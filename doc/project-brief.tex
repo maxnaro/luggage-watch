@@ -25,14 +25,15 @@
 This project aims to develop an embedded system that can detect suspicious, or unattended, luggage from video surveillance footage.
 The system will utilise computer vision and deep learning techniques to identify luggage distinctly from other objects in the scene.
 
-Primarily, the use case is focused on train carriages, where unattended luggage can pose inconvenience for passengers and, at worst, security risks. 
+Primarily, the use case is focused on public or semi-public spaces, such as transport hubs, waiting areas, or building lobbies. In these environments, unattended luggage can pose an inconvenience and, at worst, a security risk.
 
 \section{Objectives}
 
 The main objectives of this project are:
 \begin{itemize}
     \item Develop deep learning software capable of detecting, and recognising, objects and people from a camera footage in real time.
-    \subitem Aiming for ~85\% precision in detecting suspicious luggage with a ~15\% rate of false positives; 2-5 second inference time, compromising with the limitations of hardware and the volume of passengers, and luggage, that may fill a train carriage at a given time
+    \subitem Evaluate and optimise the model to achieve a suitable balance between precision, recall, and false positive rates for a real-world surveillance application.
+    \subitem Target a near-real-time inference speed, balancing detection accuracy with the computational constraints of the embedded hardware.
     \item Integrate the software within an embedded system, Jetson Orin Nano.
     \subitem This will include hardware integration, with camera inputs, \textit{proper power management, and networking for logging}. As well as, resource usage optimisation, managing system and GPU memory efficiently, and minimising CPU overhead. 
 \end{itemize}
@@ -40,11 +41,11 @@ The main objectives of this project are:
 \section{Scope}
 
 % Point of contention here, may need to reduce the scope of the project if datasets are not available
-As mentioned in the introduction, the main use case of this project is in train carriages. 
-This will include luggage left on the overhead storage compartments and luggage compartments (often situated near the entrance of each carriage). 
-The software will, therefore, be optimised for precision in this environment; the aforementioned ~85\% precision applying.
+As mentioned in the introduction, the project's use case is in monitoring public or semi-public environments.
+This will include detecting luggage (such as bags, backpacks, or suitcases) left unattended in open areas, near seating, or in other designated zones for a pre-defined period.
+The software will, therefore, be developed as a more general-purpose solution for unattended object detection. Performance will be evaluated based on metrics suitable for this task, rather than a fixed precision target, and benchmarked against available public datasets.
 
-\section{Technical Approach}
+\section{Approach}
 
 The project will be implemented on an NVIDIA Jetson Orin Nano embedded system, with the software developed in Python.
 A majority of similar projects implement a version of a YOLO (You Only Look Once) model for object detection, which I believe will be the direction I take this project.
@@ -56,7 +57,7 @@ RGB, RGB-D, ToF (time-of-flight), all offer different information about the scen
 
 \section{Risks \& Constraints}
 
-The main risks in this project are my lack of experience in deep learning and computer vision, and the availability of a suitable dataset.
+The main risks in this project are my lack of experience in deep learning and computer vision, and the availability of a suitable, high-quality labelled dataset for unattended object detection.
 
 \section{Timeline}
 
