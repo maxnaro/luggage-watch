@@ -1,3 +1,4 @@
 doc/*
 !doc/*.tex
 !doc/*.md
+!figures
