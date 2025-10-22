@@ -1,7 +1,8 @@
 \documentclass{article}
 \usepackage{fancyhdr}
-\usepackage{hyperref}
 \usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{apacite}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -33,10 +34,14 @@ Primarily, the use case is focused on public or semi-public spaces, such as tran
 The main objectives of this project are:
 \begin{itemize}
     \item Develop deep learning software capable of detecting, and recognising, objects and people from a camera footage in real time.
-    \subitem Evaluate and optimise the model to achieve a suitable balance between precision, recall, and false positive rates for a real-world surveillance application.
-    \subitem Target a near-real-time inference speed, balancing detection accuracy with the computational constraints of the embedded hardware.
+    \begin{itemize}
+        \item Evaluate and optimise the model to achieve a suitable balance between precision, recall, and false positive rates for a real-world surveillance application.
+        \item Target a near-real-time inference speed, balancing detection accuracy with the computational constraints of the embedded hardware.
+    \end{itemize}
     \item Integrate the software within an embedded system, Jetson Orin Nano.
-    \subitem This will include hardware integration, with camera inputs, \textit{proper power management, and networking for logging}. As well as, resource usage optimisation, managing system and GPU memory efficiently, and minimising CPU overhead. 
+    \begin{itemize}
+        \item This will include hardware integration, with camera inputs, \textit{proper power management, and networking for logging}, as well as resource usage optimisation, managing system and GPU memory efficiently, and minimising CPU overhead.
+    \end{itemize}
 \end{itemize}
 
 \section{Scope}
@@ -46,10 +51,14 @@ As mentioned in the introduction, the project's use case is in monitoring public
 This will include detecting luggage (such as bags, backpacks, or suitcases) left unattended in open areas, near seating, or in other designated zones for a pre-defined period.
 The software will, therefore, be developed as a more general-purpose solution for unattended object detection. Performance will be evaluated based on metrics suitable for this task, rather than a fixed precision target, and benchmarked against available public datasets.
 
+\section{Literature Review}
+
+I began my review by exploring existing research and reviews in the field of unattended, or suspicious, object detection using computer vision and deep learning techniques.
+
 \section{Approach}
 
 The project will be implemented on an NVIDIA Jetson Orin Nano embedded system, with the software developed in Python.
-A majority of similar projects implement a version of a YOLO (You Only Look Once) model for object detection, which I believe will be the direction I take this project.
+A majority of similar projects \cite{qasim2024abandoned} implement a version of a YOLO (You Only Look Once) model for object detection, which I believe will be the direction I take this project.
 However, despite being a popular choice for object detection, I will evaluate other architectures such as SSD (Single Shot MultiBox Detector) and Faster R-CNN to determine the most suitable model for this application.
 
 A dataset will be required to train the model, which will be collected from pre-existing, publicly available sources, and potentially supplemented by using proprietary data.
@@ -67,8 +76,11 @@ Using Jira provides a lot of different tools for project management, including a
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=\linewidth]{figures/luggage_watch_2025-10-20_09.47pm.png}
+\includegraphics[width=\linewidth]{../figures/luggage_watch_2025-10-20_09.47pm.png}
 \caption{Initial project timeline.}
 \end{figure}
+
+\bibliographystyle{apacite}
+\bibliography{project-brief}
 
 \end{document}

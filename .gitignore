@@ -1,4 +1,6 @@
-doc/*
-!doc/*.tex
+doc/**
+!doc/**/
+!doc/**/*.tex
+!doc/**/*.bib
 !doc/*.md
 !figures
