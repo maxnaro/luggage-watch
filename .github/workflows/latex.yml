@@ -27,11 +27,19 @@ jobs:
         with:
           root_file: |
             project-brief.tex
+            report.tex
           working_directory: ./doc/
 
-      - name: Upload PDF artifact
+      - name: Upload project brief artifact
         uses: actions/upload-artifact@v4
         with:
-          name: project-brief-pdf
+          name: project-brief
           path: doc/project-brief.pdf
+          if-no-files-found: error
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: report
+          path: doc/report.pdf
           if-no-files-found: error
