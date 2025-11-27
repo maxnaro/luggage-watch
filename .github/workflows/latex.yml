@@ -1,0 +1,43 @@
+name: Build LaTeX PDF
+
+on:
+  push:
+    paths:
+      - '**/*.tex'
+      - '**/*.puml'
+      - references.bib
+      - .github/workflows/latex.yml
+  pull_request:
+    paths:
+      - '**/*.tex'
+      - '**/*.puml'
+      - references.bib
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compile LaTeX
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: |
+            project-brief.tex
+          working_directory: ./doc/
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-brief-pdf
+          path: doc/project-brief.pdf
+          if-no-files-found: error
