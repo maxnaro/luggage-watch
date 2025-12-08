@@ -13,65 +13,144 @@
 \fancyfoot[C]{\thepage}
 \pagestyle{fancy}
 
+\bibliographystyle{agsm}
+
 \begin{document}
 
 \begin{titlepage}
-    \centering
-    \vspace*{2.5cm}
+	\centering
+	\vspace*{2.5cm}
 
-    {\LARGE{Embedded System for}\\[6pt]
-     \Huge\bfseries Suspicious Luggage Detection\par}
+	{\LARGE{Embedded System for}\\[6pt]
+		\Huge\bfseries Suspicious Luggage Detection\par}
 
-    \vspace{1.5cm}
-    
-    \begin{tabular}{c}
-        \Large Max Narongchai \\ Computer Science \\ COC251 \\ F226732
-    \end{tabular}
-    
-    \vfill
+	\vspace{1.5cm}
 
-    {\small \today\par}
+	\begin{tabular}{c}
+		\Large Max Narongchai \\ Computer Science \\ COC251 \\ F226732
+	\end{tabular}
+
+	\vfill
+
+	{\small \today\par}
 \end{titlepage}
 
 \begin{abstract}
-    % TODO: complete at the end
+	% TODO: complete at the end
 
-    \noindent\textbf{Keywords:} suspicious luggage, CCTV, embedded system, anomaly detection
+	\noindent\textbf{Keywords:} suspicious luggage, CCTV, embedded system, anomaly detection
 \end{abstract}
-
 
 \tableofcontents
 \newpage
 
 \begin{multicols*}{2}
-    \section{Introduction}
+	\section{Introduction}
 
-    Surveillance is a powerful tool, used in various public settings to ensure safety of the public on a daily basis.
-    CCTV, closed circuit television, is employed widely with operators having to comb through hours of footage everyday 
-    to uphold security. This is a tedious task, and human error is inevitable. Posing the question, can we automate this 
-    process?
+	Surveillance is a powerful tool, used in various public settings to ensure
+	safety of the public on a daily basis. CCTV, closed circuit television, is
+	employed widely with operators having to comb through hours of footage everyday
+	to uphold security. This is a tedious task, and human error is inevitable.
+	Posing the question, can we automate this process?
 
-    One of the many threats to public safety is unattended luggage, this is a common occurence which, at best, causes
-    inconvenience, and at worst, could be placed for a more sinister purpose.
+	One of the many threats to public safety is unattended luggage, this is a
+	common occurence which, at best, causes inconvenience, and at worst, could be
+	placed for a more sinister purpose.
 
-    An automated approach to detecting suspicious luggage could alleviate the burden on operators, allowing them to dedicate
-    more attention to pressing matters; require smaller teams to monitor larger areas, saving resources; and reduce human error, 
-    bolstering overall security.
-    
-    \section{Literature Review}
-    
-    \section{Requirements Analysis}
-    
-    \section{System Design}
-    
-    \section{Implementation}
-    
-    \section{Testing and Evaluation}
+	An automated approach to detecting suspicious luggage could alleviate the
+	burden on operators, allowing them to dedicate more attention to pressing
+	matters; require smaller teams to monitor larger areas, saving resources; and
+	reduce human error, bolstering overall security.
 
-    \section{Conclusion}
+	\section{Literature Review}
+
+	\subsection{Object Detection}
+
+	Object detection is a computer vision task that involves identifying and
+	locating objects within an image or video frame.
+
+	\subsection{Existing Systems}
+
+	This section explores existing research and reviews in the field of unattended,
+	or suspicious, object detection using computer vision and deep learning
+	techniques. This includes a broader view on machine learning techniques for
+	suspicious object detection \citep{dubey2024critical}, as well as a specific,
+	novel approach to abandoned object detection using deep learning methods
+	\citep{qasim2024abandoned}. The main question of the review is to determining
+	how the specific implementation choices tackle the general challenges posed.
+
+	\subsubsection[A Critical Study on Suspicious Object Detection with Images and Videos Using Machine Learning Techniques]
+	{\enquote{A Critical Study on Suspicious Object Detection with Images and Videos Using Machine Learning Techniques} \protect\citep{dubey2024critical}}
+
+	Authors \citeauthor{dubey2024critical} provide a broad study of the field,
+	reviewing machine learning techniques for detecting suspicious objects. The
+	authors cover a range of detection methods, from static images, real-time
+	videos, and via IoT systems.
+
+	A pertinent point raised in this review are the challenges that researchers
+	faced in this domain \enquote{illumination changes, occlusion, noise, poor
+		resolution, and real-time processing complexities}.
+
+	The review compares multiple deep learning models with the most promising
+	results coming from Faster-RCNN, Mask-RCNN, and variants of YOLO. Despite the
+	promise of these models, the authors conclude that many limitations are still
+	faced, particularly in terms of accuracy in busy scenes.
+
+	\subsubsection[Abandoned Object Detection and Classification Using Deep Embedded Vision]
+	{\enquote{Abandoned Object Detection and Classification Using Deep Embedded Vision} \protect\citep{qasim2024abandoned}}
+
+	The article by \citeauthor{qasim2024abandoned} present a novel approach for
+	identifying abandoned objects in surveillance footage. It features a two-stage
+	approach, the first stage employing a ConvLSTM (Convolutional Long Short-Term
+	Memory) model which combines the abilities of a CNN and LSTM to capture both
+	spatial and temporal features from video data, classifying scenes as
+	\enquote{suspicious} or \enquote{non-suspicious}; the second stage, given a
+	suspicious scene, utilises a YOLOv8l model to classify the detected objects.
+
+	\subsubsection{Identifying the Research Gap}
+
+	The two studies provide an answer to the review's main question. The review by
+	\citeauthor{dubey2024critical} establishes the persistent challenges of the
+	domain: environmental factors, and, most critically for this project, the
+	difficulty of \enquote{real-time processing complexities}
+	\citep{dubey2024critical}. The implementation choices of researchers are a
+	response to these challenges.
+
+	A state-of-the-art example is presented by \citeauthor{qasim2024abandoned}, who
+	tackle these challenges with a novel, specific implementation: a two-stage
+	model \citep{qasim2024abandoned}. Their ConvLSTM classifier acts as an
+	efficient first-pass filter, analysing spatio-temporal data to identify
+	\enquote{suspicious} scenes. This implementation choice addresses the challenge
+	of real-time processing by preventing the system from running the more
+	computationally expensive YOLOv8l model on every single frame. This solution
+	allows the system to achieve high accuracy (99.70\% for the localiser) by
+	focusing resources only when necessary.
+
+	However, this is where the research gap, and the justification for this
+	project, becomes clear. While the \citeauthor{qasim2024abandoned} paper is
+	titled \enquote{Using Deep Embedded Vision}, their experimental setup was
+	conducted on a high-performance NVIDIA GeForce RTX 3090 GPU. This hardware,
+	while having been superseded, remains a high-power, high-cost component not
+	suitable for a typical, low-cost embedded application, revealing a gap between
+	academic demonstration and practical, real-world deployment.
+
+	Therefore, this project is justified as a critical investigation into the
+	practical implementation and optimisation of an object detection model. It will
+	tackle the \enquote{real-time processing complexities} identified by
+	\citeauthor{dubey2024critical} by moving from a theoretical, high-performance
+	environment to a constrained one.
+
+	\section{Requirements Analysis}
+
+	\section{System Design}
+
+	\section{Implementation}
+
+	\section{Testing and Evaluation}
+
+	\section{Conclusion}
 \end{multicols*}
 
-% \bibliographystyle{agsm}
-% \bibliography{report-references}
+\bibliography{report}
 
 \end{document}
