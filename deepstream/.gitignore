@@ -1,5 +1,8 @@
 # TensorRT engines (arch-specific)
 *.engine
+*.pth
+*.pt
+*.ckpt
 
 # Temp/build outputs
 *.log
