@@ -1,0 +1,3 @@
+[submodule "training"]
+	path = training
+	url = git@github.com:maxnaro/luggage-watch-training.git
