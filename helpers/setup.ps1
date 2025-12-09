@@ -72,8 +72,8 @@ docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi || Wri
 
 # Optionally pull DeepStream image (x86_64)
 if ($PullDeepStreamImage) {
-    Write-Step "Pulling DeepStream x86_64 image (nvcr.io/nvidia/deepstream:6.4-triton-devel)..."
-    docker pull nvcr.io/nvidia/deepstream:6.4-triton-devel
+    Write-Step "Pulling DeepStream x86_64 image (nvcr.io/nvidia/deepstream:8.0-gc-triton-devel)..."
+    docker pull nvcr.io/nvidia/deepstream:8.0-gc-triton-devel
 }
 
 Write-Step "Done. If features were just enabled or drivers updated, reboot may be required."
