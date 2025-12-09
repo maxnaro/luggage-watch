@@ -1,0 +1,9 @@
+# TensorRT engines (arch-specific)
+*.engine
+
+# Temp/build outputs
+*.log
+build/
+dist/
+__pycache__/
+*.pyc
