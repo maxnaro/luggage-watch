@@ -1,17 +1,11 @@
 name: Build LaTeX PDF
 
 on:
-  push:
-    paths:
-      - '**/*.tex'
-      - '**/*.puml'
-      - references.bib
-      - .github/workflows/latex.yml
   pull_request:
     paths:
       - '**/*.tex'
       - '**/*.puml'
-      - references.bib
+      - '**/*.bib'
   workflow_dispatch:
 
 permissions:
