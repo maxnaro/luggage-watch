@@ -115,10 +115,55 @@
 
 	\subsection{Core Concepts of Computer Vision and Object Detection}
 
-	Object detection is a computer vision task that involves identifying and
-	locating objects within an image or video frame.
+	\subsubsection{The Evolution of Detection Techniques}
 
-	% TODO: expand with more sources, going into foundational concepts of computer vision
+	Authors \citeauthor{zou2025comprehensive} provide a comprehensive review of
+	object detection methods, describing a shift from traditional algorithms to
+	modern deep learning and transformer-based approaches.
+
+	The survey~\citep{zou2025comprehensive} displays that the progression of object
+	detection techniques can be categorised into three main eras: traditional
+	methods, deep learning-based methods, and state-of-the-art modern methods.
+
+	\begin{itemize}
+		\item \textbf{Traditional Methods:} SIFT (scale-invariant feature transform),
+		      HOG (histogram of oriented gradients), and Viola-Jones, are examples of
+		      the earliest feature-based methods of object detection. These methods
+		      paved the way for the field but struggled with limits of complexity,
+		      computational resources, and adaptability to diverse environments.
+		      Few models were suitable for real-time application, excluding HOG and Viola-Jones,
+		      the latter of which introduced usage of Haar-like features which are still used
+		      in some real-time applications due to their facilitation of rapid inference times.
+
+		      In addition, decision tree classifiers (DTs), K-nearest neighbours (KNNs) and
+		      support vector machines (SVMs) were developed to address the shortcomings of
+		      feature-based methods using machine learning. The integration of ML with
+		      traditional methods improved adaptability and accuracy, but left much to be
+		      desired in terms of computational complexity and real-time performance.
+		\item \textbf{Deep Learning-Based Methods:} A step away from the \enquote{handcrafted}
+		      feature sets of traditional methods, deep learning-based methods offered solutions
+		      that automated feature extraction and learning.
+
+		      Convolutional neural networks (CNNs) became the backbone of these methods,
+		      leading to the development of two-stage detectors. Architectures such as R-CNN,
+		      Fast R-CNN, and Faster R-CNN introduced region proposals combined with CNNs to
+		      extract features (with Faster R-CNN going a step further by integrating region
+		      proposal networks). This is to say that these models were a significant step
+		      forward in terms of accuracy and adaptability yet remained computationally
+		      intensive, limiting their real-time application.
+
+		      The shortcomings of two-stage detectors led to the development of single-stage
+		      detectors. SSDs and YOLO (You Only Look Once)
+		      \citep{Jocher_Ultralytics_YOLO_2023,pathak2023object} revolutionised the field
+		      by removing the region proposal step, enabling predictions from an entire image
+		      in a single propagation. This marked a breakthrough in real-time object
+		      detection, and is used in nearly every example of abandoned luggage detection
+		      in literature \citep{abandoned2025vrsalovic,dubey2024critical}.
+		\item \textbf{Modern Methods:}
+		      % \citep{abandoned2025vrsalovic} talk about using DETR
+	\end{itemize}
+
+	\subsubsection{Evaluation Metrics for Object Detection}
 
 	\subsection{Object Detection Models for Real-Time Inference}
 
