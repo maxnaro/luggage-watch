@@ -1,6 +1,7 @@
 \documentclass{report}
 
 \usepackage{fancyhdr}
+\usepackage{hyperref}
 \usepackage{natbib}
 \usepackage[a4paper, margin=3cm]{geometry}
 \usepackage{graphicx}
@@ -55,19 +56,75 @@
 
 	One of the many threats to public safety is unattended luggage, this is a
 	common occurence which, at best, causes inconvenience, and at worst, could be
-	placed for a more sinister purpose.
+	placed for a more sinister purpose. Numerous incidents at transportation hubs
+	and public spaces have demonstrated the potential dangers of unattended luggage
+	and bags, with counter terrorism authorities advising the public and security
+	personnel to remain vigilant and report any suspicious
+	items~\citep{protectuk2022unattended}. Historical acts of terrorism, such as
+	the Boston Marathon bombing, have emphasised the importance of detecting
+	suspicious items in crowded spaces, highlighting the need for reliable
+	detection mechanisms in these scenarios.
 
-	An automated approach to detecting suspicious luggage could alleviate the
-	burden on operators, allowing them to dedicate more attention to pressing
-	matters; require smaller teams to monitor larger areas, saving resources; and
-	reduce human error, bolstering overall security.
+	Compared to other threats, unattended luggage is distinct in its ability to be
+	discrete. To the human eye, with low resolution CCTV footage, a security threat
+	may be indistinguishable from legitimate items, presenting a unique challenge
+	compared to more obvious security threats such as disorderly conduct. False
+	positives can increase the burden on teams responsible for monitoring, being
+	too relaxed could have dire consequences.
+
+	Systems recording footage at all hours of the day generate an overwhelming
+	amount of data, the sheer volume posing a significant challenge for operators
+	to review on a regular basis. This implies a costly requirement for large teams
+	of personnel manually monitoring the footage, diverting resources from other
+	facets of security, increasing operational expenses, and potentially leading to
+	fatigue-induced oversights.
+
+	Automation in security is already a widely incorporated concept accross the
+	public sector, with systems such as facial recognition and intrusion detection
+	providing results that manual monitoring alone cannot achieve; at least without
+	significant human-resource investment. An automated approach to detecting
+	suspicious luggage could alleviate the burden on operators, allowing them to
+	dedicate more attention to pressing matters; require smaller teams to monitor
+	larger areas, saving resources; and reduce human error, bolstering overall
+	security.
+
+	Edge processing using embedded systems has become an increasingly viable, cost
+	effective, and practical solution for surveillance applications. Versus a cloud
+	solution, edge processing offers lower latency, by way of being situated
+	physically closer to the data source; improved privacy, sensitive data remains
+	on site and the onus is on the operator to secure it --- not a cloud provider;
+	and network independence, there is no reliance on a stable internet connection
+	just the local network~\citep{pamadi2025edgevscloud}. The proliferation of
+	affordable, high-performance embedded hardware, with enhanced software support,
+	has made a strong case for edge processing in surveillance; the benefits of
+	cloud computing's scalability and power are minimised by new embedded
+	solutions.
+
+	Advances in computer vision technology and deep learning have made the issue of
+	embedded suspicious luggage detection more tractable. Similar automation tasks,
+	are being successfully implemented in real-world applications.
+
+	Therefore, this project aims to design and implement an embedded system for
+	suspicious luggage detection. The system will bridge the gap between academic
+	research and practical deployment, focusing on real-time performance on edge
+	devices. The target for the project is to create a deployable solution that can
+	integrate with surveillance infrastructure, utilising an NVIDIA Jetson Orin
+	Nano as a cost-effective piece of hardware suitable for the task.
 
 	\section{Literature Review}
 
-	\subsection{Object Detection}
+	\subsection{Core Concepts of Object Detection}
 
 	Object detection is a computer vision task that involves identifying and
 	locating objects within an image or video frame.
+
+	% TODO: expand with more sources, going into foundational concepts of computer vision
+
+	\subsection{Object Detection Models for Real-Time Inference}
+
+	\subsection{Video Analysis, Temporal Modeling and Object Tracking}
+
+	\subsection{Real-Time Processing on Edge Devices}
 
 	\subsection{Existing Systems}
 
@@ -107,7 +164,11 @@
 	\enquote{suspicious} or \enquote{non-suspicious}; the second stage, given a
 	suspicious scene, utilises a YOLOv8l model to classify the detected objects.
 
-	\subsubsection{Identifying the Research Gap}
+	\subsection{Model Optimisation Techniques}
+
+	\subsection{Challenges in Surveillance Systems}
+
+	\subsection{Identifying the Research Gap}
 
 	The two studies provide an answer to the review's main question. The review by
 	\citeauthor{dubey2024critical} establishes the persistent challenges of the
