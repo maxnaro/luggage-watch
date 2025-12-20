@@ -1,12 +1,15 @@
 \documentclass{report}
 
 \usepackage{fancyhdr}
-\usepackage{hyperref}
 \usepackage{natbib}
 \usepackage[a4paper, margin=3cm]{geometry}
 \usepackage{graphicx}
 \usepackage{csquotes}
 \usepackage{multicol}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{hyperref}
 
 \fancyhf{}
 \fancyhead[L]{Embedded System for Suspicious Luggage Detection}
@@ -15,6 +18,8 @@
 \pagestyle{fancy}
 
 \bibliographystyle{agsm}
+
+\renewcommand\tabularxcolumn[1]{m{#1}} % make X columns vertically centered
 
 \begin{document}
 
@@ -126,7 +131,8 @@
 	methods, deep learning-based methods, and state-of-the-art modern methods.
 
 	\begin{itemize}
-		\item \textbf{Traditional Methods:} SIFT (scale-invariant feature transform),
+		\item \textbf{Traditional Methods:}
+		      SIFT (scale-invariant feature transform),
 		      HOG (histogram of oriented gradients), and Viola-Jones, are examples of
 		      the earliest feature-based methods of object detection. These methods
 		      paved the way for the field but struggled with limits of complexity,
@@ -140,7 +146,8 @@
 		      feature-based methods using machine learning. The integration of ML with
 		      traditional methods improved adaptability and accuracy, but left much to be
 		      desired in terms of computational complexity and real-time performance.
-		\item \textbf{Deep Learning-Based Methods:} A step away from the \enquote{handcrafted}
+		\item \textbf{Deep Learning-Based Methods:}
+		      A step away from the \enquote{handcrafted}
 		      feature sets of traditional methods, deep learning-based methods offered solutions
 		      that automated feature extraction and learning.
 
@@ -154,17 +161,87 @@
 
 		      The shortcomings of two-stage detectors led to the development of single-stage
 		      detectors. SSDs and YOLO (You Only Look Once)
-		      \citep{Jocher_Ultralytics_YOLO_2023,pathak2023object} revolutionised the field
-		      by removing the region proposal step, enabling predictions from an entire image
-		      in a single propagation. This marked a breakthrough in real-time object
-		      detection, and is used in nearly every example of abandoned luggage detection
-		      in literature \citep{abandoned2025vrsalovic,dubey2024critical}.
+		      \citep{jocher2023ultralytics,pathak2023object} revolutionised the field by
+		      removing the region proposal step, enabling predictions from an entire image in
+		      a single propagation. This marked a breakthrough in real-time object detection,
+		      and is used in nearly every example of abandoned luggage detection in
+		      literature \citep{abandoned2025vrsalovic,dubey2024critical}.
 		\item \textbf{Modern Methods:}
-		      % \citep{abandoned2025vrsalovic} talk about using DETR
+		      The latest advancements in object detection are represented by transformer-based
+		      approaches. The application of transformers, initially for natural language
+		      processing, then developing into vision transformers (ViTs), finally to detection
+		      transformers (DETRs), has introduced a new pardigm in object detection.
+
+		      Utilising self-attention mechanisms, mechanisms that take into account the
+		      \enquote{importance} of features relative to one another in an
+		      input~\citep{vaswani2023attentionneed}, DETRs predict objects without the need
+		      for predefined anchor boxes (used in CNN-based, SSD, and some\footnote{YOLOv2,
+			      v3, v4, v5, and v7~\citep{terven2023comprehensive}} YOLO models to propose
+		      potential object locations). This allows for transformer-based models to
+		      determine objects outside of the constraints of pre-set shapes and sizes,
+		      improving adaptability to diverse object types and environments.
+
+		      Other notable methods include hybrid models that combine CNNs and transformers,
+		      multi-scale detection, and lightweight architectures such as
+		      MobileNet~\citep{chiu2020mobilenet}.
 	\end{itemize}
+
+	The study demonstrates that the evolution of object detection has been driven
+	by persistent challenges, the need to manage object occlusions, handling object
+	scale, and improving real-time processing capabilities.
 
 	\subsubsection{Evaluation Metrics for Object Detection}
 
+	Progress through the eras of object detection has been measured using a
+	consistent, standard set of metrics. The survey by
+	\citeauthor{zou2025comprehensive} highlights the importance of these metrics in
+	evaluating and includes the following key metrics found in
+	table~\ref{tab:evaluation_metrics_desc} and
+	table~\ref{tab:evaluation_metrics_formula}~\citep{zou2025comprehensive}.
+\end{multicols*}
+
+\begin{table}[ht]
+	\centering
+	\small
+	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Metric}                                                                                                                 & \textbf{Description}                                                                                        & \textbf{Insights}                                                                                                                                                                                          \\
+		\midrule
+		Intersection over Union ($\mathrm{IoU}$)                                                                                        & Measure of overlap between predicted and ground truth bounding boxes.                                       & Bounded by $[0,1]$, a higher IoU indicates better localisation (more accurate bounding box predictions).                                                                                                   \\
+		True Positive ($\mathrm{TP}$) / False Positive ($\mathrm{FP}$) / True Negative ($\mathrm{TN}$) / False Negative ($\mathrm{FN}$) & Counts of correct and incorrect predictions.                                                                & Fundamental for calculating precision, recall, and F1-score.                                                                                                                                               \\
+		Recall                                                                                                                          & The ratio of true positives to the sum of true positives and false negatives.                               & Bounded by $[0,1]$, higher recall indicates better detection of actual objects.                                                                                                                            \\
+		Average Precision ($\mathrm{AP}$)                                                                                               & Area under the precision recall curve (plotted by evaluating the model at different confidence thresholds). & Bounded by $[0,1]$, a higher AP indicates better overall performance across all thresholds for a given class.                                                                                              \\
+		Mean Average Precision ($\mathrm{mAP}$)                                                                                         & The mean of AP accross all classes.                                                                         & Bounded by $[0,1]$, a higher mAP indicates better overall performance across all classes.                                                                                                                  \\
+		$\mathrm{F1}$-Score                                                                                                             & The harmonic mean of precision and recall.                                                                  & Bounded by $[0,1]$, a higher F1-score indicates a better balance between precision and recall. It is more useful when there is an uneven class distribution.                                               \\
+		Matthews Correlation Coefficient ($\mathrm{MCC}$)                                                                               & A measure of classification quality, a numerical representation of a confusion matrix.                      & Bounded by [-1, 1], 1 indicating perfect prediction, 0 indicating random prediction, and -1 indicating total disagreement between prediction and observation. Particularly useful for imbalanced datasets. \\
+		Cohen's Kappa ($\kappa$)                                                                                                        & A measure of accuracy that takes into account the probability of a random agreement.                        & Bounded by $[-1, 1]$, 1 indication perfect agreement, 0 equivalent to chance, and -1 indicating complete disagreement. It has the same use-cases as $\mathrm{MCC}$.                                        \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Evaluation metrics for object detection: descriptions and insights.}
+	\label{tab:evaluation_metrics_desc}
+\end{table}
+
+\begin{table}[ht]
+	\centering
+	\small
+	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Metric}                                   & \textbf{Formula}                                                                                                                                                                                               \\
+		\midrule
+		Intersection over Union ($\mathrm{IoU}$)          & $$\mathrm{IoU} = \dfrac{|B_{\mathrm{pred}} \cap B_{\mathrm{gt}}|}{|B_{\mathrm{pred}} \cup B_{\mathrm{gt}}|}$$                                                                                                  \\
+		Recall                                            & $$\mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}}$$                                                                                                                                            \\
+		Average Precision ($\mathrm{AP}$)                 & For threshold $n \in [0, 1]$, recall at threshold $R_n$, and precision at threshold $P_n$: $$\mathrm{AP} = \sum_n{(R_n - R_{n-1})\cdot P_n}$$                                                                  \\
+		Mean Average Precision ($\mathrm{mAP}$)           & For number of classes $N$: $$\mathrm{mAP} = \frac{1}{N}\cdot\sum_{i=1}^N{\mathrm{AP}_i}$$                                                                                                                      \\
+		$\mathrm{F1}$-Score                               & $$\mathrm{F1} = 2 \cdot \frac{P\cdot R}{P + R} = \frac{2\cdot \mathrm{TP}}{2\cdot \mathrm{TP} + \mathrm{FP} + \mathrm{FN}}$$                                                                                   \\
+		Matthews Correlation Coefficient ($\mathrm{MCC}$) & $$\mathrm{MCC} = \frac{(\mathrm{TP} \cdot \mathrm{TN}) - \mathrm{FP} \cdot \mathrm{FN}}{\sqrt{(\mathrm{TP} + \mathrm{FP})(\mathrm{TP} + \mathrm{FN})(\mathrm{TN} + \mathrm{FP})(\mathrm{TN} + \mathrm{FN})}}$$ \\
+		Cohen's Kappa ($\kappa$)                          & For $P_o$ the observed accuracy and $P_e$ the expected accuracy: $$\kappa = \frac{P_o - P_e}{1 - P_e}$$                                                                                                        \\                                                                                                     \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Evaluation metrics for object detection: formulae.}
+	\label{tab:evaluation_metrics_formula}
+\end{table}
+
+\begin{multicols*}{2}
 	\subsection{Object Detection Models for Real-Time Inference}
 
 	\subsection{Video Analysis, Temporal Modeling and Object Tracking}
