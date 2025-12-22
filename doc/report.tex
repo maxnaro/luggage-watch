@@ -141,6 +141,13 @@
 		      the latter of which introduced usage of Haar-like features which are still used
 		      in some real-time applications due to their facilitation of rapid inference times.
 
+		      Authors \citeauthor{pathak2023object}, elaborate further, describing
+		      traditional methods to rely on three parts, viewing the entire image at varying
+		      positions and scales to generate candidate regions, feature extraction from
+		      these regions, and finally classification. The review~\citep{pathak2023object}
+		      highlights the main issue of these method being their high requirements for
+		      computational power.
+
 		      In addition, decision tree classifiers (DTs), K-nearest neighbours (KNNs) and
 		      support vector machines (SVMs) were developed to address the shortcomings of
 		      feature-based methods using machine learning. The integration of ML with
@@ -161,11 +168,11 @@
 
 		      The shortcomings of two-stage detectors led to the development of single-stage
 		      detectors. SSDs and YOLO (You Only Look Once)
-		      \citep{jocher2023ultralytics,pathak2023object} revolutionised the field by
-		      removing the region proposal step, enabling predictions from an entire image in
-		      a single propagation. This marked a breakthrough in real-time object detection,
-		      and is used in nearly every example of abandoned luggage detection in
-		      literature \citep{abandoned2025vrsalovic,dubey2024critical}.
+		      \citep{jocher2023yolo8,pathak2023object} revolutionised the field by removing
+		      the region proposal step, enabling predictions from an entire image in a single
+		      propagation. This marked a breakthrough in real-time object detection, and is
+		      used in nearly every example of abandoned luggage detection in literature
+		      \citep{abandoned2025vrsalovic,dubey2024critical}.
 		\item \textbf{Modern Methods:}
 		      The latest advancements in object detection are represented by transformer-based
 		      approaches. The application of transformers, initially for natural language
@@ -188,7 +195,9 @@
 
 	The study demonstrates that the evolution of object detection has been driven
 	by persistent challenges, the need to manage object occlusions, handling object
-	scale, and improving real-time processing capabilities.
+	scale, and improving real-time processing capabilities. These challenges have
+	pushed development towards the exact use-cases of this project: real-time
+	suspicious luggage detection.
 
 	\subsubsection{Evaluation Metrics for Object Detection}
 
@@ -196,25 +205,58 @@
 	consistent, standard set of metrics. The survey by
 	\citeauthor{zou2025comprehensive} highlights the importance of these metrics in
 	evaluating and includes the following key metrics found in
-	table~\ref{tab:evaluation_metrics_desc} and
-	table~\ref{tab:evaluation_metrics_formula}~\citep{zou2025comprehensive}.
+	table~\ref{tab:evaluation_metrics_desc}, and
+	tables~\ref{tab:evaluation_metrics_formula_1} \&
+	\ref{tab:evaluation_metrics_formula_2} ~\citep{zou2025comprehensive}.
+
+	Confusion matrices and ROC curves are two additional tools commonly used to
+	visualise the performance of classification models graphically. In conjunction
+	with the metrics listed, they provide a comprehensive understanding of a
+	model's ability to accurately detect objects and distinguish between different
+	classes.
+
+	The paper by \cite{zou2025comprehensive} groups evaluation metrics into the
+	categories: classification, localisation, detection, agreement, and others.
+	These defined categories outline the facets of model performance that we must
+	consider, not only when evaluating an object detection system, but when
+	developing one; each category outline the aspects of a model that we want to
+	optimise. In a sentence, the optimal model is one that can accurately classify
+	objects, precisely localise them within an image, detect all relevant objects,
+	and agree with ground truth data consistently across various scenarios.
 \end{multicols*}
 
 \begin{table}[ht]
 	\centering
 	\small
-	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
 		\toprule
-		\textbf{Metric}                                                                                                                 & \textbf{Description}                                                                                        & \textbf{Insights}                                                                                                                                                                                          \\
+		\textbf{Metric}                                                                                                                 & \textbf{Description}                                                                                          & \textbf{Insights}                                                                                                                                                                      \\
 		\midrule
-		Intersection over Union ($\mathrm{IoU}$)                                                                                        & Measure of overlap between predicted and ground truth bounding boxes.                                       & Bounded by $[0,1]$, a higher IoU indicates better localisation (more accurate bounding box predictions).                                                                                                   \\
-		True Positive ($\mathrm{TP}$) / False Positive ($\mathrm{FP}$) / True Negative ($\mathrm{TN}$) / False Negative ($\mathrm{FN}$) & Counts of correct and incorrect predictions.                                                                & Fundamental for calculating precision, recall, and F1-score.                                                                                                                                               \\
-		Recall                                                                                                                          & The ratio of true positives to the sum of true positives and false negatives.                               & Bounded by $[0,1]$, higher recall indicates better detection of actual objects.                                                                                                                            \\
-		Average Precision ($\mathrm{AP}$)                                                                                               & Area under the precision recall curve (plotted by evaluating the model at different confidence thresholds). & Bounded by $[0,1]$, a higher AP indicates better overall performance across all thresholds for a given class.                                                                                              \\
-		Mean Average Precision ($\mathrm{mAP}$)                                                                                         & The mean of AP accross all classes.                                                                         & Bounded by $[0,1]$, a higher mAP indicates better overall performance across all classes.                                                                                                                  \\
-		$\mathrm{F1}$-Score                                                                                                             & The harmonic mean of precision and recall.                                                                  & Bounded by $[0,1]$, a higher F1-score indicates a better balance between precision and recall. It is more useful when there is an uneven class distribution.                                               \\
-		Matthews Correlation Coefficient ($\mathrm{MCC}$)                                                                               & A measure of classification quality, a numerical representation of a confusion matrix.                      & Bounded by [-1, 1], 1 indicating perfect prediction, 0 indicating random prediction, and -1 indicating total disagreement between prediction and observation. Particularly useful for imbalanced datasets. \\
-		Cohen's Kappa ($\kappa$)                                                                                                        & A measure of accuracy that takes into account the probability of a random agreement.                        & Bounded by $[-1, 1]$, 1 indication perfect agreement, 0 equivalent to chance, and -1 indicating complete disagreement. It has the same use-cases as $\mathrm{MCC}$.                                        \\
+		Intersection over Union ($\mathrm{IoU}$)                                                                                        & Measure of overlap between predicted and ground truth bounding boxes.                                         & Higher IoU indicates better localisation (more accurate bounding box predictions).                                                                                                     \\
+		\addlinespace
+		True Positive ($\mathrm{TP}$) / False Positive ($\mathrm{FP}$) / True Negative ($\mathrm{TN}$) / False Negative ($\mathrm{FN}$) & Counts of correct and incorrect predictions.                                                                  & Fundamental for calculating precision, recall, and F1-score.                                                                                                                           \\
+		\addlinespace
+		Recall                                                                                                                          & The ratio of true positives to the sum of true positives and false negatives.                                 & Higher recall indicates better detection of actual objects.                                                                                                                            \\
+		\addlinespace
+		Average Precision ($\mathrm{AP}$)                                                                                               & Area under the precision recall curve (plotted by evaluating the model at different confidence thresholds).   & Higher AP indicates better overall performance across all thresholds for a given class.                                                                                                \\
+		\addlinespace
+		Mean Average Precision ($\mathrm{mAP}$)                                                                                         & The mean of AP accross all classes.                                                                           & Higher mAP indicates better overall performance across all classes.                                                                                                                    \\
+		\addlinespace
+		$\mathrm{F1}$-Score                                                                                                             & The harmonic mean of precision and recall.                                                                    & Higher F1-score indicates a better balance between precision and recall. It is more useful when there is an uneven class distribution.                                                 \\
+		\addlinespace
+		Matthews Correlation Coefficient ($\mathrm{MCC}$)                                                                               & A measure of classification quality, a numerical representation of a confusion matrix.                        & 1 indicating perfect prediction, 0 indicating random prediction, and -1 indicating total disagreement between prediction and observation. Particularly useful for imbalanced datasets. \\
+		\addlinespace
+		Cohen's Kappa ($\kappa$)                                                                                                        & A measure of accuracy that takes into account the probability of a random agreement.                          & 1 indication perfect agreement, 0 equivalent to chance, and -1 indicating complete disagreement. It has the same use-cases as $\mathrm{MCC}$.                                          \\
+		\addlinespace
+		Expected Agreement by Chance ($P_e$)                                                                                            & The probability of random agreement between predicted and actual classes.                                     & Used in calculating Cohen's Kappa ($\kappa$).                                                                                                                                          \\
+		\addlinespace
+		Balanced Accuracy                                                                                                               & Average of recall for each class, ensuring that classes are considered equally (even in imbalanced datasets). & Higher balanced accuracy indicates better performance across all classes, particularly useful for imbalanced datasets.                                                                 \\
+		\addlinespace
+		False Positive per Image                                                                                                        & Average number of false positives per image.                                                                  & Lower values indicate better performance.                                                                                                                                              \\
+		\addlinespace
+		Objectness Score                                                                                                                & A confidence score indicating the likelihood of an object being present within a bounding box.                & Used by object detection models such as YOLO, higher scores indicate higher likelihood of object presence.                                                                             \\
+		\addlinespace
+		Detection Error Rate (DER)                                                                                                      & Percentage of images where objects were incorrectly detected.                                                 & Lower values indicate better performance.                                                                                                                                              \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Evaluation metrics for object detection: descriptions and insights.}
@@ -224,21 +266,49 @@
 \begin{table}[ht]
 	\centering
 	\small
-	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
 		\toprule
-		\textbf{Metric}                                   & \textbf{Formula}                                                                                                                                                                                               \\
+		\textbf{Metric}                                   & \textbf{Formula}                                                                                                                                                                                                                                               \\
 		\midrule
-		Intersection over Union ($\mathrm{IoU}$)          & $$\mathrm{IoU} = \dfrac{|B_{\mathrm{pred}} \cap B_{\mathrm{gt}}|}{|B_{\mathrm{pred}} \cup B_{\mathrm{gt}}|}$$                                                                                                  \\
-		Recall                                            & $$\mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}}$$                                                                                                                                            \\
-		Average Precision ($\mathrm{AP}$)                 & For threshold $n \in [0, 1]$, recall at threshold $R_n$, and precision at threshold $P_n$: $$\mathrm{AP} = \sum_n{(R_n - R_{n-1})\cdot P_n}$$                                                                  \\
-		Mean Average Precision ($\mathrm{mAP}$)           & For number of classes $N$: $$\mathrm{mAP} = \frac{1}{N}\cdot\sum_{i=1}^N{\mathrm{AP}_i}$$                                                                                                                      \\
-		$\mathrm{F1}$-Score                               & $$\mathrm{F1} = 2 \cdot \frac{P\cdot R}{P + R} = \frac{2\cdot \mathrm{TP}}{2\cdot \mathrm{TP} + \mathrm{FP} + \mathrm{FN}}$$                                                                                   \\
-		Matthews Correlation Coefficient ($\mathrm{MCC}$) & $$\mathrm{MCC} = \frac{(\mathrm{TP} \cdot \mathrm{TN}) - \mathrm{FP} \cdot \mathrm{FN}}{\sqrt{(\mathrm{TP} + \mathrm{FP})(\mathrm{TP} + \mathrm{FN})(\mathrm{TN} + \mathrm{FP})(\mathrm{TN} + \mathrm{FN})}}$$ \\
-		Cohen's Kappa ($\kappa$)                          & For $P_o$ the observed accuracy and $P_e$ the expected accuracy: $$\kappa = \frac{P_o - P_e}{1 - P_e}$$                                                                                                        \\                                                                                                     \\
+		Intersection over Union ($\mathrm{IoU}$)          & $$\mathrm{IoU} = \dfrac{|B_{\mathrm{pred}} \cap B_{\mathrm{gt}}|}{|B_{\mathrm{pred}} \cup B_{\mathrm{gt}}|} \in [0,1]$$                                                                                                                                        \\
+		\addlinespace
+		Recall                                            & $$\mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \in [0,1]$$                                                                                                                                                                                  \\
+		\addlinespace
+		Average Precision ($\mathrm{AP}$)                 & For threshold $n \in [0, 1]$, recall at threshold $R_n$, and precision at threshold $P_n$: $$\mathrm{AP} = \sum_n{(R_n - R_{n-1})\cdot P_n} \in [0,1]$$                                                                                                        \\
+		\addlinespace
+		Mean Average Precision ($\mathrm{mAP}$)           & For number of classes $N$: $$\mathrm{mAP} = \frac{1}{N}\cdot\sum_{i=1}^N{\mathrm{AP}_i} \in [0,1]$$                                                                                                                                                            \\
+		\addlinespace
+		$\mathrm{F1}$-Score                               & $$\mathrm{F1} = 2 \cdot \frac{P\cdot R}{P + R} = \frac{2\cdot \mathrm{TP}}{2\cdot \mathrm{TP} + \mathrm{FP} + \mathrm{FN}} \in [0,1]$$                                                                                                                         \\
+		\addlinespace
+		Matthews Correlation Coefficient ($\mathrm{MCC}$) & $$\mathrm{MCC} = \frac{(\mathrm{TP} \cdot \mathrm{TN}) - (\mathrm{FP} \cdot \mathrm{FN})}{\sqrt{\begin{aligned}[t]&(\mathrm{TP} + \mathrm{FP})(\mathrm{TP} + \mathrm{FN})\\&(\mathrm{TN} + \mathrm{FP})(\mathrm{TN} + \mathrm{FN})\end{aligned}}} \in [-1,1]$$ \\
 		\bottomrule
 	\end{tabularx}
-	\caption{Evaluation metrics for object detection: formulae.}
-	\label{tab:evaluation_metrics_formula}
+	\caption{Evaluation metrics for object detection: formulae (Part 1).}
+	\label{tab:evaluation_metrics_formula_1}
+\end{table}
+
+\begin{table}[ht]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Metric}                       & \textbf{Formula}                                                                                                                                                                                                  \\
+		\midrule
+		Cohen's Kappa ($\kappa$)              & For $P_o$ the observed accuracy and $P_e$ the expected accuracy: $$\kappa = \frac{P_o - P_e}{1 - P_e} \in [-1,1]$$                                                                                                \\
+		\addlinespace
+		Expected Agreement by Chance ($P_e$)  & For number of classes $N$: $$P_e = \frac{1}{N^2}\cdot\sum^k_{i=1}{(A_i\cdot B_i)}$$                                                                                                                               \\
+		\addlinespace
+		Balanced Accuracy                     & $$\frac{1}{2}\cdot(\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} + \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FP}}) \in [0,1]$$                                                                                     \\
+		\addlinespace
+		False Positive per Image              & For number of images $N_{\mathrm{images}}$: $$\mathrm{FPPI} = \frac{\mathrm{FP}}{N_{\mathrm{images}}}$$                                                                                                           \\
+		\addlinespace
+		Objectness Score                      & As calculated by \cite{jocher2020yolov5} in YOLOv3, for probability of object presence within a bounding box $P(\mathrm{Obj}) \in [0, 1]$: $$\mathrm{Objectness} = P(\mathrm{Obj}) \cdot \mathrm{IoU} \in [0,1]$$ \\
+		\addlinespace
+		Detection Error Rate ($\mathrm{DER}$) & For total number of detections $D$: $$\mathrm{DER} = \frac{\mathrm{FP} + \mathrm{FN}}{D} \times 100$$                                                                                                             \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Evaluation metrics for object detection: formulae (Part 2).}
+	\label{tab:evaluation_metrics_formula_2}
 \end{table}
 
 \begin{multicols*}{2}
@@ -278,7 +348,7 @@
 	\subsubsection[Abandoned Object Detection and Classification Using Deep Embedded Vision]
 	{\enquote{Abandoned Object Detection and Classification Using Deep Embedded Vision} \protect\citep{qasim2024abandoned}}
 
-	The article by \citeauthor{qasim2024abandoned} present a novel approach for
+	The article by \cite{qasim2024abandoned} present a novel approach for
 	identifying abandoned objects in surveillance footage. It features a two-stage
 	approach, the first stage employing a ConvLSTM (Convolutional Long Short-Term
 	Memory) model which combines the abilities of a CNN and LSTM to capture both
