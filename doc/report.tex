@@ -1,4 +1,4 @@
-\documentclass{report}
+\documentclass{article}
 
 \usepackage{fancyhdr}
 \usepackage{natbib}
@@ -35,17 +35,17 @@
 	\begin{tabular}{c}
 		\Large Max Narongchai \\ Computer Science \\ COC251 \\ F226732
 	\end{tabular}
-
-	\vfill
+	\vspace{1.5cm}
 
 	{\small \today\par}
+	\vfill
+
+	\begin{abstract}
+		% TODO: complete at the end
+
+		\noindent\textbf{Keywords:} suspicious luggage, CCTV, embedded system, anomaly detection
+	\end{abstract}
 \end{titlepage}
-
-\begin{abstract}
-	% TODO: complete at the end
-
-	\noindent\textbf{Keywords:} suspicious luggage, CCTV, embedded system, anomaly detection
-\end{abstract}
 
 \tableofcontents
 \newpage
@@ -75,7 +75,13 @@
 	may be indistinguishable from legitimate items, presenting a unique challenge
 	compared to more obvious security threats such as disorderly conduct. False
 	positives can increase the burden on teams responsible for monitoring, being
-	too relaxed could have dire consequences.
+	too relaxed could have dire consequences. Crucially, the definition of
+	'suspicious' is inherently temporal. Unlike detecting a weapon, where the
+	object itself is the threat, a piece of luggage is neutral until it loses its
+	association with an owner for a specific duration. This introduces a complex
+	requirement for a system: it must not only detect objects but track ownership
+	and measure time, maintaining state across multiple frames in a dynamic
+	environment.
 
 	Systems recording footage at all hours of the day generate an overwhelming
 	amount of data, the sheer volume posing a significant challenge for operators
@@ -121,6 +127,7 @@
 	\subsection{Core Concepts of Computer Vision and Object Detection}
 
 	\subsubsection{The Evolution of Detection Techniques}
+	\label{sec:evolution_of_detection_techniques}
 
 	Authors \citeauthor{zou2025comprehensive} provide a comprehensive review of
 	object detection methods, describing a shift from traditional algorithms to
@@ -200,7 +207,9 @@
 	suspicious luggage detection.
 
 	\subsubsection{Evaluation Metrics for Object Detection}
+	\label{sec:evaluation_metrics_for_object_detection}
 
+	% What are the common evaluation metrics used in object detection?
 	Progress through the eras of object detection has been measured using a
 	consistent, standard set of metrics. The survey by
 	\citeauthor{zou2025comprehensive} highlights the importance of these metrics in
@@ -215,6 +224,7 @@
 	model's ability to accurately detect objects and distinguish between different
 	classes.
 
+	% Summarisation of what each metric measures, and insights into the ``optimal'' model
 	The paper by \cite{zou2025comprehensive} groups evaluation metrics into the
 	categories: classification, localisation, detection, agreement, and others.
 	These defined categories outline the facets of model performance that we must
@@ -223,9 +233,72 @@
 	optimise. In a sentence, the optimal model is one that can accurately classify
 	objects, precisely localise them within an image, detect all relevant objects,
 	and agree with ground truth data consistently across various scenarios.
+
+	\% How are evaluation metrics used with popular object detection models?
+	Object detection models, such as YOLO, SSD, and Faster R-CNN, commonly utilise
+	these evaluation metrics to benchmark their performance. For instance, YOLO
+	\citep{jocher2023yolo8} provides in-depth documentation on the performance
+	metrics it uses to evaluate the accuracy and efficiency of their models
+	\citep{ultralytics2025metrics}. The documentation cites IoU, AP, mAP, precision
+	and recall, and F1 score as key metrics for assessment
+	(table~\ref{tab:evaluation_metrics_desc}).
+
+	% How do these metrics differ from classification to object detection?
+	Evaluating object detection performance is inherently more complex than
+	classification due to the additional requirement of localisation.
+	\cite{padilla2020survey} demonstrate that, whilst considered standard, metrics
+	like AP's implementation can vary significantly across literature, leading to
+	inconsistencies in evaluation.
+
+	Unlike classification tasks, object detection does not have a true definition
+	of true negative (TN), as the background is not classified, this results in an
+	\enquote{infinite} number of TNs \citep{padilla2020survey}. This leads to IoU
+	(table~\ref{tab:evaluation_metrics_desc}) having an increased importance in
+	object detection contexts. For this reason, metrics that rely on TNs, such as
+	specificity, are absent from object detection frameworks, such as YOLO
+	\citep{ultralytics2025metrics}.
+
+	\subsubsection{The Role of Benchmarks \& Challenges in Shaping Object Detection Techniques}
+
+	The rapid evolution of object detection techniques (described in
+	section~\ref{sec:evolution_of_detection_techniques}) has necessitated the
+	development of robust benchmarks in order to allow for comparisons between
+	models to be made. Challenges such as PASCAL VOC \citep{everingham2010pascal},
+	MS COCO \citep{lin2014microsoft}, and Open Images \citep{krasin2017openimages}
+	challenge have played a pivotal role, providing standardised datasets and
+	goals.
+
+	% Standardisation of metrics through challenges
+	The paper by \citet{padilla2020survey} highlights the importance of these
+	challenges in standardising evaluation metrics. With PASCAL VOC introducing the
+	use of 11-point interpolated AP, MS COCO later adopting stricter metrics such
+	as AP at different IoU thresholds (AP@[0.5:0.95] across ten thresholds), and
+	Open Images adding complexity with hierarchical annotations (e.g.,
+	\enquote{vehicle} encompassing \enquote{car}, \enquote{truck}, etc.).
+
+	Crucially, for surveillance applications, COCO also introduced scale-specific
+	metrics (e.g., AP\textsubscript{small} for objects $<$ $32^2$ pixels). This
+	shift in focus towards small object detection is a key requirement for
+	identifying unattended luggage in wide-angle CCTV footage.
+
+	% Abandoned object detection challenges
+	In the field of abandoned object detection, specific challenges have been
+	organised. Unfortunately, these challenges are not as widely publicised as the
+	general object detection challenges, making it difficult to source information
+	on them. The challenges found in literature include the I-LIDS datasets for
+	AVSS 2007 \citep{qmul2007avss}, and the PETS 2006 dataset for the PETS 2006
+	challenge \citep{thirde2006pets}. Despite their prevalence in literature, these
+	datasets are exceptionally difficult to source, as an alternative, there is the
+	ABODA dataset which is publically available on GitHub
+	\url{https://github.com/kevinlin311tw/ABODA}. These datasets provide a common
+	ground for researchers to evaluate and compare their results in a niche field.
+	Due to the limited availability, and age, of these datasets, there is a clear
+	gap in the field for modern, publically available datasets for abandoned object
+	detection.
+
 \end{multicols*}
 
-\begin{table}[ht]
+\begin{table}[!htb]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -263,7 +336,7 @@
 	\label{tab:evaluation_metrics_desc}
 \end{table}
 
-\begin{table}[ht]
+\begin{table}[!htb]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -287,7 +360,7 @@
 	\label{tab:evaluation_metrics_formula_1}
 \end{table}
 
-\begin{table}[ht]
+\begin{table}[!htb]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -313,6 +386,45 @@
 
 \begin{multicols*}{2}
 	\subsection{Object Detection Models for Real-Time Inference}
+
+	The need for real-time inference is a requirement that rules out many object
+	detection models.
+
+	Section~\ref{sec:evolution_of_detection_techniques} describes two-stage
+	detectors such as the R-CNN family of models, which despite their accuracy,
+	fall short in terms of speed. This is not to say two-stage detectors are never
+	used in real-time applications, Faster R-CNN has been used in some
+	implementations \citep{dubey2024critical,mao2018towards,ren2017faster}, but
+	this is often at the cost of operational efficiency for marginal --- or no ---
+	performance benefits over single-stage detectors. This is demonstrated in the
+	study by \citet{demetriou2023real}, pitting YOLO, SSD, and Faster R-CNN against
+	each other for real-time performance in a demolition waste detection task. The
+	results found that YOLOv7 outperformed its competition in both accuracy, with a
+	mAP\textsubscript{50:95} of \enquote{$\approx$ 70\%}, and speed, with an
+	inference time of \enquote{$<$ 30ms}.
+
+	Transformer models, described in
+	section~\ref{sec:evolution_of_detection_techniques} \enquote{Modern Methods},
+	also struggle to meet real-time requirements due to their computational
+	requirements. The paper \citet{pagire2025comprehensive} provides a
+	comprehensive review of transformer-based object detection models, highlighting
+	their immense memory usage and processing power needs. This rules them out for
+	real-time edge deployment in many scenarios.
+
+	This leaves single-stage detectors, such as SSD and YOLO, as the main
+	candidates for real-time applications. Authors
+	\citeauthor{pagire2025comprehensive} recognise both among the top 6
+	\enquote{best object detection algorithms}, with significant overlap between
+	the use cases of SSD and YOLO. However, the ongoing development of the YOLO
+	family, with its focus on optimising speed and accuracy, makes it the preferred
+	choice for real-time applications. The latest iteration, YOLO26, claims to have
+	been \enquote{engineered from the ground up for edge and low-power devices}
+	\citep{jocher2025yolo26}, a promising direction for the future of real-time
+	object detection.
+
+	\subsubsection{Architectural Efficiency of YOLO Models}
+
+
 
 	\subsection{Video Analysis, Temporal Modeling and Object Tracking}
 
