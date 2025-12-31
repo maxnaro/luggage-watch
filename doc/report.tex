@@ -10,6 +10,7 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{hyperref}
+\usepackage{caption}
 
 \fancyhf{}
 \fancyhead[L]{Embedded System for Suspicious Luggage Detection}
@@ -20,6 +21,8 @@
 \bibliographystyle{agsm}
 
 \renewcommand\tabularxcolumn[1]{m{#1}} % make X columns vertically centered
+
+\captionsetup[table]{hypcap=false}
 
 \begin{document}
 
@@ -296,95 +299,92 @@
 	gap in the field for modern, publically available datasets for abandoned object
 	detection.
 
-\end{multicols*}
+	\begin{table*}[!p]
+		\centering
+		\small
+		\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+			\toprule
+			\textbf{Metric}                                                                                                                 & \textbf{Description}                                                                                          & \textbf{Insights}                                                                                                                                                                      \\
+			\midrule
+			Intersection over Union ($\mathrm{IoU}$)                                                                                        & Measure of overlap between predicted and ground truth bounding boxes.                                         & Higher IoU indicates better localisation (more accurate bounding box predictions).                                                                                                     \\
+			\addlinespace
+			True Positive ($\mathrm{TP}$) / False Positive ($\mathrm{FP}$) / True Negative ($\mathrm{TN}$) / False Negative ($\mathrm{FN}$) & Counts of correct and incorrect predictions.                                                                  & Fundamental for calculating precision, recall, and F1-score.                                                                                                                           \\
+			\addlinespace
+			Recall                                                                                                                          & The ratio of true positives to the sum of true positives and false negatives.                                 & Higher recall indicates better detection of actual objects.                                                                                                                            \\
+			\addlinespace
+			Average Precision ($\mathrm{AP}$)                                                                                               & Area under the precision recall curve (plotted by evaluating the model at different confidence thresholds).   & Higher AP indicates better overall performance across all thresholds for a given class.                                                                                                \\
+			\addlinespace
+			Mean Average Precision ($\mathrm{mAP}$)                                                                                         & The mean of AP accross all classes.                                                                           & Higher mAP indicates better overall performance across all classes.                                                                                                                    \\
+			\addlinespace
+			$\mathrm{F1}$-Score                                                                                                             & The harmonic mean of precision and recall.                                                                    & Higher F1-score indicates a better balance between precision and recall. It is more useful when there is an uneven class distribution.                                                 \\
+			\addlinespace
+			Matthews Correlation Coefficient ($\mathrm{MCC}$)                                                                               & A measure of classification quality, a numerical representation of a confusion matrix.                        & 1 indicating perfect prediction, 0 indicating random prediction, and -1 indicating total disagreement between prediction and observation. Particularly useful for imbalanced datasets. \\
+			\addlinespace
+			Cohen's Kappa ($\kappa$)                                                                                                        & A measure of accuracy that takes into account the probability of a random agreement.                          & 1 indication perfect agreement, 0 equivalent to chance, and -1 indicating complete disagreement. It has the same use-cases as $\mathrm{MCC}$.                                          \\
+			\addlinespace
+			Expected Agreement by Chance ($P_e$)                                                                                            & The probability of random agreement between predicted and actual classes.                                     & Used in calculating Cohen's Kappa ($\kappa$).                                                                                                                                          \\
+			\addlinespace
+			Balanced Accuracy                                                                                                               & Average of recall for each class, ensuring that classes are considered equally (even in imbalanced datasets). & Higher balanced accuracy indicates better performance across all classes, particularly useful for imbalanced datasets.                                                                 \\
+			\addlinespace
+			False Positive per Image                                                                                                        & Average number of false positives per image.                                                                  & Lower values indicate better performance.                                                                                                                                              \\
+			\addlinespace
+			Objectness Score                                                                                                                & A confidence score indicating the likelihood of an object being present within a bounding box.                & Used by object detection models such as YOLO, higher scores indicate higher likelihood of object presence.                                                                             \\
+			\addlinespace
+			Detection Error Rate (DER)                                                                                                      & Percentage of images where objects were incorrectly detected.                                                 & Lower values indicate better performance.                                                                                                                                              \\
+			\bottomrule
+		\end{tabularx}
+		\caption{Evaluation metrics for object detection: descriptions and insights.}
+		\label{tab:evaluation_metrics_desc}
+	\end{table*}
 
-\begin{table}[!htb]
-	\centering
-	\small
-	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
-		\toprule
-		\textbf{Metric}                                                                                                                 & \textbf{Description}                                                                                          & \textbf{Insights}                                                                                                                                                                      \\
-		\midrule
-		Intersection over Union ($\mathrm{IoU}$)                                                                                        & Measure of overlap between predicted and ground truth bounding boxes.                                         & Higher IoU indicates better localisation (more accurate bounding box predictions).                                                                                                     \\
-		\addlinespace
-		True Positive ($\mathrm{TP}$) / False Positive ($\mathrm{FP}$) / True Negative ($\mathrm{TN}$) / False Negative ($\mathrm{FN}$) & Counts of correct and incorrect predictions.                                                                  & Fundamental for calculating precision, recall, and F1-score.                                                                                                                           \\
-		\addlinespace
-		Recall                                                                                                                          & The ratio of true positives to the sum of true positives and false negatives.                                 & Higher recall indicates better detection of actual objects.                                                                                                                            \\
-		\addlinespace
-		Average Precision ($\mathrm{AP}$)                                                                                               & Area under the precision recall curve (plotted by evaluating the model at different confidence thresholds).   & Higher AP indicates better overall performance across all thresholds for a given class.                                                                                                \\
-		\addlinespace
-		Mean Average Precision ($\mathrm{mAP}$)                                                                                         & The mean of AP accross all classes.                                                                           & Higher mAP indicates better overall performance across all classes.                                                                                                                    \\
-		\addlinespace
-		$\mathrm{F1}$-Score                                                                                                             & The harmonic mean of precision and recall.                                                                    & Higher F1-score indicates a better balance between precision and recall. It is more useful when there is an uneven class distribution.                                                 \\
-		\addlinespace
-		Matthews Correlation Coefficient ($\mathrm{MCC}$)                                                                               & A measure of classification quality, a numerical representation of a confusion matrix.                        & 1 indicating perfect prediction, 0 indicating random prediction, and -1 indicating total disagreement between prediction and observation. Particularly useful for imbalanced datasets. \\
-		\addlinespace
-		Cohen's Kappa ($\kappa$)                                                                                                        & A measure of accuracy that takes into account the probability of a random agreement.                          & 1 indication perfect agreement, 0 equivalent to chance, and -1 indicating complete disagreement. It has the same use-cases as $\mathrm{MCC}$.                                          \\
-		\addlinespace
-		Expected Agreement by Chance ($P_e$)                                                                                            & The probability of random agreement between predicted and actual classes.                                     & Used in calculating Cohen's Kappa ($\kappa$).                                                                                                                                          \\
-		\addlinespace
-		Balanced Accuracy                                                                                                               & Average of recall for each class, ensuring that classes are considered equally (even in imbalanced datasets). & Higher balanced accuracy indicates better performance across all classes, particularly useful for imbalanced datasets.                                                                 \\
-		\addlinespace
-		False Positive per Image                                                                                                        & Average number of false positives per image.                                                                  & Lower values indicate better performance.                                                                                                                                              \\
-		\addlinespace
-		Objectness Score                                                                                                                & A confidence score indicating the likelihood of an object being present within a bounding box.                & Used by object detection models such as YOLO, higher scores indicate higher likelihood of object presence.                                                                             \\
-		\addlinespace
-		Detection Error Rate (DER)                                                                                                      & Percentage of images where objects were incorrectly detected.                                                 & Lower values indicate better performance.                                                                                                                                              \\
-		\bottomrule
-	\end{tabularx}
-	\caption{Evaluation metrics for object detection: descriptions and insights.}
-	\label{tab:evaluation_metrics_desc}
-\end{table}
+	\begin{table*}[!htb]
+		\centering
+		\small
+		\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+			\toprule
+			\textbf{Metric}                                   & \textbf{Formula}                                                                                                                                                                                                                                               \\
+			\midrule
+			Intersection over Union ($\mathrm{IoU}$)          & $$\mathrm{IoU} = \dfrac{|B_{\mathrm{pred}} \cap B_{\mathrm{gt}}|}{|B_{\mathrm{pred}} \cup B_{\mathrm{gt}}|} \in [0,1]$$                                                                                                                                        \\
+			\addlinespace
+			Recall                                            & $$\mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \in [0,1]$$                                                                                                                                                                                  \\
+			\addlinespace
+			Average Precision ($\mathrm{AP}$)                 & For threshold $n \in [0, 1]$, recall at threshold $R_n$, and precision at threshold $P_n$: $$\mathrm{AP} = \sum_n{(R_n - R_{n-1})\cdot P_n} \in [0,1]$$                                                                                                        \\
+			\addlinespace
+			Mean Average Precision ($\mathrm{mAP}$)           & For number of classes $N$: $$\mathrm{mAP} = \frac{1}{N}\cdot\sum_{i=1}^N{\mathrm{AP}_i} \in [0,1]$$                                                                                                                                                            \\
+			\addlinespace
+			$\mathrm{F1}$-Score                               & $$\mathrm{F1} = 2 \cdot \frac{P\cdot R}{P + R} = \frac{2\cdot \mathrm{TP}}{2\cdot \mathrm{TP} + \mathrm{FP} + \mathrm{FN}} \in [0,1]$$                                                                                                                         \\
+			\addlinespace
+			Matthews Correlation Coefficient ($\mathrm{MCC}$) & $$\mathrm{MCC} = \frac{(\mathrm{TP} \cdot \mathrm{TN}) - (\mathrm{FP} \cdot \mathrm{FN})}{\sqrt{\begin{aligned}[t]&(\mathrm{TP} + \mathrm{FP})(\mathrm{TP} + \mathrm{FN})\\&(\mathrm{TN} + \mathrm{FP})(\mathrm{TN} + \mathrm{FN})\end{aligned}}} \in [-1,1]$$ \\
+			\bottomrule
+		\end{tabularx}
+		\caption{Evaluation metrics for object detection: formulae (Part 1).}
+		\label{tab:evaluation_metrics_formula_1}
+	\end{table*}
 
-\begin{table}[!htb]
-	\centering
-	\small
-	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
-		\toprule
-		\textbf{Metric}                                   & \textbf{Formula}                                                                                                                                                                                                                                               \\
-		\midrule
-		Intersection over Union ($\mathrm{IoU}$)          & $$\mathrm{IoU} = \dfrac{|B_{\mathrm{pred}} \cap B_{\mathrm{gt}}|}{|B_{\mathrm{pred}} \cup B_{\mathrm{gt}}|} \in [0,1]$$                                                                                                                                        \\
-		\addlinespace
-		Recall                                            & $$\mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \in [0,1]$$                                                                                                                                                                                  \\
-		\addlinespace
-		Average Precision ($\mathrm{AP}$)                 & For threshold $n \in [0, 1]$, recall at threshold $R_n$, and precision at threshold $P_n$: $$\mathrm{AP} = \sum_n{(R_n - R_{n-1})\cdot P_n} \in [0,1]$$                                                                                                        \\
-		\addlinespace
-		Mean Average Precision ($\mathrm{mAP}$)           & For number of classes $N$: $$\mathrm{mAP} = \frac{1}{N}\cdot\sum_{i=1}^N{\mathrm{AP}_i} \in [0,1]$$                                                                                                                                                            \\
-		\addlinespace
-		$\mathrm{F1}$-Score                               & $$\mathrm{F1} = 2 \cdot \frac{P\cdot R}{P + R} = \frac{2\cdot \mathrm{TP}}{2\cdot \mathrm{TP} + \mathrm{FP} + \mathrm{FN}} \in [0,1]$$                                                                                                                         \\
-		\addlinespace
-		Matthews Correlation Coefficient ($\mathrm{MCC}$) & $$\mathrm{MCC} = \frac{(\mathrm{TP} \cdot \mathrm{TN}) - (\mathrm{FP} \cdot \mathrm{FN})}{\sqrt{\begin{aligned}[t]&(\mathrm{TP} + \mathrm{FP})(\mathrm{TP} + \mathrm{FN})\\&(\mathrm{TN} + \mathrm{FP})(\mathrm{TN} + \mathrm{FN})\end{aligned}}} \in [-1,1]$$ \\
-		\bottomrule
-	\end{tabularx}
-	\caption{Evaluation metrics for object detection: formulae (Part 1).}
-	\label{tab:evaluation_metrics_formula_1}
-\end{table}
+	\begin{table*}[!htb]
+		\centering
+		\small
+		\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+			\toprule
+			\textbf{Metric}                       & \textbf{Formula}                                                                                                                                                                                                  \\
+			\midrule
+			Cohen's Kappa ($\kappa$)              & For $P_o$ the observed accuracy and $P_e$ the expected accuracy: $$\kappa = \frac{P_o - P_e}{1 - P_e} \in [-1,1]$$                                                                                                \\
+			\addlinespace
+			Expected Agreement by Chance ($P_e$)  & For number of classes $N$: $$P_e = \frac{1}{N^2}\cdot\sum^k_{i=1}{(A_i\cdot B_i)}$$                                                                                                                               \\
+			\addlinespace
+			Balanced Accuracy                     & $$\frac{1}{2}\cdot(\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} + \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FP}}) \in [0,1]$$                                                                                     \\
+			\addlinespace
+			False Positive per Image              & For number of images $N_{\mathrm{images}}$: $$\mathrm{FPPI} = \frac{\mathrm{FP}}{N_{\mathrm{images}}}$$                                                                                                           \\
+			\addlinespace
+			Objectness Score                      & As calculated by \cite{jocher2020yolov5} in YOLOv3, for probability of object presence within a bounding box $P(\mathrm{Obj}) \in [0, 1]$: $$\mathrm{Objectness} = P(\mathrm{Obj}) \cdot \mathrm{IoU} \in [0,1]$$ \\
+			\addlinespace
+			Detection Error Rate ($\mathrm{DER}$) & For total number of detections $D$: $$\mathrm{DER} = \frac{\mathrm{FP} + \mathrm{FN}}{D} \times 100$$                                                                                                             \\
+			\bottomrule
+		\end{tabularx}
+		\caption{Evaluation metrics for object detection: formulae (Part 2).}
+		\label{tab:evaluation_metrics_formula_2}
+	\end{table*}
 
-\begin{table}[!htb]
-	\centering
-	\small
-	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
-		\toprule
-		\textbf{Metric}                       & \textbf{Formula}                                                                                                                                                                                                  \\
-		\midrule
-		Cohen's Kappa ($\kappa$)              & For $P_o$ the observed accuracy and $P_e$ the expected accuracy: $$\kappa = \frac{P_o - P_e}{1 - P_e} \in [-1,1]$$                                                                                                \\
-		\addlinespace
-		Expected Agreement by Chance ($P_e$)  & For number of classes $N$: $$P_e = \frac{1}{N^2}\cdot\sum^k_{i=1}{(A_i\cdot B_i)}$$                                                                                                                               \\
-		\addlinespace
-		Balanced Accuracy                     & $$\frac{1}{2}\cdot(\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} + \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FP}}) \in [0,1]$$                                                                                     \\
-		\addlinespace
-		False Positive per Image              & For number of images $N_{\mathrm{images}}$: $$\mathrm{FPPI} = \frac{\mathrm{FP}}{N_{\mathrm{images}}}$$                                                                                                           \\
-		\addlinespace
-		Objectness Score                      & As calculated by \cite{jocher2020yolov5} in YOLOv3, for probability of object presence within a bounding box $P(\mathrm{Obj}) \in [0, 1]$: $$\mathrm{Objectness} = P(\mathrm{Obj}) \cdot \mathrm{IoU} \in [0,1]$$ \\
-		\addlinespace
-		Detection Error Rate ($\mathrm{DER}$) & For total number of detections $D$: $$\mathrm{DER} = \frac{\mathrm{FP} + \mathrm{FN}}{D} \times 100$$                                                                                                             \\
-		\bottomrule
-	\end{tabularx}
-	\caption{Evaluation metrics for object detection: formulae (Part 2).}
-	\label{tab:evaluation_metrics_formula_2}
-\end{table}
-
-\begin{multicols*}{2}
 	\subsection{Object Detection Models for Real-Time Inference}
 
 	The need for real-time inference is a requirement that rules out many object
@@ -422,9 +422,115 @@
 	\citep{jocher2025yolo26}, a promising direction for the future of real-time
 	object detection.
 
-	\subsubsection{Architectural Efficiency of YOLO Models}
+	\subsubsection{Architecture of YOLO Models}
 
+	YOLO, standing for \enquote{You Only Look Once}, was first presented by
+	\citet{redmon2016lookonceunifiedrealtime} as a unique model, built around the
+	premise of unified detection. Instead of breaking down the detection process
+	into multiple stages, with multiple components, YOLO approaches the task
+	differently. The unification of the detection pipeline into a single
+	convolutional neural network allows for global reasoning about the image ---
+	this enables end-to-end training, and real-time inference whilst maintaining
+	high AP scores \citep{redmon2016lookonceunifiedrealtime}.
 
+	Over the years, YOLO has undergone numerous iterations. For YOLOv1, the model
+	splits an input into an $S \times S$ grid, with each grid cell being
+	responsible for predicting objects that fall within its bounds. The cells
+	predict bounding boxes and confidence scores. Confidence is defined as the
+	probability of an object being present within the bounding box, multiplied by
+	the IoU between the predicted box and the ground truth box
+	\citep{redmon2016lookonceunifiedrealtime}: $$\textrm{Confidence} =
+		\textrm{Pr}(\textrm{Object}) \cdot \textrm{IoU}.$$
+
+	As opposed to typical bounding box prediction methods, each bounding box is
+	represented by 5 predictions: $x$, $y$, $w$, $h$, and confidence. The $x$ and
+	$y$ coordinates represent the centre of the box relative to the bounds of the
+	grid cell, whilst $w$ and $h$ represent the width and height relative to the
+	entire image \citep{redmon2016lookonceunifiedrealtime}. Typically, bounding
+	boxes are represented by the top-left and bottom-right corners. The resulting
+	product of bounding boxes, confidences, and the class probability map,
+	generated as a aggregate of $C$ predictions of conditional class probabilities
+	per cell: $$\textrm{Pr}(\textrm{Class}_i | \textrm{Object}),$$ is a $S \times S
+		\times (B \cdot 5 + C)$ tensor.
+
+	The relatively simple approach of YOLOv1 was revolutionary at the time,
+	outperforming other models in both speed and accuracy.
+
+	The latest versions, YOLOv8 and YOLO11, have built upon this foundation. The
+	fundamental principles of unified detection and grid-based prediction remain,
+	but with significant improvements. The survey by
+	\citet{kotthapalli2025yolov1yolov11comprehensivesurvey} describes the taxonomy
+	of YOLO models' improvements, highlighting five key areas:
+
+	\begin{itemize}
+		\item \textbf{Backbone networks:} the evolution of backbone architectures
+		      from Darknet-19 in YOLOv2 to CSPDarknet53 in YOLOv4, and the more
+		      recent EfficientNet and MobileNet variants in YOLOv8 and YOLO11, has
+		      led to significant improvements in feature extraction capabilities.
+		\item \textbf{Neck:} the introduction of feature pyramid networks (FPNs) in
+		      YOLOv8/11, from the single $S\times S$ grid in YOLOv1.
+		\item \textbf{Detection head:} the transition to and from anchor-based
+		      methods, with YOLOv2 introducing anchor boxes, and YOLOv8/11 returning
+		      to anchor-free predictions. As well as the decoupling of classification
+		      and bounding box regressions.
+		\item \textbf{Loss and assignment:} the evolution from the simple
+		      sum-squared error and rigid centre-based assignment in YOLOv1, to
+		      sophisticated composite losses (using CIoU\footnote{Complete
+			      Intersection over Union} and Distribution Focal Loss) paired with
+		      dynamic Task Aligned Assignment (TAL) in YOLOv8/11.
+		\item \textbf{Training pipeline:} the adoption of aggressive data
+		      augmentation strategies absent in early versions, such as Mosaic and
+		      MixUp, alongside modern optimisation techniques including cosine
+		      learning rate schedulers and warmup phases to stabilise convergence.
+	\end{itemize}
+
+	\begin{center}
+		\small
+		\begin{tabularx}{\columnwidth}
+			{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}m{0.20\columnwidth}
+			>{\raggedright\arraybackslash}X}
+			\toprule
+			\textbf{Model}   & \textbf{Key Features and Improvements}                    \\
+			\midrule
+			\textbf{YOLOv1}  & Unified architecture (regression problem); real-time
+			processing (45 FPS); grid-based detection.                                   \\
+			\addlinespace
+			\textbf{YOLOv2}  & Batch normalisation; anchor boxes; multi-scale training;
+			high-resolution classifier (Darknet-19).                                     \\
+			\addlinespace
+			\textbf{YOLOv3}  & Darknet-53 backbone; feature pyramid networks (FPN) for
+			multi-scale prediction; logistic regression for objectness scores.           \\
+			\addlinespace
+			\textbf{YOLOv4}  & CSPDarknet53; Mosaic data augmentation; CIoU loss; Mish
+			activation; ``Bag of Freebies'' and ``Bag of Specials''.                     \\
+			\addlinespace
+			\textbf{YOLOv5}  & Native PyTorch implementation; focus layer (later
+			replaced); CSP backbone; auto-anchor; high ease of use and deployment.       \\
+			\addlinespace
+			\textbf{YOLOv6}  & Hardware-friendly backbone (RepVGG style); anchor-free;
+			decoupled head; SIoU loss.                                                   \\
+			\addlinespace
+			\textbf{YOLOv7}  & E-ELAN architecture; model scaling with
+			concatenation-based models; planned re-parameterised convolution.            \\
+			\addlinespace
+			\textbf{YOLOv8}  & Anchor-free; C2f module (Cross Stage Partial with varying
+			bottleneck); decoupled head; support for classification, segmentation, and
+			pose.                                                                        \\
+			\addlinespace
+			\textbf{YOLOv9}  & Programmable gradient information (PGI); generalised
+			efficient layer aggregation network (GELAN).                                 \\
+			\addlinespace
+			\textbf{YOLOv10} & NMS-free training via consistent dual assignments;
+			holistic efficiency–accuracy-driven model design.                            \\
+			\addlinespace
+			\textbf{YOLOv11} & C3k2 block; C2PSA (Cross Stage Partial with Spatial
+			Attention); enhanced feature extraction; improved speed–accuracy trade-off
+			across tasks.                                                                \\
+			\bottomrule
+		\end{tabularx}
+		\captionof{table}{Evolution of YOLO models: key features and improvements.}
+		\label{tab:yolo_evolution}
+	\end{center}
 
 	\subsection{Video Analysis, Temporal Modeling and Object Tracking}
 
