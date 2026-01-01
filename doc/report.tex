@@ -532,7 +532,21 @@
 		\label{tab:yolo_evolution}
 	\end{center}
 
-	\subsection{Video Analysis, Temporal Modeling and Object Tracking}
+	\subsection{Video Analysis, Spatio-Temporal Modeling and Object Tracking}
+
+	Object detection and classification form the backbone of computer vision
+	systems. However, effective surveillance applications require more than just
+	identifying objects statically. Video analysis introduces new requirements, the
+	combination of spatial and temporal data, and the need to track objects across
+	frames.
+
+	The paper by \citet{yilmaz2006object} defines object tracking as the problem of
+	\enquote{estimating the trajectory of an object in the image plane as it moves
+		around a scene}. This definition highlights the dynamic nature of video data,
+	where objects are not static, and their movement must be accounted for.
+	The many complexities that tracking introduces require sophisticated measures in
+	order to maintain accuracy, adding constraints to the motion and/or appearance of
+	objects is one way to do this \citep{yilmaz2006object}.
 
 	\subsection{Real-Time Processing on Edge Devices}
 
