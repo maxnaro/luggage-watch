@@ -9,6 +9,7 @@
 \fancyhf{}
 \fancyhead[L]{Embedded System for Suspicious Luggage Detection}
 \fancyhead[R]{Max Narongchai --- F226732}
+\fancyfoot[C]{\thepage}
 \pagestyle{fancy}
 
 \begin{document}
@@ -55,6 +56,7 @@
 
 \appendix
 \renewcommand{\thesection}{\Alph{section}}
+\pagestyle{empty}
 \includepdf[pages=1,pagecommand={\section{Report}\label{appendix:report}}]{report.pdf}
 \includepdf[pages=2-,pagecommand={}]{report.pdf}
 
