@@ -3,9 +3,9 @@ name: Build LaTeX PDF
 on:
   pull_request:
     paths:
-      - '**/*.tex'
-      - '**/*.puml'
-      - '**/*.bib'
+      - "**/*.tex"
+      - "**/*.puml"
+      - "**/*.bib"
   workflow_dispatch:
 
 permissions:
@@ -28,7 +28,15 @@ jobs:
           root_file: |
             project-brief.tex
             report.tex
+            january-deliverable.tex
           working_directory: ./doc/
+
+      - name: Upload January deliverable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: january-deliverable
+          path: doc/january-deliverable.pdf
+          if-no-files-found: error
 
       - name: Upload project brief artifact
         uses: actions/upload-artifact@v4
