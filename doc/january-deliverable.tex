@@ -1,0 +1,61 @@
+\documentclass{report}
+
+\usepackage[a4paper, margin=3cm]{geometry}
+\usepackage{multicol}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{pdfpages}
+
+\fancyhf{}
+\fancyhead[L]{Embedded System for Suspicious Luggage Detection}
+\fancyhead[R]{Max Narongchai --- F226732}
+\pagestyle{fancy}
+
+\begin{document}
+
+\begin{multicols*}{2}
+
+	{
+		\centering
+		{\LARGE{\bfseries January Deliverable Report}\\[6pt]}
+		\vspace{.5cm}
+
+		\begin{tabular}{c}
+			\Large Max Narongchai \\ Computer Science \\ COC251 \\ F226732
+		\end{tabular}
+		\vspace{.5cm}
+
+		{\small \today\par}
+	}
+
+	\section*{Progress}
+
+	\subsection*{Report Writing}
+
+	The current progress made on the report includes the completion of the
+	introduction and literature review sections (which can be found in the attached
+	section~\ref{appendix:report}).
+
+	\subsection*{Dataset Procurement}
+	\subsection*{Programming \& Implementation}
+
+	\section*{Challenges}
+
+	\section*{Changes in Direction}
+
+	The initial pivot of the project's scope, from an embedded system for people
+	counting and detecting to suspicious luggage detection, and the broadening of
+	the scenario from train stations to general public places have been the two
+	major changes in direction so far. Neither of these changes have affected the
+	core objectives of the project or the intended implementations significantly,
+	aside from requiring more effort in dataset procurement.
+
+	\section*{Work Plan}
+\end{multicols*}
+
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+\includepdf[pages=1,pagecommand={\section{Report}\label{appendix:report}}]{report.pdf}
+\includepdf[pages=2-,pagecommand={}]{report.pdf}
+
+\end{document}
