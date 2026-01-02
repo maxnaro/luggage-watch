@@ -5,6 +5,7 @@
 \usepackage{fancyhdr}
 \usepackage{hyperref}
 \usepackage{pdfpages}
+\usepackage{lscape}
 
 \fancyhf{}
 \fancyhead[L]{Embedded System for Suspicious Luggage Detection}
@@ -51,8 +52,18 @@
 	core objectives of the project or the intended implementations significantly,
 	aside from requiring more effort in dataset procurement.
 
-	\section*{Work Plan}
 \end{multicols*}
+
+\begin{landscape}
+	\section*{Work Plan}
+
+	\begin{figure}[!htb]
+		\centering
+		\includegraphics[height=0.8\textheight]{figures/plantuml/gantt.png}
+		\caption{Work Plan as of January 2026}
+		\label{fig:gantt-chart}
+	\end{figure}
+\end{landscape}
 
 \appendix
 \renewcommand{\thesection}{\Alph{section}}
