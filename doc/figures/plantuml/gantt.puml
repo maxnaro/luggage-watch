@@ -1,0 +1,49 @@
+@startgantt gantt
+
+Project starts 2025-10-03
+today is 2026-01-02
+printscale weekly
+
+-- Initial Steps --
+[Project Brief & Ethical Clearance] starts at 2025-10-03 and lasts 22 days
+[Project Brief & Ethical Clearance] is colored in lightgrey
+[Research & Planning] starts at 2025-10-24 and lasts 2 weeks
+[Research & Planning] is colored in lightgrey
+
+-- Implementation --
+[Data Acquisition & Preparation] starts 2025-11-03 and ends 2025-12-05
+[Data Acquisition & Preparation] is colored in lightgrey
+[Model Development & Training] starts 2025-11-24 and ends 2026-01-12
+[Model Development & Training] is colored in wheat
+[Object Tracking Implementation] starts 16 days after [Model Development & Training]'s end and lasts 4 weeks
+[Object Detection Optimisation] starts 16 days after [Model Development & Training]'s end and lasts 4 weeks
+[Hardware Integration] starts 2026-02-15 and lasts 5 weeks
+
+-- Report Writing --
+[Introduction] starts after [Research & Planning]'s end and lasts 1 week
+[Introduction] is colored in lightgrey
+[Literature Review] starts after [Introduction]'s end and ends 2026-01-07
+[Literature Review] is colored in wheat
+[Requirements Analysis] starts 2025-12-28 and ends 2026-01-07
+[Requirements Analysis] is colored in wheat
+[System Design] starts 2026-01-28 and lasts 2 weeks
+[Implementation Details] starts 2026-02-12 and lasts 4 weeks
+[Testing & Evaluation] starts 2026-03-05 and lasts 4 weeks
+[Conclusion & Future Work] starts 2026-03-26 and lasts 2 weeks
+
+[ERP Coursework Deadline] happens 2026-01-14
+[HCI Coursework Deadline] happens 2026-01-14
+[Semester 1 Exam Period] starts 2026-01-12 and ends 2026-01-28
+[ERP Coursework Deadline] is colored in grey
+[HCI Coursework Deadline] is colored in grey
+[Semester 1 Exam Period] is colored in grey
+
+[January Deliverable] happens 2026-01-07
+[January Deliverable] is colored in blue
+
+[Project Submission] happens 2026-04-21
+[Project Demonstration] happens 2026-04-27
+[Project Submission] is colored in red
+[Project Demonstration] is colored in red
+
+@endgantt
