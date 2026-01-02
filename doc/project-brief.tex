@@ -2,7 +2,7 @@
 \usepackage{fancyhdr}
 \usepackage{graphicx}
 \usepackage[hidelinks]{hyperref}
-\usepackage{apacite}
+\usepackage{natbib}
 \usepackage{csquotes}
 \usepackage[left=2.5cm, right=2.5cm, top=2cm, bottom=2cm]{geometry}
 
@@ -10,6 +10,8 @@
 \fancyhf{}
 \fancyfoot[L]{F226732}
 \fancyfoot[R]{Page \thepage}
+
+\bibliographystyle{agsm}
 
 \title{Project Brief: Embedded System for Suspicious Luggage Detection}
 \author{Max Narongchai}
@@ -26,105 +28,162 @@
 
 \section{Introduction}
 
-This project aims to develop an embedded system that can detect suspicious, or unattended, luggage from video surveillance footage.
-The system will utilise computer vision and deep learning techniques to identify luggage distinctly from other objects in the scene.
+This project aims to develop an embedded system that can detect suspicious, or
+unattended, luggage from video surveillance footage. The system will utilise
+computer vision and deep learning techniques to identify luggage distinctly
+from other objects in the scene.
 
-Primarily, the use case is focused on public spaces, such as transport hubs, waiting areas, or building lobbies. In these environments, unattended luggage can pose an inconvenience and, at worst, a security risk.
+Primarily, the use case is focused on public spaces, such as transport hubs,
+waiting areas, or building lobbies. In these environments, unattended luggage
+can pose an inconvenience and, at worst, a security risk.
 
 \section{Objectives}
 
 The main objectives of this project are:
 \begin{itemize}
-    \item Develop deep learning software capable of detecting, and recognising, objects and people from a camera footage in real time.
-    \begin{itemize}
-        \item Evaluate and optimise the model to achieve a suitable balance between precision, recall, and false positive rates for a real-world surveillance application.
-        \item Target a near-real-time inference speed, balancing detection accuracy with the computational constraints of the embedded hardware.
-    \end{itemize}
-    \item Integrate the software within an embedded system, Jetson Orin Nano.
-    \begin{itemize}
-        \item This will include hardware integration, with camera inputs, as well as resource usage optimisation, managing system and GPU memory efficiently, and minimising CPU overhead.
-    \end{itemize}
+	\item Develop deep learning software capable of detecting, and recognising, objects
+	      and people from a camera footage in real time.
+	      \begin{itemize}
+		      \item Evaluate and optimise the model to achieve a suitable balance between
+		            precision, recall, and false positive rates for a real-world surveillance
+		            application.
+		      \item Target a near-real-time inference speed, balancing detection accuracy with the
+		            computational constraints of the embedded hardware.
+	      \end{itemize}
+	\item Integrate the software within an embedded system, Jetson Orin Nano.
+	      \begin{itemize}
+		      \item This will include hardware integration, with camera inputs, as well as resource
+		            usage optimisation, managing system and GPU memory efficiently, and minimising
+		            CPU overhead.
+	      \end{itemize}
 \end{itemize}
 
 \section{Scope}
 
 % Point of contention here, may need to reduce the scope of the project if datasets are not available
-As mentioned in the introduction, the project's use case is in monitoring public or semi-public environments.
-This will include detecting luggage (such as bags, backpacks, or suitcases) left unattended in open areas, near seating, or in other designated zones for a pre-defined period.
-The software will, therefore, be developed as a more general-purpose solution for unattended object detection. Performance will be evaluated based on metrics suitable for this task, rather than a fixed precision target, and benchmarked against available public datasets.
+As mentioned in the introduction, the project's use case is in monitoring
+public or semi-public environments. This will include detecting luggage (such
+as bags, backpacks, or suitcases) left unattended in open areas, near seating,
+or in other designated zones for a pre-defined period. The software will,
+therefore, be developed as a more general-purpose solution for unattended
+object detection. Performance will be evaluated based on metrics suitable for
+this task, rather than a fixed precision target, and benchmarked against
+available public datasets.
 
 \section{Literature Review}
 
-I begin my review by exploring existing research and reviews in the field of unattended, or suspicious, object detection using computer vision and deep learning techniques.
-This includes a broader view on machine learning techniques for suspicious object detection \cite{dubey2024critical}, as well as a specific, novel approach to abandoned object detection using deep learning methods \cite{qasim2024abandoned}.
-The main question of the review is to determining how the specific implementation choices tackle the general challenges posed.
+I begin my review by exploring existing research and reviews in the field of
+unattended, or suspicious, object detection using computer vision and deep
+learning techniques. This includes a broader view on machine learning
+techniques for suspicious object detection \citep{dubey2024critical}, as well
+as a specific, novel approach to abandoned object detection using deep learning
+methods \citep{qasim2024abandoned}. The main question of the review is to
+determining how the specific implementation choices tackle the general
+challenges posed.
 
 \subsection{Reading \& Summarisation}
 
 \subsubsection[A Critical Study on Suspicious Object Detection with Images and Videos Using Machine Learning Techniques]
-{\enquote{A Critical Study on Suspicious Object Detection with Images and Videos Using Machine Learning Techniques} \protect\cite{dubey2024critical}}
+{\enquote{A Critical Study on Suspicious Object Detection with Images and Videos Using Machine Learning Techniques} \protect\citep{dubey2024critical}}
 
-Dubey et al. provide a broad study of the field, reviewing machine learning techniques for detecting suspicious objects. 
-The authors cover a range of detection methods, from static images, real-time videos, and via IoT systems.
+Dubey et al. provide a broad study of the field, reviewing machine learning
+techniques for detecting suspicious objects. The authors cover a range of
+detection methods, from static images, real-time videos, and via IoT systems.
 
-A pertinent point raised in this review are the challenges that researchers faced in this domain \enquote{illumination changes, occlusion, noise, poor resolution, and real-time processing complexities}.
+A pertinent point raised in this review are the challenges that researchers
+faced in this domain \enquote{illumination changes, occlusion, noise, poor
+	resolution, and real-time processing complexities}.
 
-The review compares multiple deep learning models with the most promising results coming from Faster-RCNN, Mask-RCNN, and variants of YOLO. 
-Despite the promise of these models, the authors conclude that many limitations are still faced, particularly in terms of accuracy in busy scenes.
+The review compares multiple deep learning models with the most promising
+results coming from Faster-RCNN, Mask-RCNN, and variants of YOLO. Despite the
+promise of these models, the authors conclude that many limitations are still
+faced, particularly in terms of accuracy in busy scenes.
 
 \subsubsection[Abandoned Object Detection and Classification Using Deep Embedded Vision]
-{\enquote{Abandoned Object Detection and Classification Using Deep Embedded Vision} \protect\cite{qasim2024abandoned}}
+{\enquote{Abandoned Object Detection and Classification Using Deep Embedded Vision} \protect\citep{qasim2024abandoned}}
 
-Qasim et al. present a novel approach for identifying abandoned objects in surveillance footage.
-It features a two-stage approach, the first stage employing a ConvLSTM (Convolutional Long Short-Term Memory) model which combines the abilities of a CNN and LSTM
-to capture both spatial and temporal features from video data, classifying scenes as "suspicious" or "non-suspicious"; the second stage, given a suspicious scene, utilises a YOLOv8l model to classify the detected objects.
+Qasim et al. present a novel approach for identifying abandoned objects in
+surveillance footage. It features a two-stage approach, the first stage
+employing a ConvLSTM (Convolutional Long Short-Term Memory) model which
+combines the abilities of a CNN and LSTM to capture both spatial and temporal
+features from video data, classifying scenes as ``suspicious'' or
+``non-suspicious''; the second stage, given a suspicious scene, utilises a
+YOLOv8l model to classify the detected objects.
 
 \subsection{Identifying the Research Gap \& Project Justification}
 
-The two studies provide an answer to the review's main question.
-The review by Dubey et al. establishes the persistent challenges of the domain: environmental factors, and, most critically for this project, the difficulty of \enquote{real-time processing complexities} \cite{dubey2024critical}. 
-The implementation choices of researchers are a response to these challenges.
+The two studies provide an answer to the review's main question. The review by
+Dubey et al. establishes the persistent challenges of the domain: environmental
+factors, and, most critically for this project, the difficulty of
+\enquote{real-time processing complexities} \citep{dubey2024critical}. The
+implementation choices of researchers are a response to these challenges.
 
-A state-of-the-art example is presented by Qasim et al., who tackle these challenges with a novel, specific implementation: a two-stage model \cite{qasim2024abandoned}. 
-Their ConvLSTM classifier acts as an efficient first-pass filter, analysing spatio-temporal data to identify "suspicious" scenes. 
-This implementation choice addresses the challenge of real-time processing by preventing the system from running the more computationally expensive YOLOv8l model on every single frame.
-This solution allows the system to achieve high accuracy (99.70\% for the localiser) by focusing resources only when necessary.
+A state-of-the-art example is presented by Qasim et al., who tackle these
+challenges with a novel, specific implementation: a two-stage model
+\citep{qasim2024abandoned}. Their ConvLSTM classifier acts as an efficient
+first-pass filter, analysing spatio-temporal data to identify ``suspicious''
+scenes. This implementation choice addresses the challenge of real-time
+processing by preventing the system from running the more computationally
+expensive YOLOv8l model on every single frame. This solution allows the system
+to achieve high accuracy (99.70\% for the localiser) by focusing resources only
+when necessary.
 
-However, this is where the research gap, and the justification for this project, becomes clear.
-While the Qasim et al. paper is titled \enquote{Using Deep Embedded Vision}, their experimental setup was conducted on a high-performance NVIDIA GeForce RTX 3090 GPU.
-This hardware, while having been superseded, remains a high-power, high-cost component not suitable for a typical, low-cost embedded application, revealing a gap between academic demonstration and practical, real-world deployment.
+However, this is where the research gap, and the justification for this
+project, becomes clear. While the Qasim et al. paper is titled \enquote{Using
+	Deep Embedded Vision}, their experimental setup was conducted on a
+high-performance NVIDIA GeForce RTX 3090 GPU. This hardware, while having been
+superseded, remains a high-power, high-cost component not suitable for a
+typical, low-cost embedded application, revealing a gap between academic
+demonstration and practical, real-world deployment.
 
-Therefore, this project is justified as a critical investigation into the practical implementation and optimisation of an object detection model.
-It will tackle the \enquote{real-time processing complexities} identified by Dubey et al. by moving from a theoretical, high-performance environment to a constrained one. 
+Therefore, this project is justified as a critical investigation into the
+practical implementation and optimisation of an object detection model. It will
+tackle the \enquote{real-time processing complexities} identified by Dubey et
+al. by moving from a theoretical, high-performance environment to a constrained
+one.
 
 \section{Approach}
 
-The project will be implemented on an NVIDIA Jetson Orin Nano embedded system, with the software developed in Python.
-A majority of similar projects \cite{qasim2024abandoned} implement a version of a YOLO (You Only Look Once) model for object detection, which I believe will be the direction I take this project.
-However, despite being a popular choice for object detection, I will evaluate other architectures such as SSD (Single Shot MultiBox Detector) and Faster R-CNN to determine the most suitable model for this application.
+The project will be implemented on an NVIDIA Jetson Orin Nano embedded system,
+with the software developed in Python. A majority of similar projects
+\citep{qasim2024abandoned} implement a version of a YOLO (You Only Look Once)
+model for object detection, which I believe will be the direction I take this
+project. However, despite being a popular choice for object detection, I will
+evaluate other architectures such as SSD (Single Shot MultiBox Detector) and
+Faster R-CNN to determine the most suitable model for this application.
 
-A dataset will be required to train the model, which will be collected from pre-existing, publicly available sources, and potentially supplemented by using proprietary data.
-The format of the dataset is important in the model's application; training a model on conventional, RGB, data means that the object recognition will only work with data of the same format.
-RGB, RGB-D, ToF (time-of-flight), all offer different information about the scene. The most likely format for this project is RGB due to the availability of datasets and ease of implementation.
+A dataset will be required to train the model, which will be collected from
+pre-existing, publicly available sources, and potentially supplemented by using
+proprietary data. The format of the dataset is important in the model's
+application; training a model on conventional, RGB, data means that the object
+recognition will only work with data of the same format. RGB, RGB-D, ToF
+(time-of-flight), all offer different information about the scene. The most
+likely format for this project is RGB due to the availability of datasets and
+ease of implementation.
 
 \section{Risks \& Constraints}
 
-The main risks in this project are my lack of experience in deep learning and computer vision, and the availability of a suitable, high-quality labelled dataset for unattended object detection.
+The main risks in this project are my lack of experience in deep learning and
+computer vision, and the availability of a suitable, high-quality labelled
+dataset for unattended object detection.
 
 \section{Timeline}
 
-I've decided to keep track of my progress using a \href{https://macksmacks.atlassian.net/jira/software/projects/FYP/boards/1}{Jira board}, which will help me manage tasks and deadlines effectively.
-Using Jira provides a lot of different tools for project management, including a kanban board, and timeline which I will use to visualise the upcoming and current demands of the project as shown in Figure 1.
+I've decided to keep track of my progress using a
+\href{https://macksmacks.atlassian.net/jira/software/projects/FYP/boards/1}{Jira
+	board}, which will help me manage tasks and deadlines effectively. Using Jira
+provides a lot of different tools for project management, including a kanban
+board, and timeline which I will use to visualise the upcoming and current
+demands of the project as shown in Figure 1.
 
 \clearpage
 \begin{figure}[p]
-\centering
-\rotatebox{90}{\includegraphics[width=\textheight,keepaspectratio]{./figures/luggage_watch_2025-10-20_09.47pm.png}}
-\caption{Project timeline.}
+	\centering
+	\rotatebox{90}{\includegraphics[width=\textheight,keepaspectratio]{./figures/luggage_watch_2025-10-20_09.47pm.png}}
+	\caption{Project timeline.}
 \end{figure}
 \clearpage
 
-\bibliographystyle{apacite}
 \bibliography{project-brief}
 
 \end{document}

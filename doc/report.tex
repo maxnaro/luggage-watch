@@ -1,0 +1,641 @@
+\documentclass{article}
+
+\usepackage{fancyhdr}
+\usepackage{natbib}
+\usepackage[a4paper, margin=3cm]{geometry}
+\usepackage{graphicx}
+\usepackage{csquotes}
+\usepackage{multicol}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{caption}
+
+\fancyhf{}
+\fancyhead[L]{Embedded System for Suspicious Luggage Detection}
+\fancyhead[R]{Max Narongchai --- F226732}
+\fancyfoot[C]{\thepage}
+\pagestyle{fancy}
+
+\bibliographystyle{agsm}
+
+\renewcommand\tabularxcolumn[1]{m{#1}} % make X columns vertically centered
+
+\captionsetup[table]{hypcap=false}
+
+\begin{document}
+
+\begin{titlepage}
+	\centering
+	\vspace*{2.5cm}
+
+	{\LARGE{Embedded System for}\\[6pt]
+		\Huge\bfseries Suspicious Luggage Detection\par}
+
+	\vspace{1.5cm}
+
+	\begin{tabular}{c}
+		\Large Max Narongchai \\ Computer Science \\ COC251 \\ F226732
+	\end{tabular}
+	\vspace{1.5cm}
+
+	{\small \today\par}
+	\vfill
+
+	\begin{abstract}
+		% TODO: complete at the end
+
+		\noindent\textbf{Keywords:} suspicious luggage, CCTV, embedded system, anomaly detection
+	\end{abstract}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\begin{multicols*}{2}
+	\section{Introduction}
+
+	Surveillance is a powerful tool, used in various public settings to ensure
+	safety of the public on a daily basis. CCTV, closed circuit television, is
+	employed widely with operators having to comb through hours of footage everyday
+	to uphold security. This is a tedious task, and human error is inevitable.
+	Posing the question, can we automate this process?
+
+	One of the many threats to public safety is unattended luggage, this is a
+	common occurence which, at best, causes inconvenience, and at worst, could be
+	placed for a more sinister purpose. Numerous incidents at transportation hubs
+	and public spaces have demonstrated the potential dangers of unattended luggage
+	and bags, with counter terrorism authorities advising the public and security
+	personnel to remain vigilant and report any suspicious
+	items~\citep{protectuk2022unattended}. Historical acts of terrorism, such as
+	the Boston Marathon bombing, have emphasised the importance of detecting
+	suspicious items in crowded spaces, highlighting the need for reliable
+	detection mechanisms in these scenarios.
+
+	Compared to other threats, unattended luggage is distinct in its ability to be
+	discrete. To the human eye, with low resolution CCTV footage, a security threat
+	may be indistinguishable from legitimate items, presenting a unique challenge
+	compared to more obvious security threats such as disorderly conduct. False
+	positives can increase the burden on teams responsible for monitoring, being
+	too relaxed could have dire consequences. Crucially, the definition of
+	'suspicious' is inherently temporal. Unlike detecting a weapon, where the
+	object itself is the threat, a piece of luggage is neutral until it loses its
+	association with an owner for a specific duration. This introduces a complex
+	requirement for a system: it must not only detect objects but track ownership
+	and measure time, maintaining state across multiple frames in a dynamic
+	environment.
+
+	Systems recording footage at all hours of the day generate an overwhelming
+	amount of data, the sheer volume posing a significant challenge for operators
+	to review on a regular basis. This implies a costly requirement for large teams
+	of personnel manually monitoring the footage, diverting resources from other
+	facets of security, increasing operational expenses, and potentially leading to
+	fatigue-induced oversights.
+
+	Automation in security is already a widely incorporated concept accross the
+	public sector, with systems such as facial recognition and intrusion detection
+	providing results that manual monitoring alone cannot achieve; at least without
+	significant human-resource investment. An automated approach to detecting
+	suspicious luggage could alleviate the burden on operators, allowing them to
+	dedicate more attention to pressing matters; require smaller teams to monitor
+	larger areas, saving resources; and reduce human error, bolstering overall
+	security.
+
+	Edge processing using embedded systems has become an increasingly viable, cost
+	effective, and practical solution for surveillance applications. Versus a cloud
+	solution, edge processing offers lower latency, by way of being situated
+	physically closer to the data source; improved privacy, sensitive data remains
+	on site and the onus is on the operator to secure it --- not a cloud provider;
+	and network independence, there is no reliance on a stable internet connection
+	just the local network~\citep{pamadi2025edgevscloud}. The proliferation of
+	affordable, high-performance embedded hardware, with enhanced software support,
+	has made a strong case for edge processing in surveillance; the benefits of
+	cloud computing's scalability and power are minimised by new embedded
+	solutions.
+
+	Advances in computer vision technology and deep learning have made the issue of
+	embedded suspicious luggage detection more tractable. Similar automation tasks,
+	are being successfully implemented in real-world applications.
+
+	Therefore, this project aims to design and implement an embedded system for
+	suspicious luggage detection. The system will bridge the gap between academic
+	research and practical deployment, focusing on real-time performance on edge
+	devices. The target for the project is to create a deployable solution that can
+	integrate with surveillance infrastructure, utilising an NVIDIA Jetson Orin
+	Nano as a cost-effective piece of hardware suitable for the task.
+
+	\section{Literature Review}
+
+	\subsection{Core Concepts of Computer Vision and Object Detection}
+
+	\subsubsection{The Evolution of Detection Techniques}
+	\label{sec:evolution_of_detection_techniques}
+
+	Authors \citeauthor{zou2025comprehensive} provide a comprehensive review of
+	object detection methods, describing a shift from traditional algorithms to
+	modern deep learning and transformer-based approaches.
+
+	The survey~\citep{zou2025comprehensive} displays that the progression of object
+	detection techniques can be categorised into three main eras: traditional
+	methods, deep learning-based methods, and state-of-the-art modern methods.
+
+	\begin{itemize}
+		\item \textbf{Traditional Methods:}
+		      SIFT (scale-invariant feature transform),
+		      HOG (histogram of oriented gradients), and Viola-Jones, are examples of
+		      the earliest feature-based methods of object detection. These methods
+		      paved the way for the field but struggled with limits of complexity,
+		      computational resources, and adaptability to diverse environments.
+		      Few models were suitable for real-time application, excluding HOG and Viola-Jones,
+		      the latter of which introduced usage of Haar-like features which are still used
+		      in some real-time applications due to their facilitation of rapid inference times.
+
+		      Authors \citeauthor{pathak2023object}, elaborate further, describing
+		      traditional methods to rely on three parts, viewing the entire image at varying
+		      positions and scales to generate candidate regions, feature extraction from
+		      these regions, and finally classification. The review~\citep{pathak2023object}
+		      highlights the main issue of these method being their high requirements for
+		      computational power.
+
+		      In addition, decision tree classifiers (DTs), K-nearest neighbours (KNNs) and
+		      support vector machines (SVMs) were developed to address the shortcomings of
+		      feature-based methods using machine learning. The integration of ML with
+		      traditional methods improved adaptability and accuracy, but left much to be
+		      desired in terms of computational complexity and real-time performance.
+		\item \textbf{Deep Learning-Based Methods:}
+		      A step away from the \enquote{handcrafted}
+		      feature sets of traditional methods, deep learning-based methods offered solutions
+		      that automated feature extraction and learning.
+
+		      Convolutional neural networks (CNNs) became the backbone of these methods,
+		      leading to the development of two-stage detectors. Architectures such as R-CNN,
+		      Fast R-CNN, and Faster R-CNN introduced region proposals combined with CNNs to
+		      extract features (with Faster R-CNN going a step further by integrating region
+		      proposal networks). This is to say that these models were a significant step
+		      forward in terms of accuracy and adaptability yet remained computationally
+		      intensive, limiting their real-time application.
+
+		      The shortcomings of two-stage detectors led to the development of single-stage
+		      detectors. SSDs and YOLO (You Only Look Once)
+		      \citep{jocher2023yolo8,pathak2023object} revolutionised the field by removing
+		      the region proposal step, enabling predictions from an entire image in a single
+		      propagation. This marked a breakthrough in real-time object detection, and is
+		      used in nearly every example of abandoned luggage detection in literature
+		      \citep{abandoned2025vrsalovic,dubey2024critical}.
+		\item \textbf{Modern Methods:}
+		      The latest advancements in object detection are represented by transformer-based
+		      approaches. The application of transformers, initially for natural language
+		      processing, then developing into vision transformers (ViTs), finally to detection
+		      transformers (DETRs), has introduced a new pardigm in object detection.
+
+		      Utilising self-attention mechanisms, mechanisms that take into account the
+		      \enquote{importance} of features relative to one another in an
+		      input~\citep{vaswani2023attentionneed}, DETRs predict objects without the need
+		      for predefined anchor boxes (used in CNN-based, SSD, and some\footnote{YOLOv2,
+			      v3, v4, v5, and v7~\citep{terven2023comprehensive}} YOLO models to propose
+		      potential object locations). This allows for transformer-based models to
+		      determine objects outside of the constraints of pre-set shapes and sizes,
+		      improving adaptability to diverse object types and environments.
+
+		      Other notable methods include hybrid models that combine CNNs and transformers,
+		      multi-scale detection, and lightweight architectures such as
+		      MobileNet~\citep{chiu2020mobilenet}.
+	\end{itemize}
+
+	The study demonstrates that the evolution of object detection has been driven
+	by persistent challenges, the need to manage object occlusions, handling object
+	scale, and improving real-time processing capabilities. These challenges have
+	pushed development towards the exact use-cases of this project: real-time
+	suspicious luggage detection.
+
+	\subsubsection{Evaluation Metrics for Object Detection}
+	\label{sec:evaluation_metrics_for_object_detection}
+
+	% What are the common evaluation metrics used in object detection?
+	Progress through the eras of object detection has been measured using a
+	consistent, standard set of metrics. The survey by
+	\citeauthor{zou2025comprehensive} highlights the importance of these metrics in
+	evaluating and includes the following key metrics found in
+	table~\ref{tab:evaluation_metrics_desc}, and
+	tables~\ref{tab:evaluation_metrics_formula_1} \&
+	\ref{tab:evaluation_metrics_formula_2} ~\citep{zou2025comprehensive}.
+
+	Confusion matrices and ROC curves are two additional tools commonly used to
+	visualise the performance of classification models graphically. In conjunction
+	with the metrics listed, they provide a comprehensive understanding of a
+	model's ability to accurately detect objects and distinguish between different
+	classes.
+
+	% Summarisation of what each metric measures, and insights into the ``optimal'' model
+	The paper by \cite{zou2025comprehensive} groups evaluation metrics into the
+	categories: classification, localisation, detection, agreement, and others.
+	These defined categories outline the facets of model performance that we must
+	consider, not only when evaluating an object detection system, but when
+	developing one; each category outline the aspects of a model that we want to
+	optimise. In a sentence, the optimal model is one that can accurately classify
+	objects, precisely localise them within an image, detect all relevant objects,
+	and agree with ground truth data consistently across various scenarios.
+
+	\% How are evaluation metrics used with popular object detection models?
+	Object detection models, such as YOLO, SSD, and Faster R-CNN, commonly utilise
+	these evaluation metrics to benchmark their performance. For instance, YOLO
+	\citep{jocher2023yolo8} provides in-depth documentation on the performance
+	metrics it uses to evaluate the accuracy and efficiency of their models
+	\citep{ultralytics2025metrics}. The documentation cites IoU, AP, mAP, precision
+	and recall, and F1 score as key metrics for assessment
+	(table~\ref{tab:evaluation_metrics_desc}).
+
+	% How do these metrics differ from classification to object detection?
+	Evaluating object detection performance is inherently more complex than
+	classification due to the additional requirement of localisation.
+	\cite{padilla2020survey} demonstrate that, whilst considered standard, metrics
+	like AP's implementation can vary significantly across literature, leading to
+	inconsistencies in evaluation.
+
+	Unlike classification tasks, object detection does not have a true definition
+	of true negative (TN), as the background is not classified, this results in an
+	\enquote{infinite} number of TNs \citep{padilla2020survey}. This leads to IoU
+	(table~\ref{tab:evaluation_metrics_desc}) having an increased importance in
+	object detection contexts. For this reason, metrics that rely on TNs, such as
+	specificity, are absent from object detection frameworks, such as YOLO
+	\citep{ultralytics2025metrics}.
+
+	\subsubsection{The Role of Benchmarks \& Challenges in Shaping Object Detection Techniques}
+
+	The rapid evolution of object detection techniques (described in
+	section~\ref{sec:evolution_of_detection_techniques}) has necessitated the
+	development of robust benchmarks in order to allow for comparisons between
+	models to be made. Challenges such as PASCAL VOC \citep{everingham2010pascal},
+	MS COCO \citep{lin2014microsoft}, and Open Images \citep{krasin2017openimages}
+	challenge have played a pivotal role, providing standardised datasets and
+	goals.
+
+	% Standardisation of metrics through challenges
+	The paper by \citet{padilla2020survey} highlights the importance of these
+	challenges in standardising evaluation metrics. With PASCAL VOC introducing the
+	use of 11-point interpolated AP, MS COCO later adopting stricter metrics such
+	as AP at different IoU thresholds (AP@[0.5:0.95] across ten thresholds), and
+	Open Images adding complexity with hierarchical annotations (e.g.,
+	\enquote{vehicle} encompassing \enquote{car}, \enquote{truck}, etc.).
+
+	Crucially, for surveillance applications, COCO also introduced scale-specific
+	metrics (e.g., AP\textsubscript{small} for objects $<$ $32^2$ pixels). This
+	shift in focus towards small object detection is a key requirement for
+	identifying unattended luggage in wide-angle CCTV footage.
+
+	% Abandoned object detection challenges
+	In the field of abandoned object detection, specific challenges have been
+	organised. Unfortunately, these challenges are not as widely publicised as the
+	general object detection challenges, making it difficult to source information
+	on them. The challenges found in literature include the I-LIDS datasets for
+	AVSS 2007 \citep{qmul2007avss}, and the PETS 2006 dataset for the PETS 2006
+	challenge \citep{thirde2006pets}. Despite their prevalence in literature, these
+	datasets are exceptionally difficult to source, as an alternative, there is the
+	ABODA dataset which is publically available on GitHub
+	\url{https://github.com/kevinlin311tw/ABODA}. These datasets provide a common
+	ground for researchers to evaluate and compare their results in a niche field.
+	Due to the limited availability, and age, of these datasets, there is a clear
+	gap in the field for modern, publically available datasets for abandoned object
+	detection.
+
+	\begin{table*}[!p]
+		\centering
+		\small
+		\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+			\toprule
+			\textbf{Metric}                                                                                                                 & \textbf{Description}                                                                                          & \textbf{Insights}                                                                                                                                                                      \\
+			\midrule
+			Intersection over Union ($\mathrm{IoU}$)                                                                                        & Measure of overlap between predicted and ground truth bounding boxes.                                         & Higher IoU indicates better localisation (more accurate bounding box predictions).                                                                                                     \\
+			\addlinespace
+			True Positive ($\mathrm{TP}$) / False Positive ($\mathrm{FP}$) / True Negative ($\mathrm{TN}$) / False Negative ($\mathrm{FN}$) & Counts of correct and incorrect predictions.                                                                  & Fundamental for calculating precision, recall, and F1-score.                                                                                                                           \\
+			\addlinespace
+			Recall                                                                                                                          & The ratio of true positives to the sum of true positives and false negatives.                                 & Higher recall indicates better detection of actual objects.                                                                                                                            \\
+			\addlinespace
+			Average Precision ($\mathrm{AP}$)                                                                                               & Area under the precision recall curve (plotted by evaluating the model at different confidence thresholds).   & Higher AP indicates better overall performance across all thresholds for a given class.                                                                                                \\
+			\addlinespace
+			Mean Average Precision ($\mathrm{mAP}$)                                                                                         & The mean of AP accross all classes.                                                                           & Higher mAP indicates better overall performance across all classes.                                                                                                                    \\
+			\addlinespace
+			$\mathrm{F1}$-Score                                                                                                             & The harmonic mean of precision and recall.                                                                    & Higher F1-score indicates a better balance between precision and recall. It is more useful when there is an uneven class distribution.                                                 \\
+			\addlinespace
+			Matthews Correlation Coefficient ($\mathrm{MCC}$)                                                                               & A measure of classification quality, a numerical representation of a confusion matrix.                        & 1 indicating perfect prediction, 0 indicating random prediction, and -1 indicating total disagreement between prediction and observation. Particularly useful for imbalanced datasets. \\
+			\addlinespace
+			Cohen's Kappa ($\kappa$)                                                                                                        & A measure of accuracy that takes into account the probability of a random agreement.                          & 1 indication perfect agreement, 0 equivalent to chance, and -1 indicating complete disagreement. It has the same use-cases as $\mathrm{MCC}$.                                          \\
+			\addlinespace
+			Expected Agreement by Chance ($P_e$)                                                                                            & The probability of random agreement between predicted and actual classes.                                     & Used in calculating Cohen's Kappa ($\kappa$).                                                                                                                                          \\
+			\addlinespace
+			Balanced Accuracy                                                                                                               & Average of recall for each class, ensuring that classes are considered equally (even in imbalanced datasets). & Higher balanced accuracy indicates better performance across all classes, particularly useful for imbalanced datasets.                                                                 \\
+			\addlinespace
+			False Positive per Image                                                                                                        & Average number of false positives per image.                                                                  & Lower values indicate better performance.                                                                                                                                              \\
+			\addlinespace
+			Objectness Score                                                                                                                & A confidence score indicating the likelihood of an object being present within a bounding box.                & Used by object detection models such as YOLO, higher scores indicate higher likelihood of object presence.                                                                             \\
+			\addlinespace
+			Detection Error Rate (DER)                                                                                                      & Percentage of images where objects were incorrectly detected.                                                 & Lower values indicate better performance.                                                                                                                                              \\
+			\bottomrule
+		\end{tabularx}
+		\caption{Evaluation metrics for object detection: descriptions and insights.}
+		\label{tab:evaluation_metrics_desc}
+	\end{table*}
+
+	\begin{table*}[!htb]
+		\centering
+		\small
+		\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+			\toprule
+			\textbf{Metric}                                   & \textbf{Formula}                                                                                                                                                                                                                                               \\
+			\midrule
+			Intersection over Union ($\mathrm{IoU}$)          & $$\mathrm{IoU} = \dfrac{|B_{\mathrm{pred}} \cap B_{\mathrm{gt}}|}{|B_{\mathrm{pred}} \cup B_{\mathrm{gt}}|} \in [0,1]$$                                                                                                                                        \\
+			\addlinespace
+			Recall                                            & $$\mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \in [0,1]$$                                                                                                                                                                                  \\
+			\addlinespace
+			Average Precision ($\mathrm{AP}$)                 & For threshold $n \in [0, 1]$, recall at threshold $R_n$, and precision at threshold $P_n$: $$\mathrm{AP} = \sum_n{(R_n - R_{n-1})\cdot P_n} \in [0,1]$$                                                                                                        \\
+			\addlinespace
+			Mean Average Precision ($\mathrm{mAP}$)           & For number of classes $N$: $$\mathrm{mAP} = \frac{1}{N}\cdot\sum_{i=1}^N{\mathrm{AP}_i} \in [0,1]$$                                                                                                                                                            \\
+			\addlinespace
+			$\mathrm{F1}$-Score                               & $$\mathrm{F1} = 2 \cdot \frac{P\cdot R}{P + R} = \frac{2\cdot \mathrm{TP}}{2\cdot \mathrm{TP} + \mathrm{FP} + \mathrm{FN}} \in [0,1]$$                                                                                                                         \\
+			\addlinespace
+			Matthews Correlation Coefficient ($\mathrm{MCC}$) & $$\mathrm{MCC} = \frac{(\mathrm{TP} \cdot \mathrm{TN}) - (\mathrm{FP} \cdot \mathrm{FN})}{\sqrt{\begin{aligned}[t]&(\mathrm{TP} + \mathrm{FP})(\mathrm{TP} + \mathrm{FN})\\&(\mathrm{TN} + \mathrm{FP})(\mathrm{TN} + \mathrm{FN})\end{aligned}}} \in [-1,1]$$ \\
+			\bottomrule
+		\end{tabularx}
+		\caption{Evaluation metrics for object detection: formulae (Part 1).}
+		\label{tab:evaluation_metrics_formula_1}
+	\end{table*}
+
+	\begin{table*}[!htb]
+		\centering
+		\small
+		\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+			\toprule
+			\textbf{Metric}                       & \textbf{Formula}                                                                                                                                                                                                  \\
+			\midrule
+			Cohen's Kappa ($\kappa$)              & For $P_o$ the observed accuracy and $P_e$ the expected accuracy: $$\kappa = \frac{P_o - P_e}{1 - P_e} \in [-1,1]$$                                                                                                \\
+			\addlinespace
+			Expected Agreement by Chance ($P_e$)  & For number of classes $N$: $$P_e = \frac{1}{N^2}\cdot\sum^k_{i=1}{(A_i\cdot B_i)}$$                                                                                                                               \\
+			\addlinespace
+			Balanced Accuracy                     & $$\frac{1}{2}\cdot(\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} + \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FP}}) \in [0,1]$$                                                                                     \\
+			\addlinespace
+			False Positive per Image              & For number of images $N_{\mathrm{images}}$: $$\mathrm{FPPI} = \frac{\mathrm{FP}}{N_{\mathrm{images}}}$$                                                                                                           \\
+			\addlinespace
+			Objectness Score                      & As calculated by \cite{jocher2020yolov5} in YOLOv3, for probability of object presence within a bounding box $P(\mathrm{Obj}) \in [0, 1]$: $$\mathrm{Objectness} = P(\mathrm{Obj}) \cdot \mathrm{IoU} \in [0,1]$$ \\
+			\addlinespace
+			Detection Error Rate ($\mathrm{DER}$) & For total number of detections $D$: $$\mathrm{DER} = \frac{\mathrm{FP} + \mathrm{FN}}{D} \times 100$$                                                                                                             \\
+			\bottomrule
+		\end{tabularx}
+		\caption{Evaluation metrics for object detection: formulae (Part 2).}
+		\label{tab:evaluation_metrics_formula_2}
+	\end{table*}
+
+	\subsection{Object Detection Models for Real-Time Inference}
+
+	The need for real-time inference is a requirement that rules out many object
+	detection models.
+
+	Section~\ref{sec:evolution_of_detection_techniques} describes two-stage
+	detectors such as the R-CNN family of models, which despite their accuracy,
+	fall short in terms of speed. This is not to say two-stage detectors are never
+	used in real-time applications, Faster R-CNN has been used in some
+	implementations \citep{dubey2024critical,mao2018towards,ren2017faster}, but
+	this is often at the cost of operational efficiency for marginal --- or no ---
+	performance benefits over single-stage detectors. This is demonstrated in the
+	study by \citet{demetriou2023real}, pitting YOLO, SSD, and Faster R-CNN against
+	each other for real-time performance in a demolition waste detection task. The
+	results found that YOLOv7 outperformed its competition in both accuracy, with a
+	mAP\textsubscript{50:95} of \enquote{$\approx$ 70\%}, and speed, with an
+	inference time of \enquote{$<$ 30ms}.
+
+	Transformer models, described in
+	section~\ref{sec:evolution_of_detection_techniques} \enquote{Modern Methods},
+	also struggle to meet real-time requirements due to their computational
+	requirements. The paper \citet{pagire2025comprehensive} provides a
+	comprehensive review of transformer-based object detection models, highlighting
+	their immense memory usage and processing power needs. This rules them out for
+	real-time edge deployment in many scenarios.
+
+	This leaves single-stage detectors, such as SSD and YOLO, as the main
+	candidates for real-time applications. Authors
+	\citeauthor{pagire2025comprehensive} recognise both among the top 6
+	\enquote{best object detection algorithms}, with significant overlap between
+	the use cases of SSD and YOLO. However, the ongoing development of the YOLO
+	family, with its focus on optimising speed and accuracy, makes it the preferred
+	choice for real-time applications. The latest iteration, YOLO26, claims to have
+	been \enquote{engineered from the ground up for edge and low-power devices}
+	\citep{jocher2025yolo26}, a promising direction for the future of real-time
+	object detection.
+
+	\subsubsection{Architecture of YOLO Models}
+
+	YOLO, standing for \enquote{You Only Look Once}, was first presented by
+	\citet{redmon2016lookonceunifiedrealtime} as a unique model, built around the
+	premise of unified detection. Instead of breaking down the detection process
+	into multiple stages, with multiple components, YOLO approaches the task
+	differently. The unification of the detection pipeline into a single
+	convolutional neural network allows for global reasoning about the image ---
+	this enables end-to-end training, and real-time inference whilst maintaining
+	high AP scores \citep{redmon2016lookonceunifiedrealtime}.
+
+	Over the years, YOLO has undergone numerous iterations. For YOLOv1, the model
+	splits an input into an $S \times S$ grid, with each grid cell being
+	responsible for predicting objects that fall within its bounds. The cells
+	predict bounding boxes and confidence scores. Confidence is defined as the
+	probability of an object being present within the bounding box, multiplied by
+	the IoU between the predicted box and the ground truth box
+	\citep{redmon2016lookonceunifiedrealtime}: $$\textrm{Confidence} =
+		\textrm{Pr}(\textrm{Object}) \cdot \textrm{IoU}.$$
+
+	As opposed to typical bounding box prediction methods, each bounding box is
+	represented by 5 predictions: $x$, $y$, $w$, $h$, and confidence. The $x$ and
+	$y$ coordinates represent the centre of the box relative to the bounds of the
+	grid cell, whilst $w$ and $h$ represent the width and height relative to the
+	entire image \citep{redmon2016lookonceunifiedrealtime}. Typically, bounding
+	boxes are represented by the top-left and bottom-right corners. The resulting
+	product of bounding boxes, confidences, and the class probability map,
+	generated as a aggregate of $C$ predictions of conditional class probabilities
+	per cell: $$\textrm{Pr}(\textrm{Class}_i | \textrm{Object}),$$ is a $S \times S
+		\times (B \cdot 5 + C)$ tensor.
+
+	The relatively simple approach of YOLOv1 was revolutionary at the time,
+	outperforming other models in both speed and accuracy.
+
+	The latest versions, YOLOv8 and YOLO11, have built upon this foundation. The
+	fundamental principles of unified detection and grid-based prediction remain,
+	but with significant improvements. The survey by
+	\citet{kotthapalli2025yolov1yolov11comprehensivesurvey} describes the taxonomy
+	of YOLO models' improvements, highlighting five key areas:
+
+	\begin{itemize}
+		\item \textbf{Backbone networks:} the evolution of backbone architectures
+		      from Darknet-19 in YOLOv2 to CSPDarknet53 in YOLOv4, and the more
+		      recent EfficientNet and MobileNet variants in YOLOv8 and YOLO11, has
+		      led to significant improvements in feature extraction capabilities.
+		\item \textbf{Neck:} the introduction of feature pyramid networks (FPNs) in
+		      YOLOv8/11, from the single $S\times S$ grid in YOLOv1.
+		\item \textbf{Detection head:} the transition to and from anchor-based
+		      methods, with YOLOv2 introducing anchor boxes, and YOLOv8/11 returning
+		      to anchor-free predictions. As well as the decoupling of classification
+		      and bounding box regressions.
+		\item \textbf{Loss and assignment:} the evolution from the simple
+		      sum-squared error and rigid centre-based assignment in YOLOv1, to
+		      sophisticated composite losses (using CIoU\footnote{Complete
+			      Intersection over Union} and Distribution Focal Loss) paired with
+		      dynamic Task Aligned Assignment (TAL) in YOLOv8/11.
+		\item \textbf{Training pipeline:} the adoption of aggressive data
+		      augmentation strategies absent in early versions, such as Mosaic and
+		      MixUp, alongside modern optimisation techniques including cosine
+		      learning rate schedulers and warmup phases to stabilise convergence.
+	\end{itemize}
+
+	\begin{center}
+		\small
+		\begin{tabularx}{\columnwidth}
+			{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}m{0.20\columnwidth}
+			>{\raggedright\arraybackslash}X}
+			\toprule
+			\textbf{Model}   & \textbf{Key Features and Improvements}                    \\
+			\midrule
+			\textbf{YOLOv1}  & Unified architecture (regression problem); real-time
+			processing (45 FPS); grid-based detection.                                   \\
+			\addlinespace
+			\textbf{YOLOv2}  & Batch normalisation; anchor boxes; multi-scale training;
+			high-resolution classifier (Darknet-19).                                     \\
+			\addlinespace
+			\textbf{YOLOv3}  & Darknet-53 backbone; feature pyramid networks (FPN) for
+			multi-scale prediction; logistic regression for objectness scores.           \\
+			\addlinespace
+			\textbf{YOLOv4}  & CSPDarknet53; Mosaic data augmentation; CIoU loss; Mish
+			activation; ``Bag of Freebies'' and ``Bag of Specials''.                     \\
+			\addlinespace
+			\textbf{YOLOv5}  & Native PyTorch implementation; focus layer (later
+			replaced); CSP backbone; auto-anchor; high ease of use and deployment.       \\
+			\addlinespace
+			\textbf{YOLOv6}  & Hardware-friendly backbone (RepVGG style); anchor-free;
+			decoupled head; SIoU loss.                                                   \\
+			\addlinespace
+			\textbf{YOLOv7}  & E-ELAN architecture; model scaling with
+			concatenation-based models; planned re-parameterised convolution.            \\
+			\addlinespace
+			\textbf{YOLOv8}  & Anchor-free; C2f module (Cross Stage Partial with varying
+			bottleneck); decoupled head; support for classification, segmentation, and
+			pose.                                                                        \\
+			\addlinespace
+			\textbf{YOLOv9}  & Programmable gradient information (PGI); generalised
+			efficient layer aggregation network (GELAN).                                 \\
+			\addlinespace
+			\textbf{YOLOv10} & NMS-free training via consistent dual assignments;
+			holistic efficiency–accuracy-driven model design.                            \\
+			\addlinespace
+			\textbf{YOLOv11} & C3k2 block; C2PSA (Cross Stage Partial with Spatial
+			Attention); enhanced feature extraction; improved speed–accuracy trade-off
+			across tasks.                                                                \\
+			\bottomrule
+		\end{tabularx}
+		\captionof{table}{Evolution of YOLO models: key features and improvements.}
+		\label{tab:yolo_evolution}
+	\end{center}
+
+	\subsection{Video Analysis, Spatio-Temporal Modeling and Object Tracking}
+
+	Object detection and classification form the backbone of computer vision
+	systems. However, effective surveillance applications require more than just
+	identifying objects statically. Video analysis introduces new requirements, the
+	combination of spatial and temporal data, and the need to track objects across
+	frames.
+
+	The paper by \citet{yilmaz2006object} defines object tracking as the problem of
+	\enquote{estimating the trajectory of an object in the image plane as it moves
+		around a scene}. This definition highlights the dynamic nature of video data,
+	where objects are not static, and their movement must be accounted for.
+	The many complexities that tracking introduces require sophisticated measures in
+	order to maintain accuracy, adding constraints to the motion and/or appearance of
+	objects is one way to do this \citep{yilmaz2006object}.
+
+	\subsection{Real-Time Processing on Edge Devices}
+
+	\subsection{Existing Systems}
+
+	This section explores existing research and reviews in the field of unattended,
+	or suspicious, object detection using computer vision and deep learning
+	techniques. This includes a broader view on machine learning techniques for
+	suspicious object detection \citep{dubey2024critical}, as well as a specific,
+	novel approach to abandoned object detection using deep learning methods
+	\citep{qasim2024abandoned}. The main question of the review is to determining
+	how the specific implementation choices tackle the general challenges posed.
+
+	\subsubsection[A Critical Study on Suspicious Object Detection with Images and Videos Using Machine Learning Techniques]
+	{\enquote{A Critical Study on Suspicious Object Detection with Images and Videos Using Machine Learning Techniques} \protect\citep{dubey2024critical}}
+
+	Authors \citeauthor{dubey2024critical} provide a broad study of the field,
+	reviewing machine learning techniques for detecting suspicious objects. The
+	authors cover a range of detection methods, from static images, real-time
+	videos, and via IoT systems.
+
+	A pertinent point raised in this review are the challenges that researchers
+	faced in this domain \enquote{illumination changes, occlusion, noise, poor
+		resolution, and real-time processing complexities}.
+
+	The review compares multiple deep learning models with the most promising
+	results coming from Faster-RCNN, Mask-RCNN, and variants of YOLO. Despite the
+	promise of these models, the authors conclude that many limitations are still
+	faced, particularly in terms of accuracy in busy scenes.
+
+	\subsubsection[Abandoned Object Detection and Classification Using Deep Embedded Vision]
+	{\enquote{Abandoned Object Detection and Classification Using Deep Embedded Vision} \protect\citep{qasim2024abandoned}}
+
+	The article by \cite{qasim2024abandoned} present a novel approach for
+	identifying abandoned objects in surveillance footage. It features a two-stage
+	approach, the first stage employing a ConvLSTM (Convolutional Long Short-Term
+	Memory) model which combines the abilities of a CNN and LSTM to capture both
+	spatial and temporal features from video data, classifying scenes as
+	\enquote{suspicious} or \enquote{non-suspicious}; the second stage, given a
+	suspicious scene, utilises a YOLOv8l model to classify the detected objects.
+
+	\subsection{Model Optimisation Techniques}
+
+	\subsection{Challenges in Surveillance Systems}
+
+	\subsection{Identifying the Research Gap}
+
+	The two studies provide an answer to the review's main question. The review by
+	\citeauthor{dubey2024critical} establishes the persistent challenges of the
+	domain: environmental factors, and, most critically for this project, the
+	difficulty of \enquote{real-time processing complexities}
+	\citep{dubey2024critical}. The implementation choices of researchers are a
+	response to these challenges.
+
+	A state-of-the-art example is presented by \citeauthor{qasim2024abandoned}, who
+	tackle these challenges with a novel, specific implementation: a two-stage
+	model \citep{qasim2024abandoned}. Their ConvLSTM classifier acts as an
+	efficient first-pass filter, analysing spatio-temporal data to identify
+	\enquote{suspicious} scenes. This implementation choice addresses the challenge
+	of real-time processing by preventing the system from running the more
+	computationally expensive YOLOv8l model on every single frame. This solution
+	allows the system to achieve high accuracy (99.70\% for the localiser) by
+	focusing resources only when necessary.
+
+	However, this is where the research gap, and the justification for this
+	project, becomes clear. While the \citeauthor{qasim2024abandoned} paper is
+	titled \enquote{Using Deep Embedded Vision}, their experimental setup was
+	conducted on a high-performance NVIDIA GeForce RTX 3090 GPU. This hardware,
+	while having been superseded, remains a high-power, high-cost component not
+	suitable for a typical, low-cost embedded application, revealing a gap between
+	academic demonstration and practical, real-world deployment.
+
+	Therefore, this project is justified as a critical investigation into the
+	practical implementation and optimisation of an object detection model. It will
+	tackle the \enquote{real-time processing complexities} identified by
+	\citeauthor{dubey2024critical} by moving from a theoretical, high-performance
+	environment to a constrained one.
+
+	\section{Requirements Analysis}
+
+	\section{System Design}
+
+	\section{Implementation}
+
+	\section{Testing and Evaluation}
+
+	\section{Conclusion}
+\end{multicols*}
+
+\bibliography{report}
+
+\end{document}
