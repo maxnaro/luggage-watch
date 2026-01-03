@@ -543,10 +543,63 @@
 	The paper by \citet{yilmaz2006object} defines object tracking as the problem of
 	\enquote{estimating the trajectory of an object in the image plane as it moves
 		around a scene}. This definition highlights the dynamic nature of video data,
-	where objects are not static, and their movement must be accounted for.
-	The many complexities that tracking introduces require sophisticated measures in
-	order to maintain accuracy, adding constraints to the motion and/or appearance of
-	objects is one way to do this \citep{yilmaz2006object}.
+	where objects are not static, and their movement must be accounted for. The
+	many complexities that tracking introduces require sophisticated measures in
+	order to maintain accuracy, adding constraints to the motion and/or appearance
+	of objects is one way to do this \citep{yilmaz2006object}.
+
+	\subsubsection{Categories of Object Tracking Methods}
+
+	The survey by \citet{yilmaz2006object} categorises tracking methods into three
+	main approaches based on the representation scheme used:
+
+	\begin{itemize}
+		\item \textbf{Point Tracking:} Objects are represented by feature points,
+		      and tracking is performed by associating points across frames. Methods
+		      such as Kalman filters and particle filters fall into this category,
+		      providing probabilistic frameworks for state estimation under
+		      uncertainty.
+		\item \textbf{Kernel Tracking:} Objects are represented by a primitive shape
+		      (e.g., rectangle, ellipse) and tracked by computing the motion of this
+		      kernel. Mean-shift and CAMShift are prominent examples, using colour
+		      histograms to iteratively locate the target.
+		\item \textbf{Silhouette Tracking:} Objects are tracked by estimating the
+		      object region in each frame, either through shape matching or contour
+		      evolution. This approach is suitable for objects with complex shapes
+		      that cannot be well-described by simple geometric primitives.
+	\end{itemize}
+
+	\subsubsection{Modern Deep Learning-Based Tracking}
+
+	Recent advances have introduced deep learning-based trackers that leverage the
+	feature extraction capabilities of CNNs. Notable examples include:
+
+	\begin{itemize}
+		\item \textbf{SORT (Simple Online and Realtime Tracking):} Combines Kalman
+		      filtering with the Hungarian algorithm for data association, achieving
+		      real-time performance with minimal computational overhead
+		      \citep{bewley2016simple}.
+		\item \textbf{DeepSORT:} Extends SORT by incorporating appearance
+		      descriptors from a deep association metric, improving robustness to
+		      occlusions and identity switches \citep{wojke2017simple}.
+		\item \textbf{ByteTrack:} Utilises both high and low confidence detection
+		      boxes to improve tracking continuity, particularly effective in crowded
+		      scenes \citep{zhang2022bytetrack}.
+	\end{itemize}
+
+	These modern trackers are particularly relevant for surveillance applications,
+	where maintaining consistent object identities across frames is essential for
+	determining ownership and detecting abandonment scenarios.
+
+	\subsubsection{Relevance to Abandoned Object Detection}
+
+	For the task of suspicious luggage detection, object tracking serves a critical
+	role. The system must not only detect luggage but also associate it with its
+	owner over time. When an owner departs and the luggage remains stationary for a
+	defined duration, the system must recognise this temporal pattern. This
+	requires robust tracking of both persons and objects, maintaining associations
+	between them, and measuring the duration of separation --- capabilities that
+	extend beyond simple frame-by-frame detection.
 
 	\subsection{Real-Time Processing on Edge Devices}
 
