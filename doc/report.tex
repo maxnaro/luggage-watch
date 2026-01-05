@@ -603,15 +603,33 @@
 
 	\subsection{Real-Time Processing on Edge Devices}
 
+	Real-time processing on edge devices presents unique challenges due to
+	constraints in computational power. These constraints, historically, have made
+	deploying deep learning models on such devices difficult and expensive.
+	However, recent advancements in model optimisation techniques and hardware have
+	made this increasingly feasible.
+
+	The study by \citet{zhu2022performance} provides an analysis of the NVIDIA
+	Jetson Nano for object inference tasks, in which it proved to be a capable
+	device for real time object detection using YOLOv3 and PPYOLO models. Both
+	\citet{zhu2022performance} and \citet{adewumi2025assessing} cite the relevance
+	of TensorRT optimisations in achieving faster and more accurate inference on
+	these devices, with \citeauthor{adewumi2025assessing} noting that FP16
+	optimisations significantly improved performance, whilst INT8 optimisations
+	seemed to have the opposite effect.
+
 	\subsection{Existing Systems}
 
-	This section explores existing research and reviews in the field of unattended,
-	or suspicious, object detection using computer vision and deep learning
-	techniques. This includes a broader view on machine learning techniques for
-	suspicious object detection \citep{dubey2024critical}, as well as a specific,
-	novel approach to abandoned object detection using deep learning methods
-	\citep{qasim2024abandoned}. The main question of the review is to determining
-	how the specific implementation choices tackle the general challenges posed.
+	This section explores existing research in the field of unattended, or
+	suspicious, object detection using computer vision and deep learning
+	techniques. Three key works are reviewed: a broad survey of machine learning
+	techniques for suspicious object detection \citep{dubey2024critical}, a novel
+	two-stage approach combining scene classification with object detection
+	\citep{qasim2024abandoned}, and a recent real-time system specifically designed
+	for airport luggage surveillance \citep{abandoned2025vrsalovic}. The central
+	question guiding this review is how specific implementation choices address the
+	persistent challenges of the domain, particularly real-time processing
+	requirements and accuracy in complex surveillance environments.
 
 	\subsubsection[A Critical Study on Suspicious Object Detection with Images and Videos Using Machine Learning Techniques]
 	{\enquote{A Critical Study on Suspicious Object Detection with Images and Videos Using Machine Learning Techniques} \protect\citep{dubey2024critical}}
@@ -641,42 +659,231 @@
 	\enquote{suspicious} or \enquote{non-suspicious}; the second stage, given a
 	suspicious scene, utilises a YOLOv8l model to classify the detected objects.
 
+	\subsubsection[A System for Real-Time Detection of Abandoned Luggage]
+	{\enquote{A System for Real-Time Detection of Abandoned Luggage} \protect\citep{abandoned2025vrsalovic}}
+
+	The most recent contribution to the field is presented by
+	\citet{abandoned2025vrsalovic}, who propose a complete system for real-time
+	abandoned luggage detection in airport surveillance footage. Their approach
+	combines a fine-tuned YOLOv11-s object detector with a novel algorithm for
+	determining luggage abandonment based on spatio-temporal analysis.
+
+	The system architecture comprises three key components: (1) a custom-trained
+	object detector for identifying people and luggage, (2) the ByteTrack
+	multi-object tracker \citep{zhang2022bytetrack} for maintaining consistent
+	object identities across frames, and (3) an abandonment detection algorithm
+	that analyses the spatial relationship between luggage and its owner over time.
+
+	A significant contribution of this work is the evaluation of multiple detection
+	architectures on custom surveillance datasets (CCTV-Korzo and CCTV-Düsseldorf).
+	The authors compare YOLOv8, YOLOv11, and DETR transformer models, finding that
+	YOLO models significantly outperform DETR for this task --- achieving mAP@0.5
+	scores of over 88\% compared to DETR's 48\%. The fine-tuned YOLOv11-s model was
+	selected for the final system due to its superior performance on small object
+	detection (AP\textsubscript{small} of 85.8\%), a critical requirement given the
+	prevalence of small objects in surveillance footage captured from elevated,
+	wide-angle cameras.
+
+	The abandonment algorithm defines luggage as abandoned when two conditions are
+	met: the luggage must be unattended (all associated persons have moved beyond a
+	predefined radius), and the luggage must remain stationary for a specified
+	duration. The system includes configurable parameters for movement threshold,
+	ownership radius, and inactivity duration, allowing adaptation to different
+	surveillance environments.
+
+	Notably, the authors address practical deployment scenarios including group
+	ownership (where luggage supervision can transfer between group members),
+	temporary departures (such as restroom breaks), and handling of camera shake
+	and video disruptions. The system was tested across multiple scenarios and
+	demonstrated effective detection while minimising false alarms through its
+	temporal and spatial filtering mechanisms.
+
 	\subsection{Model Optimisation Techniques}
+
+	Numerous model optimisation techniques exist --- pruning, quantisation,
+	knowledge distillation, and others --- this review focuses on those most
+	relevant to edge deployment on NVIDIA hardware.
+
+	\subsubsection{TensorRT Optimisations}
+
+	The TensorRT SDK from NVIDIA provides a suite of optimisations for deep
+	learning inference on NVIDIA GPUs \citep{nvidia2025tensorrt}. TensorRT analyses
+	the neural network graph and applies hardware-specific optimisations to
+	maximise throughput whilst minimising latency. Key optimisations relevant to
+	this project include:
+
+	\begin{itemize}
+		\item \textbf{Layer Fusion:} TensorRT combines multiple sequential layers
+		      (e.g., convolution, bias addition, and activation) into a single kernel
+		      operation, reducing memory bandwidth requirements and kernel launch
+		      overhead.
+		\item \textbf{Precision Calibration:} Models can be converted from FP32
+		      (32-bit floating point) to FP16 (half precision) or INT8 (8-bit
+		      integer) representations. FP16 typically offers a 2$\times$ speedup
+		      with minimal accuracy loss, whilst INT8 can provide up to 4$\times$
+		      speedup but requires careful calibration to maintain accuracy
+		      \citep{adewumi2025assessing}.
+		\item \textbf{Kernel Auto-Tuning:} TensorRT profiles multiple kernel
+		      implementations for each layer and selects the optimal one for the
+		      specific GPU architecture, ensuring maximum utilisation of available
+		      compute resources.
+		\item \textbf{Dynamic Tensor Memory:} Memory is allocated efficiently and
+		      reused across layers, reducing the overall memory footprint --- a
+		      critical consideration for memory-constrained edge devices.
+	\end{itemize}
+
+	The study by \citet{adewumi2025assessing} evaluated TensorRT optimisations for
+	real-time object detection in agricultural applications, finding that FP16
+	quantisation significantly improved inference speed on NVIDIA Jetson hardware
+	whilst maintaining acceptable accuracy. Notably, INT8 quantisation showed
+	degraded performance in their experiments, suggesting that precision
+	calibration must be carefully tuned for specific use cases.
+
+	\subsubsection{Model Architecture Considerations}
+
+	Beyond runtime optimisations, the choice of model architecture significantly
+	impacts edge deployment feasibility. The YOLO family offers multiple model
+	sizes (nano, small, medium, large, extra-large), each representing a trade-off
+	between accuracy and computational requirements. For edge deployment, smaller
+	variants (YOLOv8n, YOLOv11s) are typically preferred due to their reduced
+	parameter counts and faster inference times \citep{abandoned2025vrsalovic}.
+
+	Additionally, techniques such as depth-wise separable convolutions (used in
+	MobileNet architectures) can dramatically reduce computational complexity
+	whilst maintaining reasonable accuracy \citep{chiu2020mobilenet}. These
+	lightweight architectures are increasingly incorporated into YOLO backbones,
+	further enhancing their suitability for edge deployment.
 
 	\subsection{Challenges in Surveillance Systems}
 
+	Deploying object detection systems in real-world surveillance environments
+	presents a unique set of challenges that extend beyond the capabilities
+	measured by standard benchmarks. These challenges arise from the inherent
+	complexity of surveillance scenes and the stringent requirements for reliable,
+	continuous operation.
+
+	\subsubsection{Environmental and Visual Challenges}
+
+	Surveillance footage is captured under highly variable conditions that can
+	significantly degrade detection performance. The review by
+	\citet{dubey2024critical} identifies several key environmental factors:
+
+	\begin{itemize}
+		\item \textbf{Illumination Variation:} Lighting conditions change
+		      dramatically throughout the day, from bright daylight to artificial
+		      lighting at night. Sudden changes, such as moving from sunlit areas to
+		      shadows, can cause detection failures.
+		\item \textbf{Occlusion:} In crowded environments, objects of interest are
+		      frequently partially or fully obscured by other objects or people. The
+		      survey by \citet{amrouch2024occlusion} highlights that occlusion
+		      remains one of the most challenging problems in video surveillance,
+		      with partial occlusions causing identity switches and complete
+		      occlusions leading to track loss.
+		\item \textbf{Camera Limitations:} Surveillance cameras often capture
+		      wide-angle footage from elevated positions, resulting in small object
+		      sizes (as noted by \citet{abandoned2025vrsalovic}), motion blur, and
+		      perspective distortion. Low-resolution footage further compounds these
+		      issues.
+		\item \textbf{Background Complexity:} Dynamic backgrounds with moving
+		      elements (escalators, doors, crowds) can trigger false detections,
+		      whilst cluttered scenes make it difficult to distinguish objects of
+		      interest from their surroundings.
+	\end{itemize}
+
+	\subsubsection{Temporal and Tracking Challenges}
+
+	Unlike static image detection, surveillance applications require maintaining
+	object identities and relationships over extended periods:
+
+	\begin{itemize}
+		\item \textbf{Identity Persistence:} Objects must be tracked consistently
+		      across frames, even when temporarily occluded or when appearance
+		      changes due to lighting. Identity switches --- where the tracker
+		      incorrectly reassigns an object's ID --- can lead to false abandonment
+		      detections \citep{yilmaz2006object}.
+		\item \textbf{Owner-Object Association:} For abandoned luggage detection,
+		      the system must maintain associations between people and their
+		      belongings over time. This is complicated when multiple people interact
+		      with the same luggage, or when ownership transfers between group
+		      members \citep{abandoned2025vrsalovic}.
+		\item \textbf{Stationary Object Detection:} Paradoxically, detecting
+		      stationary objects is more challenging than moving ones, as traditional
+		      motion-based methods fail. The system must distinguish between
+		      legitimately stationary objects (furniture, fixtures) and newly
+		      abandoned items.
+	\end{itemize}
+
+	\subsubsection{Operational Constraints}
+
+	Practical deployment introduces additional constraints that academic research
+	often overlooks:
+
+	\begin{itemize}
+		\item \textbf{Real-Time Requirements:} Systems must process video streams
+		      with minimal latency to enable timely responses. The study by
+		      \citet{zhu2022performance} demonstrates that achieving real-time
+		      performance on edge devices requires careful optimisation.
+		\item \textbf{False Alarm Management:} High false positive rates burden
+		      security personnel and can lead to alert fatigue, where genuine threats
+		      are ignored. Conversely, false negatives pose unacceptable security
+		      risks. Balancing precision and recall is critical.
+		\item \textbf{Continuous Operation:} Unlike batch processing scenarios,
+		      surveillance systems must operate 24/7 without degradation. Memory
+		      leaks, thermal throttling, and model drift over time are practical
+		      concerns for edge deployment.
+		\item \textbf{Integration Requirements:} New systems must integrate with
+		      existing surveillance infrastructure, potentially including legacy
+		      cameras, network constraints, and established operator workflows.
+	\end{itemize}
+
+	These challenges collectively explain why, despite significant advances in
+	object detection accuracy, practical abandoned luggage detection systems remain
+	an active area of research and development.
+
 	\subsection{Identifying the Research Gap}
 
-	The two studies provide an answer to the review's main question. The review by
+	The three reviewed studies collectively illuminate the current state of
+	abandoned object detection and the challenges that remain. The review by
 	\citeauthor{dubey2024critical} establishes the persistent challenges of the
-	domain: environmental factors, and, most critically for this project, the
-	difficulty of \enquote{real-time processing complexities}
-	\citep{dubey2024critical}. The implementation choices of researchers are a
-	response to these challenges.
+	domain: environmental factors such as illumination changes, occlusion, and
+	noise, and most critically for this project, the difficulty of
+	\enquote{real-time processing complexities} \citep{dubey2024critical}. The
+	implementation choices of researchers are a direct response to these
+	challenges.
 
-	A state-of-the-art example is presented by \citeauthor{qasim2024abandoned}, who
-	tackle these challenges with a novel, specific implementation: a two-stage
-	model \citep{qasim2024abandoned}. Their ConvLSTM classifier acts as an
-	efficient first-pass filter, analysing spatio-temporal data to identify
-	\enquote{suspicious} scenes. This implementation choice addresses the challenge
-	of real-time processing by preventing the system from running the more
-	computationally expensive YOLOv8l model on every single frame. This solution
-	allows the system to achieve high accuracy (99.70\% for the localiser) by
-	focusing resources only when necessary.
+	The work by \citeauthor{qasim2024abandoned} tackles these challenges with a
+	novel two-stage architecture \citep{qasim2024abandoned}. Their ConvLSTM
+	classifier acts as an efficient first-pass filter, analysing spatio-temporal
+	data to identify \enquote{suspicious} scenes. This implementation choice
+	addresses the challenge of real-time processing by preventing the system from
+	running the more computationally expensive YOLOv8l model on every single frame.
+	This solution allows the system to achieve high accuracy (99.70\% for the
+	localiser) by focusing resources only when necessary.
+
+	The most recent work by \citeauthor{abandoned2025vrsalovic} presents a
+	practical system that integrates detection, tracking, and abandonment analysis
+	into a cohesive pipeline \citep{abandoned2025vrsalovic}. Their focus on
+	configurable parameters and handling of real-world scenarios (group ownership,
+	temporary departures, camera shake) demonstrates the practical considerations
+	necessary for deployed surveillance systems.
 
 	However, this is where the research gap, and the justification for this
 	project, becomes clear. While the \citeauthor{qasim2024abandoned} paper is
 	titled \enquote{Using Deep Embedded Vision}, their experimental setup was
-	conducted on a high-performance NVIDIA GeForce RTX 3090 GPU. This hardware,
-	while having been superseded, remains a high-power, high-cost component not
-	suitable for a typical, low-cost embedded application, revealing a gap between
-	academic demonstration and practical, real-world deployment.
+	conducted on a high-performance NVIDIA GeForce RTX 3090 GPU. Similarly, while
+	\citeauthor{abandoned2025vrsalovic} discuss the potential for edge deployment
+	and mention knowledge distillation techniques, their experimental validation
+	was not conducted on resource-constrained hardware. This hardware gap ---
+	between high-performance workstations and actual embedded devices --- reveals a
+	persistent disconnect between academic demonstration and practical, real-world
+	deployment.
 
 	Therefore, this project is justified as a critical investigation into the
-	practical implementation and optimisation of an object detection model. It will
-	tackle the \enquote{real-time processing complexities} identified by
-	\citeauthor{dubey2024critical} by moving from a theoretical, high-performance
-	environment to a constrained one.
+	practical implementation and optimisation of an object detection model on
+	genuine edge hardware. It will tackle the \enquote{real-time processing
+		complexities} identified by \citeauthor{dubey2024critical} by moving from a
+	theoretical, high-performance environment to a truly constrained one, bridging
+	the gap left by existing research.
 
 	\section{Requirements Analysis}
 
