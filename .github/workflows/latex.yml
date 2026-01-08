@@ -3,9 +3,9 @@ name: Build LaTeX PDF
 on:
   pull_request:
     paths:
-      - '**/*.tex'
-      - '**/*.puml'
-      - '**/*.bib'
+      - "**/*.tex"
+      - "**/*.puml"
+      - "**/*.bib"
   workflow_dispatch:
 
 permissions:
@@ -22,24 +22,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install PlantUML
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz plantuml
+
+      - name: Generate PlantUML Diagrams
+        run: plantuml -tpng *.puml
+        working-directory: ./doc/figures/plantuml/
+
       - name: Compile LaTeX
         uses: xu-cheng/latex-action@v3
         with:
           root_file: |
             project-brief.tex
             report.tex
+            january-deliverable.tex
           working_directory: ./doc/
 
-      - name: Upload project brief artifact
+      - name: Upload LaTeX artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: project-brief
-          path: doc/project-brief.pdf
-          if-no-files-found: error
-
-      - name: Upload report artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: report
-          path: doc/report.pdf
+          name: latex-artifacts
+          path: |
+            doc/january-deliverable.pdf
+            doc/project-brief.pdf
+            doc/report.pdf
           if-no-files-found: error

@@ -1,0 +1,128 @@
+\documentclass{report}
+
+\usepackage[a4paper, margin=3cm]{geometry}
+\usepackage{multicol}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{lscape}
+
+\fancyhf{}
+\fancyhead[L]{Embedded System for Suspicious Luggage Detection}
+\fancyhead[R]{Max Narongchai --- F226732}
+\fancyfoot[C]{\thepage}
+\pagestyle{fancy}
+
+\begin{document}
+
+\begin{multicols*}{2}
+
+	{
+		\centering
+		{\LARGE{\bfseries January Deliverable Report}\\[6pt]}
+		\vspace{.5cm}
+
+		\begin{tabular}{c}
+			\Large Max Narongchai \\ Computer Science \\ COC251 \\ F226732
+		\end{tabular}
+		\vspace{.5cm}
+
+		{\small \today\par}
+	}
+
+	\section*{Progress}
+
+	\subsection*{Report Writing}
+
+	The current progress made on the report includes the completion of the
+	introduction and literature review sections (which can be found in the attached
+	section~\ref{appendix:report}).
+
+	Subsequent sections, including requirements analysis have been outlined as
+	future work to be completed in the following weeks.
+
+	\subsection*{Dataset Procurement}
+
+	Several datasets have been identified and procured for use in training and
+	validation. I have been unable to procure the PETS and i-LIDS datasets due to
+	the difficulties in sourcing them, but alternative datasets such as ABODA have
+	been acquired.
+
+	For training purposes, the COCO dataset has proved useful in providing large
+	volumes of labelled images (luggage, people, bags, etc.) for initial model
+	training.
+
+	\subsection*{Programming \& Implementation}
+
+	The development environment has been set up, with baselines YOLO models being
+	trained on the COCO dataset. Initial experiments have led to promising results
+	in mAP@50 and @95, indicating that the dataset and model choice are appropriate
+	for the task. Further testing and fine-tuning will be conducted in the coming
+	weeks.
+
+	Future implementation plans include object tracking and anomaly detection
+	algorithms such as Deep SORT, as well as integration with the embedded hardware
+	platform. Moreover, communication with KTP partners to align on model
+	compilation and optimisation with TensorRT is planned, along with a potential
+	of implementing NVIDIA's DeepStream SDK for streamlined video analytics.
+
+	\section*{Challenges}
+
+	\subsection*{Dataset Availability}
+
+	Procuring high-quality datasets specific to suspicious luggage detection has
+	been difficult as the literature cites few publicly available datasets,
+	especially those that are easily accessible in 2026. I have gotten in contact
+	with multiple authors of relevant papers to request access to their datasets,
+	but have yet to receive any responses. As a workaround, I have resorted to
+	using more general datasets (e.g., COCO) for initial model training and
+	validation, while continuing to search for more specific datasets for the
+	future object tracking implementation.
+
+	\subsection*{Obligations}
+
+	Balancing project work with other academic and personal obligations has been
+	challenging, especially on the lead-up to coursework deadline and examinations.
+	To mitigate this, I have created a revised work plan (see
+	figure~\ref{fig:gantt-chart}) that allocates more time for project work in the
+	weeks following major deadlines, to ensure steady progress.
+
+	\subsection*{Delays}
+
+	Some delays have been encountered in the writing of the literature review
+	section of the report. My unfamiliarity with the field meant that I had to
+	spend additional time researching and understanding the relevant concepts and
+	literature before being able to write effectively about them. I believe that
+	the time invested in the literature review will pay off in the long run, as it
+	has provided a solid foundation for the rest of the report and project.
+
+	\section*{Changes in Direction}
+
+	The initial pivot of the project's scope, from an embedded system for people
+	counting and detecting to suspicious luggage detection, and the broadening of
+	the scenario from train stations to general public places have been the two
+	major changes in direction so far. Neither of these changes have affected the
+	core objectives of the project or the intended implementations significantly,
+	aside from requiring more effort in dataset procurement.
+
+\end{multicols*}
+
+\begin{landscape}
+	\section*{Work Plan}
+
+	\begin{figure}[!htb]
+		\centering
+		\includegraphics[height=0.8\textheight,width=\textwidth,keepaspectratio]{figures/plantuml/gantt.png}
+		\caption{Work Plan as of January 2026}
+		\label{fig:gantt-chart}
+	\end{figure}
+\end{landscape}
+
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+\pagestyle{empty}
+\includepdf[pages=1,pagecommand={\section{Report}\label{appendix:report}}]{report.pdf}
+\includepdf[pages=2-,pagecommand={}]{report.pdf}
+
+\end{document}
