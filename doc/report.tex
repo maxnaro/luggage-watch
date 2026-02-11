@@ -44,7 +44,6 @@
 	\vfill
 
 	\begin{abstract}
-		% TODO: complete at the end
 		\textit{TODO: Abstract to be completed at the end of the report.}
 
 		\noindent\textbf{Keywords:} suspicious luggage, CCTV, embedded system, anomaly detection
@@ -238,7 +237,7 @@
 	objects, precisely localise them within an image, detect all relevant objects,
 	and agree with ground truth data consistently across various scenarios.
 
-	\% How are evaluation metrics used with popular object detection models?
+	% How are evaluation metrics used with popular object detection models?
 	Object detection models, such as YOLO, SSD, and Faster R-CNN, commonly utilise
 	these evaluation metrics to benchmark their performance. For instance, YOLO
 	\citep{jocher2023yolo8} provides in-depth documentation on the performance
@@ -887,6 +886,128 @@
 	the gap left by existing research.
 
 	\section{Requirements Analysis}
+	\subsection{Project Scope and Component Requirements}
+
+	The requirements for this project span multiple interconnected components, each
+	critical to the realisation of a functional embedded suspicious luggage
+	detection system. These components can be categorised into four primary areas:
+	data acquisition and preparation, model selection and optimisation, algorithmic
+	definition and implementation, and hardware deployment.
+
+	\subsubsection{Dataset Procurement and Preparation}
+
+	A robust dataset is fundamental to training and validating an effective object
+	detection model. The requirements in this area include:
+
+	\begin{itemize}
+		\item \textbf{Source Selection:} Identifying suitable publicly available
+		      datasets or sourcing custom surveillance footage that reflects
+		      real-world deployment scenarios. As discussed in
+		      section~\ref{sec:evaluation_metrics_for_object_detection}, existing
+		      abandoned object detection datasets (ABODA, I-LIDS, PETS) are limited
+		      in availability and recency.
+		\item \textbf{Annotation Requirements:} Ensuring that training data includes
+		      precise bounding box annotations for objects of interest (luggage,
+		      people) and contextual information (ownership associations, temporal
+		      sequences).
+		\item \textbf{Data Diversity:} The dataset must encompass various
+		      environmental conditions, camera angles, lighting scenarios, and
+		      crowding levels to ensure the model generalises to real deployment
+		      environments.
+		\item \textbf{Dataset Splitting:} Appropriate partitioning into training,
+		      validation, and test sets to enable unbiased model evaluation and
+		      prevent overfitting.
+	\end{itemize}
+
+	\subsubsection{Object Detection Model Selection}
+
+	As established in the literature review, single-stage detectors, particularly
+	the YOLO family, are the most suitable candidates for real-time edge
+	deployment. Model selection must consider:
+
+	\begin{itemize}
+		\item \textbf{Architecture Choice:} Evaluating YOLO variants (YOLOv8,
+		      YOLO11) to determine which offers the optimal balance between
+		      accuracy and inference speed on the target hardware (NVIDIA Jetson
+		      Orin Nano).
+		\item \textbf{Model Size:} Selecting an appropriate model variant (nano,
+		      small, medium) that fits within the computational and memory
+		      constraints of the embedded device whilst maintaining sufficient
+		      detection accuracy for small objects in surveillance footage.
+		\item \textbf{Transfer Learning Strategy:} Leveraging pre-trained weights
+		      from large-scale datasets (COCO) as a starting point, then fine-tuning
+		      on domain-specific luggage detection data to improve performance in
+		      the target application.
+		\item \textbf{Performance Metrics:} Establishing baseline performance
+		      expectations in terms of mAP, inference latency, and frames-per-second
+		      (FPS) on the embedded device.
+	\end{itemize}
+
+	\subsubsection{Object Tracking Model Integration}
+
+	Maintaining consistent object identities across video frames is essential for
+	associating luggage with owners and detecting abandonment. This requires:
+
+	\begin{itemize}
+		\item \textbf{Tracker Selection:} Choosing a real-time, lightweight tracking
+		      algorithm such as SORT, DeepSORT, or ByteTrack that can efficiently
+		      associate detections across frames with minimal computational
+		      overhead.
+		\item \textbf{Integration with Detection:} Designing the pipeline to
+		      seamlessly integrate the detector and tracker, ensuring that
+		      detection outputs are passed to the tracker for identity maintenance.
+		\item \textbf{Robustness Requirements:} The tracker must handle common
+		      surveillance challenges including temporary occlusions, identity
+		      switches, and brief object disappearances.
+		\item \textbf{Performance on Edge:} Ensuring the combined detection and
+		      tracking pipeline meets real-time requirements (target: $\geq$ 15 FPS)
+		      on the embedded hardware.
+	\end{itemize}
+
+	\subsubsection{Defining and Detecting Suspicious Luggage}
+
+	As discussed in the introduction, luggage becomes \enquote{suspicious} only in
+	a temporal context. Operationalising this definition requires:
+
+	\begin{itemize}
+		\item \textbf{Ownership Association:} Developing logic to associate detected
+		      luggage with nearby persons, establishing ownership relationships that
+		      persist across frames.
+		\item \textbf{Temporal Thresholds:} Defining configurable parameters such as
+		      the maximum distance (radius) between an owner and their luggage, and
+		      the minimum duration of separation before luggage is flagged as
+		      abandoned.
+		\item \textbf{State Machine Design:} Implementing a state machine that
+		      tracks luggage states (owned, unattended, abandoned) and transitions
+		      based on spatial and temporal conditions.
+		\item \textbf{Alert Generation:} Specifying the criteria and format of
+		      alerts when suspicious luggage is detected, ensuring operators receive
+		      actionable information.
+	\end{itemize}
+
+	\subsubsection{Embedded Hardware Implementation and Optimisation}
+
+	Deploying the complete system on the NVIDIA Jetson Orin Nano requires
+	addressing hardware-specific constraints:
+
+	\begin{itemize}
+		\item \textbf{Hardware Characterisation:} Profiling the Jetson Orin Nano to
+		      understand its computational capabilities, memory constraints, and
+		      thermal characteristics.
+		\item \textbf{Model Optimisation:} Applying techniques such as TensorRT
+		      quantisation (FP16 and INT8), layer fusion, and kernel auto-tuning to
+		      maximise inference speed whilst preserving accuracy.
+		\item \textbf{Memory Management:} Ensuring the complete system (detector,
+		      tracker, abandonment logic) operates within the device's LPDDR5 memory
+		      constraints (\textasciitilde 8 GB).
+		\item \textbf{Power Efficiency:} Optimising for sustained operation under
+		      typical power budgets, avoiding thermal throttling and performance
+		      degradation during extended operation.
+		\item \textbf{Software Framework Selection:} Selecting appropriate deep
+		      learning frameworks and deployment tools (TensorFlow, PyTorch with
+		      ONNX export, or TensorRT native APIs) that balance ease of development
+		      with runtime efficiency.
+	\end{itemize}
 
 	\section{System Design}
 
