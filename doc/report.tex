@@ -705,6 +705,7 @@
 	relevant to edge deployment on NVIDIA hardware.
 
 	\subsubsection{TensorRT Optimisations}
+	\label{sec:tensorrt_optimisations}
 
 	The TensorRT SDK from NVIDIA provides a suite of optimisations for deep
 	learning inference on NVIDIA GPUs \citep{nvidia2025tensorrt}. TensorRT analyses
@@ -1010,6 +1011,102 @@
 	\end{itemize}
 
 	\section{System Design}
+
+	\subsection{Model Choice}
+
+	Based on the requirements analysis and literature review, the system will be
+	designed around a YOLO11 object detection model, fine-tuned for the task of
+	luggage and people detection in surveillance footage. This model has
+	demonstrated strong performance on small object detection in the work by
+	\citet{abandoned2025vrsalovic}, making it a suitable choice for the target
+	application. Ease of optimisation for edge deployment on NVIDIA hardware, is
+	also a critical factor in this choice with YOLO models being widely supported
+	by TensorRT optimisations (See~\ref{sec:tensorrt_optimisations}).
+
+	However, another state-of-the-art implementation of the YOLO architecture,
+	YOLO26, will also be evaluated as part of the model selection process. As
+	YOLO26 is a much more recent model, potential for improved accuracy and
+	efficiency is expected, but the lack of evaluations in literature may make it a
+	less certain choice for the final system. Evaluating both models will provide
+	valuable insight into their performance when compared on the test datasets, and
+	their suitability for edge deployment. Ultralytics' themselves claim that
+	YOLO26 is a leap forward compared to older models as seen in their own
+	benchmarks (figure~\ref{fig:ultralytics_benchmarks}), but these claims will be
+	independently verified in the context of this project.
+
+	\begin{figure*}[!htb]
+		\centering
+		\includegraphics[width=0.8\textwidth]{figures/ultralytics_benchmarks.png}
+		\caption{Ultralytics' benchmarks comparing pre-trained YOLO26, YOLO11, and older models \citep{vina2026yolo26}.}
+		\label{fig:ultralytics_benchmarks}
+	\end{figure*}
+
+	\subsection{Tracking Algorithm}
+
+	Whilst other implementations have used the ByteTrack algorithm for tracking,
+
+	\subsection{Determining Suspicious Luggage: Spatial and Temporal Logic}
+
+	Suspicious luggage detection is spatio-temporal issue, requiring the system to
+	recognise the spatial relationship between luggage and its owner, and to track
+	how this relationship changes over time. The design of the abandonment logic is
+	therefore critical to the system's effectiveness. The following design
+	considerations are proposed:
+
+	\begin{itemize}
+		\item \textbf{Ownership Association:} The system will maintain a dynamic
+		      association between detected luggage and nearby persons. This will be
+		      based on proximity, with a configurable radius defining the
+		      maximum distance for ownership.
+		\item \textbf{Temporal Thresholds:} A key parameter is the duration of
+		      separation required before luggage is flagged as abandoned. This will be
+		      configurable, allowing operators to adjust sensitivity based on the
+		      surveillance environment (e.g., busy airport vs. quiet train station).
+		\item \textbf{State Machine Design:} The system will implement a state machine
+		      to track the status of each piece of luggage. States will include:
+		      \enquote{attended}, \enquote{unattended}, and \enquote{abandoned}. Transitions
+		      between states will be triggered by changes in ownership association and
+		      temporal conditions.
+		\item \textbf{Alert Generation:} When luggage transitions to the \enquote{abandoned}
+		      state, the system will generate an alert containing relevant information such as
+		      the location of the luggage, time of abandonment, and any associated owner identities.
+	\end{itemize}
+
+	\subsubsection{State Machine}
+
+	Figure~\ref{fig:state_machine} illustrates the proposed state machine for
+	luggage status tracking. The design is simple but hides the complexities of the
+	underlying logic for ownership association.
+
+	\begin{figure*}[!htb]
+		\centering
+		\includegraphics[width=0.8\textwidth]{figures/plantuml/state_machine.png}
+		\caption{State machine for luggage status tracking.}
+		\label{fig:state_machine}
+	\end{figure*}
+
+	The operational logic is described in Table~\ref{tab:state_machine_logic},
+	which defines the outcome of entering and leaving each state.
+
+	\begin{table*}[!htb]
+		\centering
+		\small
+		\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+			\toprule
+			\textbf{State} & \textbf{On Entering State}                                                 \\
+			\midrule
+			Attended       & Maintain or establish ownership association; reset abandonment timer.      \\
+			\addlinespace
+			Unattended     & Check abandonment timer, start if inactive; monitor for owner proximity.   \\
+			\addlinespace
+			Abandoned      & Generate alert; log event with timestamp, object ID, and last known owner. \\
+			\bottomrule
+		\end{tabularx}
+		\caption{State machine operational logic.}
+		\label{tab:state_machine_logic}
+	\end{table*}
+
+	\subsection{System Pipeline}
 
 	\section{Implementation}
 
