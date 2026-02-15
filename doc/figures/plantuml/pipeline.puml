@@ -1,0 +1,31 @@
+@startuml pipeline
+
+hide empty description
+skinparam componentStyle rectangle
+
+package "Input Stage" {
+    [Source\n(v4l2src / filesrc)] as Source
+    [Stream Muxer\n(nvstreammux)] as Muxer
+}
+
+package "Deep Learning Stage" {
+    [Primary Inference\n(nvinfer)\nYOLO11/26 TensorRT] as PGIE
+    [Object Tracker\n(nvtracker)\n NvDCF] as Tracker
+}
+
+package "Abandonment Logic" {
+    [Metadata Probe] as Probe
+}
+
+package "Output Stage" {
+    [On-Screen Display\n(nvdsosd)] as OSD
+    [Video Sink\n(nveglglessink)] as Sink
+}
+
+Source -> Muxer : Raw Video
+Muxer -> PGIE : Batched Buffers (NvBatchMeta)
+PGIE -> Tracker : Detects (BBoxes + Classes)
+Tracker -> Probe : Tracks (Object IDs)
+Probe -> OSD : Updated Metadata (Alerts)
+OSD -> Sink : Final Overlay
+@enduml

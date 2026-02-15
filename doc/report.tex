@@ -46,7 +46,7 @@
 	\begin{abstract}
 		\textit{TODO: Abstract to be completed at the end of the report.}
 
-		\noindent\textbf{Keywords:} suspicious luggage, CCTV, embedded system, anomaly detection
+		\noindent\textbf{Keywords:} suspicious luggage, abandoned luggage, CCTV, embedded system, anomaly detection
 	\end{abstract}
 \end{titlepage}
 
@@ -523,7 +523,7 @@
 			\textbf{YOLOv10} & NMS-free training via consistent dual assignments;
 			holistic efficiency–accuracy-driven model design.                            \\
 			\addlinespace
-			\textbf{YOLOv11} & C3k2 block; C2PSA (Cross Stage Partial with Spatial
+			\textbf{YOLO11}  & C3k2 block; C2PSA (Cross Stage Partial with Spatial
 			Attention); enhanced feature extraction; improved speed–accuracy trade-off
 			across tasks.                                                                \\
 			\bottomrule
@@ -665,7 +665,7 @@
 	The most recent contribution to the field is presented by
 	\citet{abandoned2025vrsalovic}, who propose a complete system for real-time
 	abandoned luggage detection in airport surveillance footage. Their approach
-	combines a fine-tuned YOLOv11-s object detector with a novel algorithm for
+	combines a fine-tuned YOLO11-s object detector with a novel algorithm for
 	determining luggage abandonment based on spatio-temporal analysis.
 
 	The system architecture comprises three key components: (1) a custom-trained
@@ -676,9 +676,9 @@
 
 	A significant contribution of this work is the evaluation of multiple detection
 	architectures on custom surveillance datasets (CCTV-Korzo and CCTV-Düsseldorf).
-	The authors compare YOLOv8, YOLOv11, and DETR transformer models, finding that
+	The authors compare YOLOv8, YOLO11, and DETR transformer models, finding that
 	YOLO models significantly outperform DETR for this task --- achieving mAP@0.5
-	scores of over 88\% compared to DETR's 48\%. The fine-tuned YOLOv11-s model was
+	scores of over 88\% compared to DETR's 48\%. The fine-tuned YOLO11-s model was
 	selected for the final system due to its superior performance on small object
 	detection (AP\textsubscript{small} of 85.8\%), a critical requirement given the
 	prevalence of small objects in surveillance footage captured from elevated,
@@ -746,7 +746,7 @@
 	impacts edge deployment feasibility. The YOLO family offers multiple model
 	sizes (nano, small, medium, large, extra-large), each representing a trade-off
 	between accuracy and computational requirements. For edge deployment, smaller
-	variants (YOLOv8n, YOLOv11s) are typically preferred due to their reduced
+	variants (YOLOv8n, YOLO11s) are typically preferred due to their reduced
 	parameter counts and faster inference times \citep{abandoned2025vrsalovic}.
 
 	Additionally, techniques such as depth-wise separable convolutions (used in
@@ -974,7 +974,7 @@
 		\item \textbf{Ownership Association:} Developing logic to associate detected
 		      luggage with nearby persons, establishing ownership relationships that
 		      persist across frames.
-		\item \textbf{Temporal Thresholds:} Defining configurable parameters such as
+		\item \textbf{Thresholds:} Defining configurable parameters such as
 		      the maximum distance (radius) between an owner and their luggage, and
 		      the minimum duration of separation before luggage is flagged as
 		      abandoned.
@@ -1037,13 +1037,49 @@
 	\begin{figure*}[!htb]
 		\centering
 		\includegraphics[width=0.8\textwidth]{figures/ultralytics_benchmarks.png}
-		\caption{Ultralytics' benchmarks comparing pre-trained YOLO26, YOLO11, and older models \citep{vina2026yolo26}.}
+		\caption{Ultralytics' benchmarks comparing pre-trained YOLO26, YOLO11, and older models from an article by \citet{vina2026yolo26}.}
 		\label{fig:ultralytics_benchmarks}
 	\end{figure*}
 
+	The size of the model will be determined based on the constraints of the
+	hardware and the result of comparative evaluations. The nano, small and medium
+	variants of both models will be evaluated with the final choice being based on
+	the best balance of accuracy and inference speed on the target hardware.
+
 	\subsection{Tracking Algorithm}
 
-	Whilst other implementations have used the ByteTrack algorithm for tracking,
+	% TODO: this is very subject to change, depending on how successful a DeepStream implementation is
+
+	YOLO11 and YOLO26 will be integrated using the BoT-SORT tracking algorithm
+	\citep{aharon2022bot}, which builds upon the ByteTrack framework and is
+	supported by Ultralytics' official documentation and community resources.
+
+	BoT-SORT offers a robust tracking solution combining the motion-based
+	association of ByteTrack with an appearance-based association mechanism using a
+	ReID (re-identification) model similar to DeepSORT. The two mechanisms work
+	together to maintain identities across frames, which is a crucial requirement
+	for the detection of suspicious luggage. For example, a scenario where a person
+	leaves their luggage unattended and then returns to it after a short time, the
+	system would be able to maintain the association between a person and their
+	luggage even when occluded or when the person leaves the frame temporarily.
+
+	When compared against ByteTrack and DeepSORT, BoT-SORT displays improved
+	performance on the MOT17/MOT20 benchmarks \citep{aharon2022bot}, which are two
+	widely used datasets for evaluating MOT (multi-object tracking) algorithms.
+
+	Building upon the ByteTrack association pipeline, BoT-SORT incorporates CMC
+	(camera motion compensation) to handle panning, tilting, and zooming cameras,
+	which are common in surveillance applications. This is particularly relevant
+	for the target application, where busy environments already present significant
+	challenges for maintaining object identities --- camera motion would only
+	exacerbate these issues, so the ability of BoT-SORT to compensate for this is a
+	significant advantage.
+
+	However, using BoT-SORT does introduce the potential for compatibility issues
+	when implementing a pipeline with NVIDIA's DeepStream SDK, which is a common
+	choice for deploying computer vision applications on NVIDIA hardware.
+	DeepStream has native support for DeepSORT through NvDCF, but BoT-SORT's
+	additional complexity may require custom integration.
 
 	\subsection{Determining Suspicious Luggage: Spatial and Temporal Logic}
 
@@ -1085,7 +1121,7 @@
 		\label{fig:state_machine}
 	\end{figure*}
 
-	The operational logic is described in Table~\ref{tab:state_machine_logic},
+	The operational logic is described in table~\ref{tab:state_machine_logic},
 	which defines the outcome of entering and leaving each state.
 
 	\begin{table*}[!htb]
@@ -1106,7 +1142,24 @@
 		\label{tab:state_machine_logic}
 	\end{table*}
 
-	\subsection{System Pipeline}
+	\subsection{Pipeline}
+
+	\begin{figure*}[!htb]
+		\centering
+		\includegraphics[width=\textwidth]{figures/plantuml/pipeline.png}
+		\caption{Proposed DeepStream pipeline for suspicious luggage detection.}
+		\label{fig:pipeline}
+	\end{figure*}
+
+	\subsubsection{Input and Preprocessing}
+
+	\subsubsection{Primary Inference (Object Detection)}
+
+	\subsubsection{Object Tracking}
+
+	\subsubsection{Abandonment Logic and Alert Generation}
+
+	\subsubsection{Visualisation and Output}
 
 	\section{Implementation}
 
