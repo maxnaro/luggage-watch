@@ -1118,6 +1118,7 @@
 	\end{itemize}
 
 	\subsubsection{State Machine}
+	\label{sec:state_machine_logic}
 
 	Figure~\ref{fig:state_machine} illustrates the proposed state machine for
 	luggage status tracking. The design is simple but hides the complexities of the
@@ -1151,7 +1152,8 @@
 		\label{tab:state_machine_logic}
 	\end{table*}
 
-	\subsubsection{Association Logic and Pseudo-code}
+	\subsubsection{Logic and Pseudo-code}
+	\label{sec:logic_and_pseudocode}
 
 	Ownership association is determined by euclidean distance of the luggage to
 	nearby persons. The following pseudo-code
@@ -1177,7 +1179,7 @@
 			\Return $best\_person$ \Comment{Associated person or $null$ if no association}
 		\end{algorithmic}
 	\end{algorithm*}
-	
+
 	\begin{algorithm*}[!htb]
 		\caption{Alert generation logic.}
 		\label{alg:alert_generation}
@@ -1244,15 +1246,23 @@
 		\label{fig:pipeline}
 	\end{figure*}
 
-	\subsubsection{Input and Preprocessing}
-
-	\subsubsection{Primary Inference (Object Detection)}
-
-	\subsubsection{Object Tracking}
-
-	\subsubsection{Abandonment Logic and Alert Generation}
-
-	\subsubsection{Visualisation and Output}
+	\begin{itemize}
+		\item \textbf{Source and Muxer (\texttt{nvstreammux}):} Aggregates
+		      the video stream, from a file or camera feed, the muxer (multiplexer) scales the frames to
+		      the model's input resolution size (e.g., 640x640). It initialises the metadata
+		      structure for downstream processing.
+		\item \textbf{Primary Inference (\texttt{nvinfer}):} Runs the quantised
+		      TensorRT-optimised model to perform object detection on each frame; populating
+		      the metadata with bounding boxes and class labels for detected objects (luggage, people).
+		\item \textbf{Tracker (\texttt{nvtracker}):} Maintains object identities across
+		      frames using the BoT-SORT algorithm with a ReID model for appearance-based association.
+		      Handling occlusions and disappearances to ensure consistent tracking of luggage
+		      and associated persons.
+		\item \textbf{Metadata Probe (Abandonment Logic):} A custom probe function that implements
+		      the state machine logic for determining suspicious luggage based on logic defined in section~\ref{sec:state_machine_logic}.
+		      It analyses the spatial and temporal relationships between tracked objects to update
+		      their states and generate alerts when abandonment is detected (section~\ref{sec:logic_and_pseudocode}).
+	\end{itemize}
 
 	\section{Implementation}
 
