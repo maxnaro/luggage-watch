@@ -11,6 +11,15 @@
 \usepackage{tabularx}
 \usepackage{hyperref}
 \usepackage{caption}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Switch-case for algpseudocode
+\algnewcommand\algorithmicswitch{\textbf{switch}}
+\algnewcommand\algorithmiccase{\textbf{case}}
+\algdef{SE}[SWITCH]{Switch}{EndSwitch}[1]{\algorithmicswitch\ #1\ \algorithmicdo}{\algorithmicend\ \algorithmicswitch}
+\algdef{SE}[CASE]{Case}{EndCase}[1]{\algorithmiccase\ #1:}{}
+\algtext*{EndCase}
 
 \fancyhf{}
 \fancyhead[L]{Embedded System for Suspicious Luggage Detection}
@@ -1141,6 +1150,90 @@
 		\caption{State machine operational logic.}
 		\label{tab:state_machine_logic}
 	\end{table*}
+
+	\subsubsection{Association Logic and Pseudo-code}
+
+	Ownership association is determined by euclidean distance of the luggage to
+	nearby persons. The following pseudo-code
+	algorithms~\ref{alg:association},~\ref{alg:state_transitions},
+	and~\ref{alg:alert_generation} illustrate the logic for determining ownership,
+	the state transitions, and alert generation respectively.
+
+	\begin{algorithm*}[!htb]
+		\caption{Luggage ownership association logic.}
+		\label{alg:association}
+		\begin{algorithmic}[1]
+			\Require Luggage object $l$ with bounding box $l.bbox$, tracked persons set $P$, ownership radius $r$
+			\Ensure $best\_person$ as nearest person within radius, or $null$, is returned
+			\State $min\_dist \gets \infty$, $best\_person \gets null$
+			\State $c_l \gets \Call{Centre}{l.bbox}$ \Comment{$(x, y)$ centre of luggage bounding box}
+			\ForAll{$p \in P$}
+			\State $c_p \gets \Call{Centre}{p.bbox}$ \Comment{$(x, y)$ centre of person bounding box}
+			\State $d \gets \sqrt{(c_l.x - c_p.x)^2 + (c_l.y - c_p.y)^2}$ \Comment{Euclidean distance}
+			\If{$d < min\_dist \wedge d < r$}
+			\State $min\_dist \gets d$, $best\_person \gets p$
+			\EndIf
+			\EndFor\\
+			\Return $best\_person$ \Comment{Associated person or $null$ if no association}
+		\end{algorithmic}
+	\end{algorithm*}
+	
+	\begin{algorithm*}[!htb]
+		\caption{Alert generation logic.}
+		\label{alg:alert_generation}
+		\begin{algorithmic}[1]
+			\Require Abandoned luggage object $l$ with fields: $l.id$, $l.bbox$, $l.owner$, $l.timer\_start$
+			\Ensure Alert record $A$ is emitted and logged
+			\State $A.timestamp \gets t_{now}$
+			\State $A.luggage\_id \gets l.id$
+			\State $A.location \gets \Call{Centre}{l.bbox}$ \Comment{$(x, y)$ from bounding box}
+			\State $A.duration \gets t_{now} - l.timer\_start$ \Comment{Time since first unattended}
+			\If{$l.owner \neq null$}
+			\State $A.last\_owner \gets l.owner$ \Comment{Last associated person ID}
+			\Else
+			\State $A.last\_owner \gets \textsc{Unknown}$
+			\EndIf
+			\State $A.frame \gets \Call{AnnotateFrame}{l.bbox}$ \Comment{Capture frame with bounding box overlay}
+			\State \Call{Emit}{$A$} \Comment{Send alert to operator interface}
+			\State \Call{Log}{$A$} \Comment{Persist to event log}\\
+			\Return $A$
+		\end{algorithmic}
+	\end{algorithm*}
+
+	\begin{algorithm*}[!htb]
+		\caption{Luggage state transition logic.}
+		\label{alg:state_transitions}
+		\begin{algorithmic}[1]
+			\Require Tracked luggage set $L$, tracked persons set $P$, ownership radius $r$, abandonment threshold $T$
+			\ForAll{$l \in L$}
+			\State $owner \gets \Call{AssociateOwner}{l, P}$ \Comment{Algorithm~\ref{alg:association}}
+			\State $is\_stationary \gets \Call{IsStationary}{l}$ \Comment{True if $l$ has not moved between frames}
+			\Switch{$l.state$}
+			\Case{\textsc{Attended}}
+			\If{$owner = null \wedge is\_stationary$}
+			\State $l.state \gets \textsc{Unattended}$
+			\State $l.timer\_start \gets t_{now}$
+			\Else
+			\State $l.owner \gets owner$ \Comment{Maintain or update ownership}
+			\EndIf
+			\EndCase
+			\Case{\textsc{Unattended}}
+			\If{$owner \neq null \vee \neg is\_stationary$}
+			\State $l.state \gets \textsc{Attended}$
+			\State $l.owner \gets owner$
+			\State $l.timer\_start \gets null$ \Comment{Clear abandonment timer}
+			\ElsIf{$t_{now} - l.timer\_start \geq T$}
+			\State $l.state \gets \textsc{Abandoned}$
+			\State \Call{GenerateAlert}{$l$} \Comment{Algorithm~\ref{alg:alert_generation}}
+			\EndIf
+			\EndCase
+			\Case{\textsc{Abandoned}}
+			\State \textbf{no-op} \Comment{Remain abandoned until manually resolved}
+			\EndCase
+			\EndSwitch
+			\EndFor
+		\end{algorithmic}
+	\end{algorithm*}
 
 	\subsection{Pipeline}
 
