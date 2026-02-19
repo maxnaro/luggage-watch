@@ -1,0 +1,21 @@
+@startuml state_machine
+hide empty description
+
+state "Attended" as attended
+state "Unattended" as unattended
+state "Abandoned" as abandoned
+
+[*] --> attended : Object Detected / Associate with owner
+
+attended --> attended : Polling Cycle\n[Object moving OR Owner within radius]
+
+attended --> unattended : Conditions Failed\n[Object stationary AND Owner outside radius]\n/ Start timer
+
+unattended --> unattended : Polling Cycle\n[Time threshold not reached]
+
+unattended --> abandoned : Timer Expired\n[Owner not returned]\n/ Alert
+
+unattended --> attended : Conditions Met\n[Object moves OR Owner returns]\n/ Clear timer
+
+abandoned --> [*] : Resolved
+@enduml
