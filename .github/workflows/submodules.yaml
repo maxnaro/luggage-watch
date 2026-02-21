@@ -1,0 +1,46 @@
+name: Submodule Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Daily at midnight
+  workflow_dispatch:
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout parent repo
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Update submodules
+        id: update
+        run: |
+          git submodule update --remote --recursive
+          # Check if there are actual changes
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.update.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          commit-message: "Chore: Update submodules to latest"
+          committer: GitHub <noreply@github.com>
+          author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+          branch: auto-submodule-update
+          delete-branch: true
+          title: "📦 Automated Submodule Update"
+          body: |
+            This is an automated PR to update submodules to their latest versions.
+            
+            - Updated submodules to latest commits on tracked branches.
+            - Please check for breaking changes before merging.
+          labels: |
+            dependencies
+            automated-pr
