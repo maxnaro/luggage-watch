@@ -15,9 +15,15 @@ jobs:
           submodules: true
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
+          lfs: false
+
+      - name: Disable LFS globally
+        run: git lfs install --skip-smudge
 
       - name: Update submodules
         id: update
+        env:
+          GIT_LFS_SKIP_SMUDGE: 1
         run: |
           git submodule update --remote --recursive
           # Check if there are actual changes
