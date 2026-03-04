@@ -1,2 +1,35 @@
 \section{Implementation}
 
+\subsection{Dataset Procurement}
+
+\subsubsection{Object Detection Dataset}
+
+The training dataset for the object detection model was sourced from the
+Microsoft COCO dataset \citep{lin2014microsoft}. As mentioned prior, the COCO
+dataset is a large-scale source of over $200,000$ labelled images across 80
+object categories. The entirety of the dataset would lead to rundandancy with a
+majority of classes being out of scope for the target application. Therefore, a
+subset of the COCO dataset was created, containing only images including the
+\texttt{person}, \texttt{backpack}, \texttt{handbag} and \texttt{suitcase}
+classes, which I then aggregated into a single \texttt{luggage} class. This
+resulted in a training dataset of \textbf{TODO} images split into training and
+validation sets.
+
+Originally, I had intended to use datasets specific to the abandoned luggage
+detection domain, such as ABODA, however these datasets failed to include the
+amount of variation needed for training a robust model. Many annotated datasets
+created from the source footage, lead to overfitting and poor generalisation on
+test examples. The COCO dataset, while lacking the domain specificity, offers a
+much larger variety of examples, covering a wide range of environments,
+lighting conditions, and object appearances.
+
+Another benefit of using the COCO dataset is the ease of access and
+availability of annotations that are compatible with the latest YOLO models. A
+python script was used to filter the COCO dataset, specify the YOLO annotation
+format, balance class instances, and oversample specific classes
+% (\ref{sec:model_training_optimisation}) 
+to create a more varied and proportionate training dataset.
+
+\subsubsection{Suspicious Luggage Dataset}
+
+% TODO: talk about the datasets to be used to test the suspicious luggage alert generation
