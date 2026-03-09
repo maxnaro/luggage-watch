@@ -59,7 +59,5 @@ jobs:
         with:
           name: latex-artifacts
           path: |
-            doc/january-deliverable.pdf
-            doc/project-brief.pdf
             doc/report.pdf
           if-no-files-found: error
