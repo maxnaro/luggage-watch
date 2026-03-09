@@ -1,0 +1,71 @@
+\section{Introduction}
+
+Surveillance is a powerful tool, used in various public settings to ensure
+safety of the public on a daily basis. CCTV, closed circuit television, is
+employed widely with operators having to comb through hours of footage everyday
+to uphold security. This is a tedious task, and human error is inevitable.
+Posing the question, can we automate this process?
+
+One of the many threats to public safety is unattended luggage, this is a
+common occurence which, at best, causes inconvenience, and at worst, could be
+placed for a more sinister purpose. Numerous incidents at transportation hubs
+and public spaces have demonstrated the potential dangers of unattended luggage
+and bags, with counter terrorism authorities advising the public and security
+personnel to remain vigilant and report any suspicious
+items~\citep{protectuk2022unattended}. Historical acts of terrorism, such as
+the Boston Marathon bombing, have emphasised the importance of detecting
+suspicious items in crowded spaces, highlighting the need for reliable
+detection mechanisms in these scenarios.
+
+Compared to other threats, unattended luggage is distinct in its ability to be
+discrete. To the human eye, with low resolution CCTV footage, a security threat
+may be indistinguishable from legitimate items, presenting a unique challenge
+compared to more obvious security threats such as disorderly conduct. False
+positives can increase the burden on teams responsible for monitoring, being
+too relaxed could have dire consequences. Crucially, the definition of
+'suspicious' is inherently temporal. Unlike detecting a weapon, where the
+object itself is the threat, a piece of luggage is neutral until it loses its
+association with an owner for a specific duration. This introduces a complex
+requirement for a system: it must not only detect objects but track ownership
+and measure time, maintaining state across multiple frames in a dynamic
+environment.
+
+Systems recording footage at all hours of the day generate an overwhelming
+amount of data, the sheer volume posing a significant challenge for operators
+to review on a regular basis. This implies a costly requirement for large teams
+of personnel manually monitoring the footage, diverting resources from other
+facets of security, increasing operational expenses, and potentially leading to
+fatigue-induced oversights.
+
+Automation in security is already a widely incorporated concept accross the
+public sector, with systems such as facial recognition and intrusion detection
+providing results that manual monitoring alone cannot achieve; at least without
+significant human-resource investment. An automated approach to detecting
+suspicious luggage could alleviate the burden on operators, allowing them to
+dedicate more attention to pressing matters; require smaller teams to monitor
+larger areas, saving resources; and reduce human error, bolstering overall
+security.
+
+Edge processing using embedded systems has become an increasingly viable, cost
+effective, and practical solution for surveillance applications. Versus a cloud
+solution, edge processing offers lower latency, by way of being situated
+physically closer to the data source; improved privacy, sensitive data remains
+on site and the onus is on the operator to secure it --- not a cloud provider;
+and network independence, there is no reliance on a stable internet connection
+just the local network~\citep{pamadi2025edgevscloud}. The proliferation of
+affordable, high-performance embedded hardware, with enhanced software support,
+has made a strong case for edge processing in surveillance; the benefits of
+cloud computing's scalability and power are minimised by new embedded
+solutions.
+
+Advances in computer vision technology and deep learning have made the issue of
+embedded suspicious luggage detection more tractable. Similar automation tasks,
+are being successfully implemented in real-world applications.
+
+Therefore, this project aims to design and implement an embedded system for
+suspicious luggage detection. The system will bridge the gap between academic
+research and practical deployment, focusing on real-time performance on edge
+devices. The target for the project is to create a deployable solution that can
+integrate with surveillance infrastructure, utilising an NVIDIA Jetson Orin
+Nano as a cost-effective piece of hardware suitable for the task.
+
