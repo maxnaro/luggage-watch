@@ -8,6 +8,7 @@ data acquisition and preparation, model selection and optimisation, algorithmic
 definition and implementation, and hardware deployment.
 
 \subsubsection{Dataset Procurement and Preparation}
+\label{sec:requirements_dataset_procurement_preparation}
 
 A robust dataset is fundamental to training and validating an effective object
 detection model. The requirements in this area include:
@@ -30,6 +31,22 @@ detection model. The requirements in this area include:
 	\item \textbf{Dataset Splitting:} Appropriate partitioning into training,
 	      validation, and test sets to enable unbiased model evaluation and
 	      prevent overfitting.
+\end{itemize}
+
+In addition, a dataset specifically for testing the end-to-end pipeline with
+realistic scenarios of suspicious luggage is required.
+
+\begin{itemize}
+	\item \textbf{Scenario Coverage:} The dataset should include a variety of
+	      scenarios relevant to the target application, such as luggage being
+	      left unattended, moved by individuals, or in close proximity to
+	      people.
+	\item \textbf{Environmental Diversity:} The dataset should encompass
+	      different environments (indoor, outdoor), lighting conditions (daytime,
+	      nighttime), and crowd densities to ensure the robustness of the system.
+	\item \textbf{Number of Examples:} A sufficient number of examples for each scenario should
+	      be included to allow for a comprehensive evaluation of the system's
+	      performance.
 \end{itemize}
 
 \subsubsection{Object Detection Model Selection}

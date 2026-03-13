@@ -12,31 +12,132 @@ majority of classes being out of scope for the target application. Therefore, a
 subset of the COCO dataset was created, containing only images including the
 \texttt{person}, \texttt{backpack}, \texttt{handbag} and \texttt{suitcase}
 classes, which I then aggregated into a single \texttt{luggage} class. This
-resulted in a training dataset of \textbf{TODO} images split into training and
-validation sets.
+resulted in a training dataset of $8,887$ images split into training and
+validation splits of $8,397$ and $490$ images, respectively. This split ensured
+that the validation set contained a representative sample of the training data,
+allowing for an accurate assessment of the model's performance during training
+and optimisations whilst the training set provided a sufficient amount of data
+for the model to learn from.
 
 Originally, I had intended to use datasets specific to the abandoned luggage
 detection domain, such as ABODA, however these datasets failed to include the
-amount of variation needed for training a robust model. Many annotated datasets
-created from the source footage, lead to overfitting and poor generalisation on
-test examples. The COCO dataset, while lacking the domain specificity, offers a
-much larger variety of examples, covering a wide range of environments,
-lighting conditions, and object appearances.
+amount of variation needed for training a robust model. Many annotated
+datasets, created from the source footage, led to overfitting and poor
+generalisation on test examples due to their smaller size, limited diversity in
+viewpoints, and repeated scene context. The COCO dataset, while lacking the
+domain specificity, offers a much larger variety of examples, covering a wide
+range of environments, lighting conditions, and object appearances.
 
 Another benefit of using the COCO dataset is the ease of access and
 availability of annotations that are compatible with the latest YOLO models. A
 python script was used to filter the COCO dataset, specify the YOLO annotation
-format, balance class instances, and oversample specific classes
-% (\ref{sec:model_training_optimisation}) 
+format, balance class instances, remap classes to a single \texttt{luggage}
+class, and oversample specific classes (\ref{sec:model_training_optimisation})
 to create a more varied and proportionate training dataset.
+
+Constructing the dataset programmatically allowed for a specific and
+reproducable balance between the detected classes, which is crucial in the
+context of abandoned luggage detection, where smaller objects such as bags may
+be underrepresented in typical dataset. The target \texttt{person} budget was
+constrained by $N_{\text{person},\text{allowed}}=r\cdot N_{\text{luggage}}$,
+where $r$ is the target class instance ratio. Utilising balancing and
+oversampling techniques resulted in an overall class instance ratio of
+$\frac{13092}{6543} \approx 2.0:1$ between the \texttt{person} and
+\texttt{luggage} classes shown in
+figure~\ref{fig:dataset_class_distribution_after}; the reasoning behind this
+method is covered in more detail in the model training and optimisation section
+(\ref{sec:model_training_optimisation}). An example of the class distribution
+of the dataset before and after the balancing and oversampling techniques were
+applied is shown in figures~\ref{fig:dataset_class_distribution_before} and
+\ref{fig:dataset_class_distribution_after}, respectively.
+
+\begin{figure*}[!htb]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/dataset_class_distribution_before.jpg}
+	\caption{Class distribution of the dataset before aggregation, balancing and oversampling techniques were applied.}
+	\label{fig:dataset_class_distribution_before}
+\end{figure*}
+
+\begin{figure*}[!htb]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/dataset_class_distribution_after.jpg}
+	\caption{Class distribution of the dataset after aggregation, balancing and oversampling techniques were applied.}
+	\label{fig:dataset_class_distribution_after}
+\end{figure*}
+
+Oversampling was applied to the consituent classes of the \texttt{luggage}
+class, which inferred upon review of the model's performance. This was
+implemented by duplicating images containing the underrepresented classes,
+defined by a parameter assigning weights to each class e.g.,
+``\texttt{backpack=2,handbag=3,suitcase=1}'' for the given COCO classes. This
+method allowed the model to learn the features of more difficult classes, such
+as \texttt{handbag}s, which it struggled to detect in the early stages of
+training.
+
+A limitation of using the COCO dataset and the sampling techniques used is the
+inherent lack of domain specificity, whilst the dataset contains a wide variety
+of examples, its lack of CCTV-native footage can lead to models struggling to
+generalise to the target application. Aggregating multiple classes into a
+single \texttt{luggage} class can also lead to a loss of granularity in the
+model's understanding of different types of luggage, however, this is a
+necessary trade-off to ensure a sufficient amount of training data was
+available and for the model to learn a more generalised representation of
+luggage which can help with the issue of generalisation.
 
 \subsubsection{Suspicious Luggage Dataset}
 
-% TODO: talk about the datasets to be used to test the suspicious luggage alert generation
+The purpose of the suspicious luggage dataset is to provide a source of data
+for testing the end-to-end DeepStream pipeline, not for training the primary
+detector. This dataset is important for validating the temporal logic, tracking
+consistency, and alert behaviour of the system in realistic scenarios.
+
+The coverage of the dataset was focused on scenarios relevant to the target
+application, including people and luggage items that are abandoned, moving, or
+in close proximity to each other. An ideal dataset would include a variety of
+environments, conditions and factors such as occlusion, lighting, and crowd
+density to ensure the robustness of the system. The dataset should also include
+a sufficient number of examples of each scenario to allow for a comprehensive
+evaluation of the system's performance as outlined in the requirements analysis
+section (\ref{sec:requirements_dataset_procurement_preparation}).
+
+A mixture of positive and negative cases were sourced to evaluate the system's
+ability to correctly identify suspicious luggage while minimising false
+positives; positive cases including true abandonment and negative cases
+including stationary luggage with the owner nearby, brief separations, and
+occlusions.
+
+Example datasets for suspicious luggage scenarios were sourced from the ABODA
+dataset (\url{https://github.com/kevinlin311tw/ABODA}), containing $11$ video
+sequences of various environments and scenarios. These videos were used for the
+testing and evaluation of the suspicious luggage detection pipeline, with
+examples featuring marked changes in lighting condition, nighttime scenarios,
+indoor and outdoor environments.
+
+In addition, authors \citet{amin2021large} provide a dataset of scenarios split
+into abandoned and non-abandoned scenarios, with graded levels of difficulty.
+This dataset has been used in literature by authors
+\citet{abandoned2025vrsalovic}.
+
+Unfortunately, the PETS2006 \citep{thirde2006pets} and AVSS-2007
+\citep{qmul2007avss} datasets were unable to be sourced despite their
+prevalence in the literature and my efforts to contact the authors. The
+utilisation of AVSS-2007 was restricted to a single example video sequence,
+which was used in conjunction with the aforementioned procured datasets.
+
+% TODO: determine ground-truth protocol for evaluation of the end-to-end pipeline,
+%       e.g., frame-level labels of abandonment, bounding box annotations, etc.
 
 \subsection{Model Training and Optimisation}
+\label{sec:model_training_optimisation}
+
+Model training (and export, see section~\ref{sec:model_export_quantisation})
+was separated into its own submodule for version control which can be found at
+\url{https://github.com/maxnaro/luggage-watch-training/}.
+
+
 
 \subsection{Model Export and Quantisation}
+\label{sec:model_export_quantisation}
 
 \subsection{DeepStream Pipeline Configuration}
 
