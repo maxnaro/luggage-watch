@@ -1,0 +1,75 @@
+\section{Appendix}
+
+\subsection{Training Hardware}
+\label{sec:training_hardware}
+
+Training was performed on a desktop system with the specifications outlined in
+Table~\ref{tab:training_hardware}.
+
+\begin{table*}[!htb]
+    \centering
+    \small
+    \begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+        \toprule
+        \textbf{Component} & \textbf{Specification} \\ 
+        \midrule
+        CPU              & AMD Ryzen 9 7800X3D 8-core 16-thread processor \\
+        \addlinespace
+        GPU              & NVIDIA GeForce RTX 4070 Super 12GB \\
+        \addlinespace
+        RAM              & 32GB DDR5 6000MT/s \\
+        \addlinespace
+        Storage          & 1TB NVMe SSD \\
+        \addlinespace
+        Operating System & Windows 11 \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Training hardware specifications.}
+    \label{tab:training_hardware}
+\end{table*}
+
+\subsection{Training Configuration}
+
+The training configuration for the primary detector model is shown in listing~\ref{lst:training_config}.
+
+\begin{lstlisting}[caption={YOLO training configuration file.}, label={lst:training_config}]
+{
+    "train": {
+        "data": "/app/data/dataset.yaml",
+        "model": "yolo26s.pt",
+        "epochs": 100,
+        "patience": 30,
+        "batch": 0.8,
+        "imgsz": 1280,
+        "optimizer": "AdamW",
+        "lr0": 0.0008,
+        "lrf": 0.01,
+        "warmup_epochs": 3.0,
+        "freeze": 10,
+        "workers": 8,
+        "cache": "disk",
+        "seed": 0,
+        "resume": false,
+        "exist_ok": false,
+        "save_period": -1,
+        "close_mosaic": 15,
+        "iou": 0.8,
+        "label_smoothing": 0.05,
+        "cls": 0.8,
+        "scale": 0.7,
+        "device": "0",
+        "name": "yolo26s_1280_020326"
+    },
+    "export": {
+        "format": "onnx",
+        "imgsz": 1280,
+        "opset": 12,
+        "simplify": true,
+        "dynamic": false,
+        "half": true,
+        "int8": false,
+        "batch": 1,
+        "out": "/app/model/yolo26s_1280_020326.onnx"
+    }
+}
+\end{lstlisting}

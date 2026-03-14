@@ -134,7 +134,42 @@ Model training (and export, see section~\ref{sec:model_export_quantisation})
 was separated into its own submodule for version control which can be found at
 \url{https://github.com/maxnaro/luggage-watch-training/}.
 
+Once the training dataset was procured and prepared, the next step was to train
+the model and optimise its performance. The training environment involved a
+containerised setup using Docker, with leveraging NVIDIA's GPU support for
+accelerated training. Training, being separate to deployment, allowed for a
+more flexible and powerful environment, enabling the use of the greater
+computational resources of a desktop GPU and system as a whole. The hardware of
+the training system can be found in the appendix (\ref{sec:training_hardware}).
 
+The containerised approach allowed for a consistent and reproducible training
+environment, with dependency management and isolation from the host system.
+Containers require some overhead, but less than virtual machines, and the
+benefits of consistency and ease of setup outweighed the performance cost in
+this case.
+
+The training script was implemented using Ultralytics' YOLO training framework,
+which offered a high-level API for training YOLO models, built-in support for
+various optimisers such as AdamW \citep{loschilov2017fixing}, and an automatic
+optimiser which chooses based on other configuration parameters; data
+augmentation techniques, and easy integration with the procurred dataset. The
+training script was used in conjunction with a custom configuration file
+specifying the parameters of the training process as seen in
+listing~\ref{lst:training_config}.
+
+Model training was an iterative process, with multiple rounds of training and
+evaluation to optimise the model's performance. Training a YOLO model involves
+adjusting various hyperparameters such as learning rate, batch size, number of
+epochs and data augmentation techniques. Feedback from the model's performance
+on the validation set was used to guide the optimisation process, with the goal
+of improving metrics such as mAP@0.5, mAP@0.5:0.95, precision and recall the
+basis of which were explored in
+\ref{sec:evaluation_metrics_for_object_detection}. All metrics improving was
+the goal, however, particular attention was paid to improving recall, as the
+cost of false negatives (missed detections) is higher than false positives in
+the context of abandoned luggage detection.
+
+\subsection{Training Hyperparameters}
 
 \subsection{Model Export and Quantisation}
 \label{sec:model_export_quantisation}
