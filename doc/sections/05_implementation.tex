@@ -130,9 +130,11 @@ which was used in conjunction with the aforementioned procured datasets.
 \subsection{Model Training and Optimisation}
 \label{sec:model_training_optimisation}
 
-Model training (and export, see section~\ref{sec:model_export_quantisation})
-was separated into its own submodule for version control which can be found at
+Model training (and export, see section~\ref{sec:model_export}) was separated
+into its own submodule for version control which can be found at
 \url{https://github.com/maxnaro/luggage-watch-training/}.
+
+\subsubsection{Training Environment}
 
 Once the training dataset was procured and prepared, the next step was to train
 the model and optimise its performance. The training environment involved a
@@ -157,22 +159,164 @@ training script was used in conjunction with a custom configuration file
 specifying the parameters of the training process as seen in
 listing~\ref{lst:training_config}.
 
+\subsubsection{Training Process and Iterative Optimisation}
+
+A transfer learning approach was applied where a pre-trained YOLO model was
+fine-tuned on the custom dataset. This approach allows the model to leverage
+the general features learned from the large-scale COCO dataset, which can be
+beneficial for improving performance and reducing training time, especially
+when the custom dataset is relatively small. The pre-trained model used in the
+final iteration was \texttt{yolo26s.pt}, a compact and efficient model
+architecture, well suited for deployment on edge devices like the NVIDIA Jetson
+Orin Nano.
+
 Model training was an iterative process, with multiple rounds of training and
 evaluation to optimise the model's performance. Training a YOLO model involves
 adjusting various hyperparameters such as learning rate, batch size, number of
-epochs and data augmentation techniques. Feedback from the model's performance
-on the validation set was used to guide the optimisation process, with the goal
-of improving metrics such as mAP@0.5, mAP@0.5:0.95, precision and recall the
-basis of which were explored in
-\ref{sec:evaluation_metrics_for_object_detection}. All metrics improving was
-the goal, however, particular attention was paid to improving recall, as the
-cost of false negatives (missed detections) is higher than false positives in
-the context of abandoned luggage detection.
+epochs and augmentation strategy. Feedback from validation performance was used
+to guide each optimisation step, with the goal of improving mAP@0.5,
+mAP@0.5:0.95, precision and recall
+(section~\ref{sec:evaluation_metrics_for_object_detection}). Although all
+metrics were considered, recall was prioritised because false negatives (missed
+detections) are operationally more severe than false positives in suspicious
+luggage detection.
 
-\subsection{Training Hyperparameters}
+An early baseline run used \texttt{yolo11l.pt} at \texttt{imgsz=640}, with
+\texttt{optimizer=auto}, \texttt{lr0=0.01}, \texttt{batch=16}, no backbone
+freezing, and uncached loading. A later optimised run used \texttt{yolo26s.pt}
+at \texttt{imgsz=1280}, \texttt{optimizer=AdamW}, \texttt{lr0=0.001},
+\texttt{batch=0.8} (auto-scaled by available VRAM), \texttt{freeze=10}, and
+\texttt{cache=disk}. The rationale behind these changes was: (i) increase input
+resolution to improve small-object localisation for luggage items, (ii) improve
+optimisation stability with AdamW and a lower initial learning rate, (iii)
+preserve transferable low-level visual features by freezing early backbone
+layers, and (iv) improve training throughput and memory efficiency using disk
+caching and adaptive batch sizing at higher resolution.
 
-\subsection{Model Export and Quantisation}
-\label{sec:model_export_quantisation}
+Table~\ref{tab:training_run_comparison} summarises the principal differences
+between the early baseline run and the later optimised configuration.
+
+\begin{table*}[!p]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Parameter}    & \textbf{Early baseline run} & \textbf{Later optimised run} & \textbf{Optimisation rationale}                                                                         \\
+		\midrule
+		Model                 & \texttt{yolo11l.pt}         & \texttt{yolo26s.pt}          & Move from an older large model to a newer, smaller architecture with a better speed-accuracy trade-off. \\
+		\addlinespace
+		Input size            & \texttt{640}                & \texttt{1280}                & Improve localisation of smaller luggage instances in wide-angle surveillance imagery.                   \\
+		\addlinespace
+		Optimizer             & \texttt{auto}               & \texttt{AdamW}               & Use a more controlled optimiser with stronger regularisation behaviour during fine-tuning.              \\
+		\addlinespace
+		Initial learning rate & \texttt{0.01}               & \texttt{0.001}               & Reduce the risk of unstable updates and overshooting during convergence.                                \\
+		\addlinespace
+		Batch configuration   & \texttt{16}                 & \texttt{0.8}                 & Allow automatic batch scaling based on available VRAM when training at higher resolution.               \\
+		\addlinespace
+		Layer freezing        & None                        & \texttt{freeze=10}           & Preserve transferable low-level features from pre-training and reduce overfitting.                      \\
+		\addlinespace
+		Dataset cache         & \texttt{false}              & \texttt{disk}                & Reduce data loading overhead and improve throughput during longer training runs.                        \\
+		\addlinespace
+		Patience              & \texttt{100}                & \texttt{30}                  & Stop earlier once validation improvement plateaus, reducing wasted compute.                             \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Comparison of the early baseline training configuration and the later optimised run.}
+	\label{tab:training_run_comparison}
+\end{table*}
+
+Another additional optimisation step that was applied was the use of early
+stopping with a patience of $30$ epochs, which allows the training process to
+stop early if the validation metrics do not improve for the specified number of
+epochs. This can help to prevent overfitting and reduce training time. For
+example, in another training run, the model was trained for $100$ epochs with
+early stopping enabled, and the training process stopped at epoch $87$ when the
+validation metrics plateaued (see figure ~\ref{fig:plateau_map5095}),
+indicating that the model had likely converged and further training would not
+yield significant improvements. This optimisation step can be particularly
+beneficial when training on a limited dataset, as it helps to avoid overfitting
+and ensures that the model generalises well to unseen data.
+
+Furthermore, data augmentation techniques were applied during training to
+improve the model's generalisation capabilities. These techniques included
+random horizontal flipping, scaling, and color jittering (all implemented
+natively by the \texttt{auto\_augment} feature of the framework), which help
+the model to learn invariant features and improve its robustness to variations
+in the input data. Data mosaicing, a technique where multiple images are
+combined into a single training example, was also applied to further enhance
+the diversity; mosaicing was disabled in the last 10 epochs to allow the model
+to fine-tune on simpler examples as it converged.
+
+\begin{figure*}[!p]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/plateau_map5095.png}
+	\caption{Example of a training run where early stopping was applied, showing the plateauing of the mAP@0.5:0.95 metric at epoch 87.}
+	\label{fig:plateau_map5095}
+\end{figure*}
+
+This progression produced substantial validation gains. The early run log
+contains $37$ epochs with final metrics of mAP@0.5:0.95 $=0.2645$, mAP@0.5
+$=0.4125$, precision $=0.4931$, and recall $=0.4096$. The optimised run
+completed $100$ epochs with final metrics of mAP@0.5:0.95 $=0.3951$, mAP@0.5
+$=0.6095$, precision $=0.6716$, and recall $=0.5798$. Relative to the baseline,
+this corresponds to approximately $+49.4\%$ mAP@0.5:0.95, $+47.7\%$ mAP@0.5,
+$+36.2\%$ precision, and $+41.6\%$ recall. This is represented graphically in
+figure~\ref{fig:early_baseline_vs_later_optimised_metrics}.
+
+\begin{figure*}[!p]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/early_baseline_vs_later_optimised_metrics.png}
+	\caption{Comparison of the validation metrics between the early baseline run and the later optimised run.}
+	\label{fig:early_baseline_vs_later_optimised_metrics}
+\end{figure*}
+
+These improvements indicate that the optimisation strategy was effective for
+the target application, particularly for reducing missed detections. However,
+the comparison is not a fully controlled ablation because architecture,
+resolution, and training duration were changed simultaneously; therefore, the
+reported gains should be interpreted as cumulative system-level improvement
+rather than isolated effects of any single hyperparameter.
+
+\subsection{Model Export}
+\label{sec:model_export}
+
+The result of training is a PyTorch model checkpoint file, which contains the
+learned weights and architecture information. However, for deployment on the
+NVIDIA Jetson Orin Nano, the model needed to be exported to a format compatible
+with NVIDIA's TensorRT inference engine, which is optimised for performance on
+proprietary hardware. The export process involved converting the PyTorch model
+to ONNX format, which is a widely supported intermediate representation for
+machine learning models.
+
+Exporting the model to ONNX format was achieved using the same containerised
+environment as training, utilising a custom export script sourced from
+``DeepStream-Yolo'' GitHub repository \citep{luciano2026deepstreamyolo}, which
+provides DeepStream SDK implementations for YOLO models. Since I had planned to
+use DeepStream, and by extension \citeauthor{luciano2026deepstreamyolo}'s
+\texttt{nvdsinfer} custom implementation for YOLO models, using
+\citeauthor{luciano2026deepstreamyolo}'s export script ensured compatibility
+and optimised performance when deploying the model.
+
+The containerised export implementation forwards parameters into the
+DeepStream-compatible YOLO26 exporter. The exporter applies model-level changes
+required for compatibility with downstream DeepStream parsing: the detection
+head is switched to export mode, output formatting is adapted for ONNX export,
+and the final tensor is transformed into a compact per-detection layout of
+\texttt{[x1, y1, x2, y2, score, class\_id]}. A \texttt{labels.txt} file is also
+emitted from the trained class names to preserve class-index alignment at
+inference time.
+
+The main export configuration used in this project is summarised in the
+appendix~\ref{sec:config}, with the key parameters being: \texttt{format=onnx}
+to specify the export format, and \texttt{imgsz=1280} to maintain the input
+resolution used during training.
+
+In practice, this produced an ONNX model suitable for subsequent TensorRT
+engine generation on the Jetson platform while retaining compatibility with the
+DeepStream YOLO parser.
+
+\subsection{NVIDIA Jetson Orin Nano Setup and Configuration}
+
+
 
 \subsection{DeepStream Pipeline Configuration}
 

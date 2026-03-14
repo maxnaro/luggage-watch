@@ -7,32 +7,34 @@ Training was performed on a desktop system with the specifications outlined in
 Table~\ref{tab:training_hardware}.
 
 \begin{table*}[!htb]
-    \centering
-    \small
-    \begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
-        \toprule
-        \textbf{Component} & \textbf{Specification} \\ 
-        \midrule
-        CPU              & AMD Ryzen 9 7800X3D 8-core 16-thread processor \\
-        \addlinespace
-        GPU              & NVIDIA GeForce RTX 4070 Super 12GB \\
-        \addlinespace
-        RAM              & 32GB DDR5 6000MT/s \\
-        \addlinespace
-        Storage          & 1TB NVMe SSD \\
-        \addlinespace
-        Operating System & Windows 11 \\
-        \bottomrule
-    \end{tabularx}
-    \caption{Training hardware specifications.}
-    \label{tab:training_hardware}
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Component} & \textbf{Specification}                         \\
+		\midrule
+		CPU                & AMD Ryzen 9 7800X3D 8-core 16-thread processor \\
+		\addlinespace
+		GPU                & NVIDIA GeForce RTX 4070 Super 12GB             \\
+		\addlinespace
+		RAM                & 32GB DDR5 6000MT/s                             \\
+		\addlinespace
+		Storage            & 1TB NVMe SSD                                   \\
+		\addlinespace
+		Operating System   & Windows 11                                     \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Training hardware specifications.}
+	\label{tab:training_hardware}
 \end{table*}
 
 \subsection{Training Configuration}
+\label{sec:config}
 
-The training configuration for the primary detector model is shown in listing~\ref{lst:training_config}.
+The training and export configuration for the primary detector model is shown
+in listing~\ref{lst:config}.
 
-\begin{lstlisting}[caption={YOLO training configuration file.}, label={lst:training_config}]
+\begin{lstlisting}[caption={YOLO training configuration file.}, label={lst:config}]
 {
     "train": {
         "data": "/app/data/dataset.yaml",
