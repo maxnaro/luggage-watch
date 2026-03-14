@@ -1,6 +1,13 @@
 name: Build LaTeX PDF
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.tex"
+      - "**/*.puml"
+      - "**/*.bib"
   pull_request:
     paths:
       - "**/*.tex"
@@ -10,6 +17,8 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -66,12 +75,21 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download redacted artifact
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: luggage-watch-report
-          path: doc/report.pdf
+          name: latex-artifacts
+          path: artifacts
+
+      - name: Prepare Pages content
+        run: |
+          set -euo pipefail
+          mkdir -p public
+          mv artifacts/report.pdf public/luggage-watch.pdf
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -79,7 +97,8 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: doc/report.pdf
+          path: public
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
