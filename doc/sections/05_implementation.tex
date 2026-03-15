@@ -157,7 +157,7 @@ optimiser which chooses based on other configuration parameters; data
 augmentation techniques, and easy integration with the procurred dataset. The
 training script was used in conjunction with a custom configuration file
 specifying the parameters of the training process as seen in
-listing~\ref{lst:training_config}.
+listing~\ref{lst:config}.
 
 \subsubsection{Training Process and Iterative Optimisation}
 
@@ -314,13 +314,132 @@ In practice, this produced an ONNX model suitable for subsequent TensorRT
 engine generation on the Jetson platform while retaining compatibility with the
 DeepStream YOLO parser.
 
-\subsection{NVIDIA Jetson Orin Nano Setup and Configuration}
+\subsection{Deployment Setup and Configuration}
+\label{sec:deployment_setup_and_configuration}
 
+The deployment system used an NVIDIA Jetson Orin Nano running JetPack 6.2 and
+DeepStream 7.1 to perform real-time inference using the trained model, and
+integrating the object tracking and abandonment logic into an end-to-end
+pipeline.
 
+Steps to set up the deployment environment included: (i) installing the
+necessary software dependencies in order to run a Python-based DeepStream
+application, (ii) compiling the custom YOLO parser library from
+\citet{luciano2026deepstreamyolo} to enable support for the exported model, and
+(iii) downloading the Re-ID model from NVIDIA's TAO Toolkit Model Zoo, which is
+used for object tracking and re-identification in the pipeline.
+
+Development of the inference application was done using Python, and was
+contained as submodule in the repository at
+\url{https://github.com/maxnaro/luggage-watch-inference} which was able to be
+cloned and worked on directly on the Jetson device via SSH.
 
 \subsection{DeepStream Pipeline Configuration}
 
+The implementation of the DeepStream pipeline involved the instantiation of a
+series of GStreamer elements, responsible for the different stages of video
+processing, object detection, tracking and abandonment logic. These elements
+were configured and linked together to form a cohesive pipeline that processes
+video input, performs inference using the trained model, and outputs the
+results in realtime. The configuration was defined programmatically in the
+Python application in listing~\ref{lst:pipeline} and is represented in
+figure~\ref{fig:pipeline}.
+
+Iterative development and testing of the pipeline was performed using
+pre-recorded video sequences from the procured suspicious luggage dataset,
+which which allowed for debugging of the pipeline's functionality, the
+generation of TensorRT engine files, and validation of inference performance on
+the target hardware before implementing the rest of the system's logic and
+deployment.
+
+Configuration for the primary object detection stage of the pipeline is
+determined by a custom configuration file, which specifies parameters such as
+the model path, input resolution, confidence threshold, and class count. These
+parameters can have a significant impact on the performance of the model and
+the overall system, and were tuned based on the results of the developing and
+testing process. The configuration file can be found in the appendix
+~\ref{lst:primary_config}, with the reasonings for the key parameters being:
+
+\begin{itemize}
+	\item \textbf{Inference Interval and Real-time Tradeoff:} The
+	      \texttt{interval} parameter, which specifies the number
+	      of frames to skip between inferences, was set to $3$
+	      to balance the tradeoff between inference performance and real-time
+	      processing. Using a lower interval (e.g., $1$) would allow for more
+	      frequent detections but in practice led to increased latency and
+	      reduced frame rates, while a higher interval reduced the computational
+	      load at the expense of missing brief events. Ultimately, an interval
+	      of $3$ was found to provide a good balance for the target application,
+	      as the temporal logic of the system is designed to detect abandoned luggage over a
+	      span of several seconds, so missing detections in a few frames does
+	      not significantly impact the overall performance.
+	\item \textbf{Aspect Ratio and Padding Behaviour:} The \texttt{maintain-aspect-ratio}
+	      parameter was set to \texttt{1} (true) to ensure that the aspect ratio of the input
+	      is maintained during resizing, along with the \texttt{symmetric-padding} being set
+	      to \texttt{1} (true) to apply symmetric padding when resizing. This configuration was chosen to
+	      preserve the spatial relationships between objects in the input frames, which is important for
+	      accurate detection and tracking. Furthermore, the reduced distortion allowed the
+	      model to detect smaller luggage items more effectively.
+	\item \textbf{TensorRT Engine Generation and Compatibility:} The \texttt{model-engine-file}
+	      parameter specifies the path to the TensorRT engine file generated from the exported ONNX model
+	      specified at \texttt{onnx-file}. If no engine file can be found, the system will attempt
+	      to generate one from the ONNX file which, while time-consuming, only has to be done once.
+	      This engine file is optimised for inference on the NVIDIA Jetson Orin Nano, having
+	      been generated on the device itself, and ensures compatibility with the DeepStream pipeline.
+	      Additionally, the \texttt{network-mode} parameter is set to \texttt{2} to specify FP16
+	      precision for the engine, providing the benefits outlined in
+	      sections~\ref{sec:real_time_processing_on_edge_devices} and \ref{sec:tensorrt_optimisations}.
+	\item \textbf{Custom Parsing Implementation for YOLO Models:} The parameters,
+	      \texttt{parse-bbox-func-name}, \texttt{custom-lib-path}, and \texttt{engine-create-func-name},
+	      specify the custom C++ parsing implementation for YOLO models provided by \citet{luciano2026deepstreamyolo}.
+	      This enables the exported YOLO model to be correctly parsed and integrated into the DeepStream pipeline,
+	      ensuring that the detections are correctly interpreted and processed by the subsequent elements in the pipeline.
+\end{itemize}
+
 \subsection{Object Tracking Integration}
+
+Object tracking is a crucial component of the system, allowing for the
+consistent identification of objects across frames, which is essential for the
+temporal logic of abandoned luggage detection. The tracking component was
+implemented as a \texttt{nvtracker} element of the pipeline using the
+\texttt{NvDeepSORT} algorithm.
+
+\subsubsection{Determining the Optimal Tracking Algorithm}
+
+The choice of tracking algorithm was informed by a combination of researching
+current implementations
+(\ref{sec:video_analysis_spatio_temporal_modeling_and_object_tracking}),
+determining the solutions used by similar projects in the literature (e.g.,
+ByteTrack \citep{zhang2022bytetrack} used by \citet{abandoned2025vrsalovic}),
+and practical testing of different algorithms on the target hardware. Luckily,
+the modular design of the DeepStream pipeline allowed for relatively easy
+integration and testing of different tracking algorithms, as they can be
+swapped out as different configurations passed to the \texttt{nvtracker}
+element.
+
+The available options from the DeepStream SDK included: \texttt{IoU Tracker},
+using the IoU values among detections to associate them across frames;
+\texttt{NvSORT}, an implementation of the SORT algorithm
+\citep{bewley2016simple} which uses a combination of bounding box proximities
+for association and a Kalman filter to update the state of tracked objects;
+\texttt{NvDeepSORT}, an extension of SORT that incorporates a deep association
+metric \citep{wojke2017simple} and a Re-ID model for association;
+\texttt{NvDCF}, an implementation that uses a discriminative correlation filter
+for tracking; and \texttt{MaskTracker}, mainly used for segmentation tasks.
+
+After testing the different algorithms, it became clear that the requirements
+of the system required a robust tracking solution. Environmental factors such
+as occlusion and crowd density whilst using a less rigorous tracking algorithm
+led to frequent ID flips and ownership misattribution, which in turn led to
+incorrect abandonment detections. The requirements for ownership and ID
+consistency across frames, made \texttt{NvDeepSORT} the most suitable choice,
+as its use of a deep association metric and Re-ID model provided improved
+robustness to occlusion and appearance changes, which are common in
+surveillance scenarios.
+
+\subsubsection{Intercepting Tracking Outputs}
+
+
 
 \subsection{Abandonment Detection Logic}
 
