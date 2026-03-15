@@ -31,6 +31,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Init submodules (HTTPS rewrite)
+        run: |
+          set -euo pipefail
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth 1
+
       - name: Install PlantUML
         run: |
           sudo apt-get update
@@ -62,6 +69,7 @@ jobs:
             report.tex
             january-deliverable.tex
           working_directory: ./doc/
+          args: -pdf -pretex="\\def\\commit{${{ github.sha }}}"
 
       - name: Upload LaTeX artifacts
         uses: actions/upload-artifact@v4
