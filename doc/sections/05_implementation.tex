@@ -664,6 +664,14 @@ elapsed time since becoming unattended with timeout $T_a$.
 
 \subsubsection{Alert Generation}
 
+The alert generation stage converts the state-machine outputs into
+operator-visible signals in real time. After the tracking metadata is
+intercepted by the probe callback, and the state of each luggage item is
+evaluated, the summaries are passed to a method to update the OSD metadata in
+order to visualise the state of each luggage item on the output video stream.
+This is implemented across \texttt{probes.py}, \texttt{process.py}, and
+\texttt{overlay.py}.
+
 \subsubsection{Failure Modes and Mitigation Strategies}
 \label{sec:failure_modes_and_mitigation_strategies}
 
