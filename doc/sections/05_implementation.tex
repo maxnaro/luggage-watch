@@ -511,9 +511,7 @@ decisions to the active state object. This ordering ensures deterministic
 behaviour and clear responsibility boundaries between context management and
 transition policy. The nearest-owner assignment step is radius-constrained to
 reduce spurious associations in crowded scenes, at the cost of occasionally
-losing ownership under heavy occlusion. Computationally, owner assignment is
-linear in the number of detected persons per frame, which is acceptable for the
-target deployment density. Overall, this context-centric design provides a
+losing ownership under heavy occlusion. Overall, this context-centric design provides a
 practical implementation of temporal reasoning while keeping state-transition
 logic modular and extensible.
 
@@ -521,6 +519,26 @@ This encompasses the first component of the abandonment logic, processing of
 each frame's metadata into a structured context and evaluating the state of
 each luggage item based on its current context and the defined criteria for
 each state's transitions.
+
+\subsubsection{Context Lifecycle Management}
+
+\subsubsection{Ownership Assignment and Re-identification}
+
+\subsubsection{Movement and Attendance Heuristics}
+
+\subsubsection{Consistency and Debouncing}
+
+\subsubsection{State Transition Invariants}
+
+\subsubsection{Alert Generation}
+
+\subsubsection{Computational Complexity and Runtime Cost}
+
+Computationally, owner assignment is
+linear in the number of detected persons per frame, which is acceptable for the
+target deployment density
+
+\subsubsection{Failure Modes and Mitigation Strategies}
 
 \subsection{Deployment on NVIDIA Jetson Orin Nano}
 
