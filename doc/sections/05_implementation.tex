@@ -489,6 +489,38 @@ The three states, \texttt{Attended}, \texttt{Unattended} and
 \texttt{Abandoned}, are derived from a single base class, and represent the
 different states of a luggage item. Each implements an \texttt{evaluate} method
 which, given a \texttt{LuggageContext} object, determines whether the luggage
-item meets the the criteria for transitioning states.
+item meets the the criteria for transitioning states. This object-oriented
+approach can be seen in the class diagram in
+figure~\ref{fig:states_class_diagram}.
+
+\begin{figure*}[!p]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/plantuml/states_class_diagram.png}
+	\caption{Class diagram representing the object-oriented implementation of the luggage state machine.}
+	\label{fig:states_class_diagram}
+\end{figure*}
+
+The \texttt{LuggageContext} implementation functions as a per-object memory
+that bridges frame-wise tracker outputs and state-based abandonment logic. For
+each tracked luggage ID, the context stores persistent attributes (owner
+hypothesis, last observed bounding box, and current state), then updates them
+once per frame using a fixed evaluation order: movement estimation from
+inter-frame box displacement, attendance estimation from owner proximity (or
+nearest-owner assignment when no owner is set), and delegation of transition
+decisions to the active state object. This ordering ensures deterministic
+behaviour and clear responsibility boundaries between context management and
+transition policy. The nearest-owner assignment step is radius-constrained to
+reduce spurious associations in crowded scenes, at the cost of occasionally
+losing ownership under heavy occlusion. Computationally, owner assignment is
+linear in the number of detected persons per frame, which is acceptable for the
+target deployment density. Overall, this context-centric design provides a
+practical implementation of temporal reasoning while keeping state-transition
+logic modular and extensible.
+
+This encompasses the first component of the abandonment logic, processing of
+each frame's metadata into a structured context and evaluating the state of
+each luggage item based on its current context and the defined criteria for
+each state's transitions.
 
 \subsection{Deployment on NVIDIA Jetson Orin Nano}
+
