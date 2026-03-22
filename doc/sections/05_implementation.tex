@@ -624,6 +624,44 @@ minimise missed detections in operational deployment.
 
 \subsubsection{State Transition Invariants}
 
+The state machine enforces a set of invariants to ensure deterministic and
+stable behaviour.
+
+\begin{itemize}
+	\item \textbf{Single Active State:} At any time, a luggage item has exactly
+	      one active state from the set \{\texttt{Attended}, \texttt{Unattended}, \texttt{Abandoned}\}.
+	      State updates are performed with explicit transitions, so simultaneous multi-state activation
+	      is not possible.
+	\item \textbf{Adjacency Invariance:} Transitions can only occur between adjacent states in the
+	      defined state transition graph (figure~\ref{fig:state_machine}). For example,
+	      no direct transition from \texttt{Attended} to \texttt{Abandoned} is possible without first
+	      passing through \texttt{Unattended}. This rule prevents immediate escalation to abandonment.
+	\item \textbf{Guard-conditioned Transitions:} Each transition is triggered by
+	      specific conditions evaluated in the context of the luggage item as seen defined in figure~\ref{fig:state_machine}.
+	\item \textbf{Recovery of Attendance:} Any evidence of re-attendance or movement whilst in an \texttt{Unattended}
+	      state immediately returns the object to \texttt{Attended}, resetting the abandonment timer.
+	\item \textbf{Persistence of Abandonment:} Once in the \texttt{Abandoned} state, the object remains
+	      abandoned.
+\end{itemize}
+
+The state transitions can be defined formally as follows: let $s_t$ be the
+state at frame $t$, $a_t$ attendance, $m_t$ movement, and $\Delta t_u$ the
+elapsed time since becoming unattended with timeout $T_a$.
+
+\begin{small}
+	\begin{equation}
+		s_{t+1} = \begin{cases}
+			\text{Unatt} & \text{if } s_t = \text{Att} \wedge \neg a_t \wedge \neg m_t               \\
+			\text{Att}   & \text{if } s_t = \text{Unatt} \wedge (a_t \vee m_t)                       \\
+			\text{Abnd}  & \begin{aligned}[t]
+				               \text{if } s_t & = \text{Unatt} \wedge \neg a_t \wedge \neg m_t \\[-0.5ex]
+				                              & \quad \wedge \Delta t_u \ge T_a
+			               \end{aligned} \\
+			\text{Abnd}  & \text{if } s_t = \text{Abnd}
+		\end{cases}
+	\end{equation}
+\end{small}
+
 \subsubsection{Alert Generation}
 
 \subsubsection{Failure Modes and Mitigation Strategies}
