@@ -537,7 +537,39 @@ without a previous owner hypothesis. For each luggage item, the nearest person
 is selected if and only if the center-point distance is within a fixed radius
 threshold defined in the configuration. Formally, for luggage box $b_l$, person
 boxes $\{b_p\}$, distance function $d$ and radius $R$, the assigned owner is:
-$$owner(l) = \arg\min_p{d(b_l, b_p) \text{ s.t. } d(b_l, b_p) \leq R}.$$
+$$owner(l) = \argmin_p{d(b_l, b_p) \text{ s.t. } d(b_l, b_p) \leq R}.$$ If no
+candidate satisfies the radius constraint, no owner is assigned. This
+conservative approach reduces spurious ownership in crowded scenes, whilst
+remaining computationally lightweight.
+
+Once assigned, owner identity is treated as persistent in the luggage context,
+being reused across subsequent frames as long as the owner track remains
+present and spatially consistent with the luggage. Attendance is then evaluated
+from the owner's proximity, while state transitions are handled independently
+by the finite-state machine. Separating assignment from transition policies
+keeps the system deterministic.
+
+Re-identification is implicitly handled by the tracking component of the
+pipeline, using a DeepSORT-based tracker that uses appearance embeddings and
+motion cues to maintain consitent track IDs for objects across frames. Within
+the application logic, re-identification is handled explicitly with methods
+that improve robustness, explored in
+section~\ref{sec:failure_modes_and_mitigation_strategies}.
+
+The main limitation of this approach is the reliance on a proximity-based
+heuristic, over an interaction-based one. In dense scenes the nearest person
+may not be the true owner, leading to misattribution and incorrect abandonment
+detections. Moreover, for scenes of varying depth, a fixed radius threshold may
+not be optimal, as the apparent size of objects and their spatial relationships
+can change with distance from the camera.
+
+% TODO: consider more robust ownership assignment heuristics, then write about them
+
+Per frame, ownership assignment has linear complexity in the number of detected
+people for each luggage item, giving an overall complexity of $O(n \cdot m)$
+for $n$ luggage items and $m$ people. This is acceptable for typical
+surveillance scenarios where the number of detected objects is relatively low,
+but may need to be optimised for very crowded scenes.
 
 \subsubsection{Movement and Attendance Heuristics}
 
@@ -548,6 +580,7 @@ $$owner(l) = \arg\min_p{d(b_l, b_p) \text{ s.t. } d(b_l, b_p) \leq R}.$$
 \subsubsection{Alert Generation}
 
 \subsubsection{Failure Modes and Mitigation Strategies}
+\label{sec:failure_modes_and_mitigation_strategies}
 
 \subsection{Deployment on NVIDIA Jetson Orin Nano}
 
