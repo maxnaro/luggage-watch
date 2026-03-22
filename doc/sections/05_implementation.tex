@@ -238,7 +238,7 @@ and ensures that the model generalises well to unseen data.
 
 Furthermore, data augmentation techniques were applied during training to
 improve the model's generalisation capabilities. These techniques included
-random horizontal flipping, scaling, and color jittering (all implemented
+random horizontal flipping, scaling, and colour jittering (all implemented
 natively by the \texttt{auto\_augment} feature of the framework), which help
 the model to learn invariant features and improve its robustness to variations
 in the input data. Data mosaicing, a technique where multiple images are
@@ -534,11 +534,15 @@ indefinite retention of contexts for objects that have left the scene.
 
 Ownership assignment is performed when a luggage item is first observed,
 without a previous owner hypothesis. For each luggage item, the nearest person
-is selected if and only if the center-point distance is within a fixed radius
+is selected if and only if the centre-point distance is within a fixed radius
 threshold defined in the configuration. Formally, for luggage box $b_l$, person
-boxes $\{b_p\}$, distance function $d$ and radius $R$, the assigned owner is:
-$$owner(l) = \argmin_p{d(b_l, b_p) \text{ s.t. } d(b_l, b_p) \leq R}.$$ If no
-candidate satisfies the radius constraint, no owner is assigned. This
+boxes $\{b_p\}$, $d(x, y)$ denoting the Euclidean distance between centre
+points of $x$ and $y$ and radius for attendance $R_a$, the assigned owner is:
+
+\begin{align}
+	\text{owner}(l) = \argmin_p{d(b_l, b_p) \text{ s.t. } d(b_l, b_p) \leq R_a}.
+\end{align}
+If no candidate satisfies the radius constraint, no owner is assigned. This
 conservative approach reduces spurious ownership in crowded scenes, whilst
 remaining computationally lightweight.
 
@@ -551,7 +555,7 @@ keeps the system deterministic.
 
 Re-identification is implicitly handled by the tracking component of the
 pipeline, using a DeepSORT-based tracker that uses appearance embeddings and
-motion cues to maintain consitent track IDs for objects across frames. Within
+motion cues to maintain consistent track IDs for objects across frames. Within
 the application logic, re-identification is handled explicitly with methods
 that improve robustness, explored in
 section~\ref{sec:failure_modes_and_mitigation_strategies}.
@@ -573,7 +577,50 @@ but may need to be optimised for very crowded scenes.
 
 \subsubsection{Movement and Attendance Heuristics}
 
-\subsubsection{Consistency and Debouncing}
+Movement detection is performed by computing the inter-frame displacement of
+each luggage bounding box's centre point. If the displacement exceeds a
+configurable threshold, the luggage item is classified as moving; otherwise it
+is classified as stationary. Formally, for luggage box $b_l^{t}$ at frame $t$
+and $b_l^{t-1}$ at frame $t-1$:
+\begin{align}
+	\texttt{is\_moving} = \begin{cases} \text{True} & \text{if } d(b_l^{t}, b_l^{t-1}) \ge \tau_m \\ \text{False} & \text{otherwise} \end{cases}
+\end{align}
+where $\tau_m$ is the movement threshold and $d(x, y)$ denotes the Euclidean
+distance between centre points of $x$ and $y$. This simple heuristic avoids
+overfitting to accumulated tracking noise and provides a clear empirical signal
+for distinguishing intentional motion from detection jitter. The threshold is
+typically set proportional to the object scale to maintain robustness across
+different camera resolutions and zoom levels.
+
+Attendance is determined by evaluating spatial proximity between the luggage
+and its assigned owner. If an owner has been assigned and is currently tracked,
+attendance is True if the centre-to-centre distance remains within a
+configurable attendance radius; otherwise it is False:
+\begin{align}
+	\texttt{is\_attended} =
+	\begin{cases}
+		d(b_l, b_p^{\text{owner}}) \le R_a & \begin{tabular}{@{}l@{}}if\\owner is\\assigned\\and\\visible\end{tabular} \\[2.5ex]
+		\text{False}                       & \text{otherwise}
+	\end{cases}
+\end{align}
+where $R_a$ is the attendance radius and $b_p^{\text{owner}}$ is the owner's
+bounding box. When no owner has been assigned, the owner-assignment step
+implicitly performs an attendance check as part of determining whether to
+assign a new owner; if no person is within the attendance radius, the luggage
+is considered unattended. By decoupling movement and attendance signals this
+way, the state machine can distinguish between transient motion (wind,
+tracking artifacts, gentle nudging) and intentional carrying or retrieval
+by an owner.
+
+The parameters $\tau_m$ and $R_a$ are configuration constants that require
+tuning based on expected scene characteristics. A strict (small) movement
+threshold increases sensitivity to abandonment but risks false positives from
+environmental motion or gradual settling. A lax threshold may miss subtle
+repositioning. Similarly, a tight attendance radius prioritises accuracy but
+may cause rapid owner loss under occlusion or crowding, while a generous radius
+tolerates dense scenarios at the cost of potential ownership misattribution.
+The typical values used in development prioritise recall over precision to
+minimise missed detections in operational deployment.
 
 \subsubsection{State Transition Invariants}
 
