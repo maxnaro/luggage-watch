@@ -695,6 +695,46 @@ output. An extension is to trigger one-shot events on state transitions, which
 could be consumed by external monitoring systems or operator dashboards for
 enhanced situational awareness and response coordination.
 
+\subsubsection{Computational Complexity and Runtime Cost}
+
+The abandonment logic is designed to remain computationally lightweight on edge
+hardware by combining constant-time geometric checks with bounded linear scans.
+Let $L$ be the number of tracked luggage items, $P$ the number of tracked
+people, $T$ the number of active luggage contexts, and $O$ the total number of
+tracked objects in a frame.
+
+In the processing stage, person bounding boxes are first materialised in
+$O(P)$. For each luggage item, context update combines (i) movement and
+attendance checks that are constant-time when an owner hypothesis already
+exists, and (ii) nearest-owner assignment that is linear in people in the
+worst case, giving $O(P)$ per unassigned luggage item. Tracker-flip handling
+introduces an additional scan over existing contexts, giving up to $O(T)$ per
+luggage item in the worst case. Context garbage collection for lost IDs is
+linear in retained contexts, $O(T)$.
+
+Combining these terms gives a worst-case per-frame bound for the abandonment
+logic of:
+\begin{equation}
+\mathcal{O}(LT + LP + P + T)
+\end{equation}
+which is commonly simplified to $\mathcal{O}(L(T+P))$ for moderate-to-large
+object counts. In practical steady-state operation, average cost is typically
+lower because many luggage items retain a valid owner and therefore bypass the
+full nearest-neighbour scan.
+
+The overlay stage remains linear in frame object count. Constructing the person
+centre map is $O(P)$, iterating tracked objects for text/box updates is $O(O)$,
+and ownership line/circle drawing is $O(1)$ per attended luggage item (with
+bounded metadata pool management). Memory complexity is dominated by persistent
+context storage, $O(T)$, plus per-frame temporary maps $O(P+L)$.
+
+One implementation detail affects realised runtime: frame-level processing and
+overlay updates are currently called from inside the object-iteration loop in
+the probe callback. This multiplies effective work within a frame and increases
+constant factors compared with a single invocation per frame. Refactoring those
+calls to execute once after object collection would preserve the asymptotic
+bound while reducing practical runtime overhead.
+
 \subsubsection{Failure Modes and Mitigation Strategies}
 \label{sec:failure_modes_and_mitigation_strategies}
 
