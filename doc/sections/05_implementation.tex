@@ -623,6 +623,7 @@ The typical values used in development prioritise recall over precision to
 minimise missed detections in operational deployment.
 
 \subsubsection{State Transition Invariants}
+\label{sec:state_transition_invariants}
 
 The state machine enforces a set of invariants to ensure deterministic and
 stable behaviour.
@@ -672,8 +673,81 @@ order to visualise the state of each luggage item on the output video stream.
 This is implemented across \texttt{probes.py}, \texttt{process.py}, and
 \texttt{overlay.py}.
 
+Alerts are derived from the finite-state machine output, rather than a separate
+classification head. In practice, the current luggage state acts as the alert
+level: \texttt{Attended} corresponds to no alert, \texttt{Unattended}
+corresponds to a warning, and \texttt{Abandoned} corresponds to an actionable
+alert. The OSD encodes this mapping through colour-coding and text annotations,
+with attended luggage outlined in green, unattended luggage outlined in yellow,
+and abandoned luggage outlined in red. Additionally, the OSD displays the
+ownership radius and a straight line ``tether'' connecting the luggage to its
+assigned owner when attended, providing a visual cue of the ownership
+relationship and proximity.
+
+Because alert emission depends on the guards defined in the state machine (see
+section~\ref{sec:state_transition_invariants}), brief detector noise doesn't
+immediately escalate to critical alerts.
+
+The current implementation prioritises immediate visual alerting through the
+OSD. It does not yet emit persistent external alerts (e.g., via message bus
+events, structured logs, or notification webhooks) beyond development console
+output. An extension is to trigger one-shot events on state transitions, which
+could be consumed by external monitoring systems or operator dashboards for
+enhanced situational awareness and response coordination.
+
 \subsubsection{Failure Modes and Mitigation Strategies}
 \label{sec:failure_modes_and_mitigation_strategies}
 
+The main failure modes of the abandonment detection logic include: tracker ID
+flips, ownership misattribution, and tracker ID loss.
+
+\textbf{Tracker ID flips:} A common failure mode in crowded scenes is when the
+tracker assigns a new ID to the same physical luggage item after occlusion or
+brief overlap. Without mitigation, this would reset the luggage context and
+could cause premature or missed abandonment decisions. To reduce this, the
+processing stage performs spatial continuity checks when a new luggage ID is
+observed: if the new box is within a tolerance radius of a recently seen
+context, the existing context is transferred to the new ID. This preserves
+state, owner hypothesis, and temporal history across ID changes.
+
+\textbf{Ownership misattribution:} Ownership is inferred using nearest-person
+proximity with a fixed radius gate. In dense scenes this can assign the wrong
+owner, especially when multiple people are co-located or crossing paths near
+luggage. The current mitigation is conservative gating: ownership is only
+assigned when candidates are sufficiently close, and owner identity is then
+kept persistent rather than re-selected every frame. This reduces rapid owner
+switching, but can still fail under prolonged crowding or strong perspective
+effects.
+
+\textbf{Temporary tracker loss:} Detector misses, partial occlusion, and motion
+blur can cause short gaps in tracking output. If contexts were removed
+immediately, these gaps would fragment the temporal history and increase false
+alerts. The implementation therefore uses time-to-live (TTL) context retention,
+where missing IDs are only removed after a grace period. This supports
+re-association after short dropouts while preventing unbounded growth of stale
+contexts.
+
+\textbf{Boundary sensitivity of fixed thresholds:} Attendance, movement, and
+tracker-flip association all rely on pixel thresholds. Scenes with varying
+depth, camera angle, or frame resolution can shift object scale and therefore
+change the effective meaning of these thresholds. The practical mitigation is
+calibration by scenario (e.g., concourse versus corridor footage) and
+prioritisation of recall-oriented settings during safety-critical testing.
+
+\textbf{Visual ambiguity for operators:} Even when state estimation is correct,
+operators may misinterpret why a state was assigned if overlays are sparse. To
+improve explainability, the OSD shows object ID, state label, colour-coded box
+severity, and (for attended luggage) a line plus ownership radius overlay.
+These cues make the underlying decision basis more transparent during live
+monitoring.
+
+Despite these mitigations, limitations remain. The current system does not use
+interaction modelling (for example, hand-object contact), depth-aware distance
+normalisation, or global multi-frame assignment optimisation. These are
+promising directions for future work to further reduce false positives and
+identity drift in highly crowded scenes.
+
 \subsection{Deployment on NVIDIA Jetson Orin Nano}
+
+% TODO: write about the actual deployment process.
 
