@@ -1,0 +1,81 @@
+@startuml states_class_diagram
+title Luggage State Machine Class Diagram
+
+skinparam classAttributeIconSize 0
+
+abstract class State {
+	{abstract} +name: str
+	+__eq__(other: str)
+	{abstract} +evaluate(context: LuggageContext, is_attended: bool, is_moving: bool): None
+}
+
+class Attended {
+	+name: str
+	+evaluate(context: LuggageContext, is_attended: bool, is_moving: bool): None
+}
+
+class Unattended {
+	-_abandonment_timeout: float
+	-_entered_at: float
+	+name: str
+	+elapsed_time: float
+	+evaluate(context: LuggageContext, is_attended: bool, is_moving: bool): None
+}
+
+class Abandoned {
+	+name: str
+	+evaluate(context: LuggageContext, is_attended: bool, is_moving: bool): None
+}
+
+class LuggageContext {
+	+id: int
+	+owner_id: int | None
+	+state: State
+	+last_bbox: BBox | None
+	+last_seen: float
+	+transition_to(new_state: State): None
+	+update(luggage_bbox: BBox, person_bboxes: dict[int, BBox]): dict[str, str]
+	{static} -_get_nearest_person_id(luggage_bbox: BBox, person_bboxes: dict[int, BBox]): int | None
+}
+
+class NvOSD_RectParams
+
+class BBox {
+	{static} <<frozen dataclass>>
+	+x: float
+	+y: float
+	+width: float
+	+height: float
+	+__init__(rect_params: NvOSD_RectParams)
+	+centre: tuple[float, float]
+	+distance_to(other: BBox): float
+}
+
+State <|-- Attended
+State <|-- Unattended
+State <|-- Abandoned
+
+LuggageContext *-- State : owns current state
+LuggageContext ..> Attended : default_factory
+LuggageContext ..> State : evaluate(...)
+State ..> LuggageContext : transition_to(...)
+LuggageContext ..> BBox : computes distance
+BBox ..> NvOSD_RectParams : constructed from
+
+Attended ..> Unattended : transition_to()
+Unattended ..> Attended : transition_to()
+Unattended ..> Abandoned : transition_to()
+
+note right of LuggageContext
+  update(...) is called once per frame.
+  It computes is_moving and is_attended,
+  then delegates transition logic to state.evaluate(...).
+end note
+
+note right of BBox
+	centre returns the bbox midpoint.
+	distance_to(...) computes Euclidean distance
+	between centres of two bounding boxes.
+end note
+
+@enduml

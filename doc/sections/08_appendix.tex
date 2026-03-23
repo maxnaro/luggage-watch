@@ -1,0 +1,66 @@
+\section{Appendix}
+
+\subsection{Training Hardware}
+\label{sec:training_hardware}
+
+Training was performed on a desktop system with the specifications outlined in
+Table~\ref{tab:training_hardware}.
+
+\begin{table*}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Component} & \textbf{Specification}                         \\
+		\midrule
+		CPU                & AMD Ryzen 9 7800X3D 8-core 16-thread processor \\
+		\addlinespace
+		GPU                & NVIDIA GeForce RTX 4070 Super 12GB             \\
+		\addlinespace
+		RAM                & 32GB DDR5 6000MT/s                             \\
+		\addlinespace
+		Storage            & 1TB NVMe SSD                                   \\
+		\addlinespace
+		Operating System   & Windows 11                                     \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Training hardware specifications.}
+	\label{tab:training_hardware}
+\end{table*}
+
+\subsection{Training Configuration}
+\label{sec:config}
+
+The training and export configuration for the primary detector model is shown
+in listing~\ref{lst:config}.
+
+\lstinputlisting[
+	language=json,
+	caption={YOLO training configuration file.},
+	label={lst:config}
+]{../training/source/config.json}
+
+\subsection{Pipeline Configuration}
+
+The configuration of the DeepStream pipeline is defined programmatically in
+lines 10-19 of \texttt{builder.py} shown in listing~\ref{lst:pipeline}.
+
+\lstinputlisting[
+	style=pythonstyle,
+	caption={DeepStream pipeline configuration.},
+	label={lst:pipeline},
+	firstline=7,
+	lastline=19
+]{../inference/source/pipeline/builder.py}
+
+\subsection{Configuration for Primary Detector}
+
+The configuration file for the primary inference model is shown in
+listing~\ref{lst:primary_config}.
+
+\lstinputlisting[
+	language=deepstream,
+	caption={Primary detector configuration.},
+	label={lst:primary_config}
+]{../inference/config/config_infer_primary.txt}
+

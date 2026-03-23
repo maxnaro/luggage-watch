@@ -1,0 +1,43 @@
+\lstdefinelanguage{deepstream}{
+numbers=left,
+numberstyle=\small,
+frame=single,
+rulecolor=\color{black},
+showspaces=false,
+showstringspaces=false,
+showtabs=false,
+breaklines=true,
+postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{gray}\hookrightarrow\space}},
+breakatwhitespace=true,
+basicstyle=\ttfamily\small,
+upquote=true,
+sensitive=true,
+alsoletter={-},
+morestring=[b]",
+morestring=[b]',
+stringstyle=\color{string},
+morecomment=[l]{\#},
+morecomment=[l]{;},
+commentstyle=\color{comment},
+moredelim=[s][\color{delim}\bfseries]{[}{]},
+emph={
+		gpu-id,net-scale-factor,model-color-format,onnx-file,model-engine-file,labelfile-path,
+		batch-size,network-mode,num-detected-classes,interval,gie-unique-id,process-mode,
+		network-type,cluster-mode,maintain-aspect-ratio,symmetric-padding,parse-bbox-func-name,
+		custom-lib-path,engine-create-func-name,nms-iou-threshold,pre-cluster-threshold,topk
+	},
+emphstyle=\color{key},
+literate=
+	*{0}{{{\color{numb}0}}}{1}
+	{1}{{{\color{numb}1}}}{1}
+	{2}{{{\color{numb}2}}}{1}
+	{3}{{{\color{numb}3}}}{1}
+	{4}{{{\color{numb}4}}}{1}
+	{5}{{{\color{numb}5}}}{1}
+	{6}{{{\color{numb}6}}}{1}
+	{7}{{{\color{numb}7}}}{1}
+	{8}{{{\color{numb}8}}}{1}
+	{9}{{{\color{numb}9}}}{1}
+	{.}{{{\color{numb}.}}}{1}
+	{=}{{{\color{delim}=}}}{1}
+}
