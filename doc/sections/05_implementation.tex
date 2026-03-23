@@ -7,7 +7,7 @@
 The training dataset for the object detection model was sourced from the
 Microsoft COCO dataset \citep{lin2014microsoft}. As mentioned prior, the COCO
 dataset is a large-scale source of over $200,000$ labelled images across 80
-object categories. The entirety of the dataset would lead to rundandancy with a
+object categories. The entirety of the dataset would lead to redundancy with a
 majority of classes being out of scope for the target application. Therefore, a
 subset of the COCO dataset was created, containing only images including the
 \texttt{person}, \texttt{backpack}, \texttt{handbag} and \texttt{suitcase}
@@ -36,7 +36,7 @@ class, and oversample specific classes (\ref{sec:model_training_optimisation})
 to create a more varied and proportionate training dataset.
 
 Constructing the dataset programmatically allowed for a specific and
-reproducable balance between the detected classes, which is crucial in the
+reproducible balance between the detected classes, which is crucial in the
 context of abandoned luggage detection, where smaller objects such as bags may
 be underrepresented in typical dataset. The target \texttt{person} budget was
 constrained by $N_{\text{person},\text{allowed}}=r\cdot N_{\text{luggage}}$,
@@ -65,7 +65,7 @@ applied is shown in figures~\ref{fig:dataset_class_distribution_before} and
 	\label{fig:dataset_class_distribution_after}
 \end{figure*}
 
-Oversampling was applied to the consituent classes of the \texttt{luggage}
+Oversampling was applied to the constituent classes of the \texttt{luggage}
 class, which inferred upon review of the model's performance. This was
 implemented by duplicating images containing the underrepresented classes,
 defined by a parameter assigning weights to each class e.g.,
@@ -154,7 +154,7 @@ The training script was implemented using Ultralytics' YOLO training framework,
 which offered a high-level API for training YOLO models, built-in support for
 various optimisers such as AdamW \citep{loschilov2017fixing}, and an automatic
 optimiser which chooses based on other configuration parameters; data
-augmentation techniques, and easy integration with the procurred dataset. The
+augmentation techniques, and easy integration with the procured dataset. The
 training script was used in conjunction with a custom configuration file
 specifying the parameters of the training process as seen in
 listing~\ref{lst:config}.
@@ -348,7 +348,7 @@ figure~\ref{fig:pipeline}.
 
 Iterative development and testing of the pipeline was performed using
 pre-recorded video sequences from the procured suspicious luggage dataset,
-which which allowed for debugging of the pipeline's functionality, the
+which allowed for debugging of the pipeline's functionality, the
 generation of TensorRT engine files, and validation of inference performance on
 the target hardware before implementing the rest of the system's logic and
 deployment.
@@ -467,7 +467,7 @@ each frame's tracking outputs, iterating through the detected luggage items and
 determining their environmental contexts; (ii) maintaining the state of each
 luggage item across frame, by retaining a context object for each item -
 tracking its ID, the ID of its owner (if any), its state (e.g., attended,
-unatteded, abandoned) , its last bounding box, and the (monotonically
+unattended, abandoned) , its last bounding box, and the (monotonically
 increasing) timestamp of its last update.
 
 \subsubsection{Processing Tracking Outputs}
@@ -489,7 +489,7 @@ The three states, \texttt{Attended}, \texttt{Unattended} and
 \texttt{Abandoned}, are derived from a single base class, and represent the
 different states of a luggage item. Each implements an \texttt{evaluate} method
 which, given a \texttt{LuggageContext} object, determines whether the luggage
-item meets the the criteria for transitioning states. This object-oriented
+item meets the criteria for transitioning states. This object-oriented
 approach can be seen in the class diagram in
 figure~\ref{fig:states_class_diagram}.
 
