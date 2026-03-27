@@ -64,3 +64,34 @@ listing~\ref{lst:primary_config}.
 	label={lst:primary_config}
 ]{../inference/config/config_infer_primary.txt}
 
+\subsection{Example Ground Truth Annotation}
+
+An example of the ground truth annotation format is shown in
+listing~\ref{lst:annotation_format}. The script for producing these annotations
+is available in the GitHub repository,
+\url{https://github.com/maxnaro/ABODA/blob/master/source/annotate.py}, a fork
+of the original ABODA repository.
+
+\begin{lstlisting}[
+	language=json,
+	caption={Ground truth annotation format example.},
+	label={lst:annotation_format}
+]
+{
+	"video_1.mp4": {
+		"has_abandonment": true,
+		"true_abandon_frame": 850,
+		"bag_roi": [100, 400, 50, 60] // [x, y, width, height]
+		"radius_px": 200,
+		"threshold_s": 15
+	},
+	"video_2_negative.mp4": {
+		"has_abandonment": false,
+		"true_abandon_frame": null,
+		"bag_roi": [],
+		"radius_px": 200,
+		"threshold_s": 15
+	}
+}
+\end{lstlisting}
+

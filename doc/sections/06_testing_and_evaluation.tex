@@ -11,3 +11,50 @@ single temporal anchor (the frame of abandonment) and a spatial region of
 interest (ROI). The pipeline was evaluated using a temporal tolerance of $\pm
 	90$ frames ($\approx 3$ seconds depending on the frame rate) to account for
 manual annotation variability.
+
+\subsubsection{Ground Truth Annotation Methodology}
+
+Due to the temporal nature of abandoned luggage, traditional frame-by-frame
+bounding box annotations were impractical. Instead, the ground truth was
+established using a single-point event anchoring method.
+
+For each video in the dataset, the annotation process followed these steps:
+
+\begin{enumerate}
+	\item \textbf{Scene Triage and Parameter Definition}
+	      \begin{itemize}
+		      \item Reviewal of the entire video sequence to determine if a genuine abandonment
+		            event has occurred, setting the \texttt{has\_abandonment} flag accordingly.
+		      \item Based on the camera's perspective, focal length, and requirements of the
+		            scenario, definition of the spatial and temporal limits for that specific
+		            video; i.e., determining the radius of ownership and the temporal window for
+		            abandonment detection as \texttt{radius\_px} and \texttt{threshold\_s}
+		            respectively.
+	      \end{itemize}
+	\item \textbf{Event Anchoring}
+	      \begin{itemize}
+		      \item If an abandonment event is identified, the annotator scrubs through the video
+		            to identify the exact moment the bag transitions from being unattended to being
+		            abandoned.
+		      \item Calculate the frame number corresponding to this moment, by determining where
+		            the owner breaches the ownership radius, and then moving forward in time by the
+		            defined threshold to anchor the event.
+		      \item This frame number is then recorded as the \texttt{true\_abandon\_frame}. This
+		            metric acts as the temporal anchor against which the pipeline's detection
+		            latency is measured.
+	      \end{itemize}
+	\item \textbf{Negative Sample Logging}
+	      \begin{itemize}
+		      \item If the video contains no abandonment event (e.g., a bag is left unattended but
+		            the owner returns within the defined temporal threshold), the video is tagged
+		            with \texttt{has\_abandonment} set to \texttt{false}. The frame and ROI fields
+		            are left null.
+		      \item Negative samples are useful for testing the pipeline's resilience against false
+		            positives.
+	      \end{itemize}
+\end{enumerate}
+
+Annotations are saved in a structured \texttt{JSON} format
+(listing~\ref{lst:annotation_format}), producing a comprehensive grount truth
+dataset that is strictly tied to the logic of the abandonment detection
+pipeline.
