@@ -55,6 +55,185 @@ For each video in the dataset, the annotation process followed these steps:
 \end{enumerate}
 
 Annotations are saved in a structured \texttt{JSON} format
-(listing~\ref{lst:annotation_format}), producing a comprehensive grount truth
+(listing~\ref{lst:annotation_format}), producing a comprehensive ground truth
 dataset that is strictly tied to the logic of the abandonment detection
 pipeline.
+
+\subsubsection{Annotation Script}
+\label{sec:annotation_script}
+
+To facilitate the annotation process, a custom script was developed. This
+script provided a user-friendly interface for annotators to review video
+footage, define spatial and temporal parameters and record the necessary
+information for each video. This was implemented using Python and OpenCV,
+allowing for video playback control and scrubbing. An example of the script's
+interface is shown in figure~\ref{fig:annotation_script_screenshot}.
+
+\begin{figure*}[!htb]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/annotation_script_screenshot.png}
+	\caption{Screenshot of the annotation script interface, showing video playback controls and parameter input fields.}
+	\label{fig:annotation_script_screenshot}
+\end{figure*}
+
+\subsubsection{Datasets Used for Validation}
+
+Annotations were performed on the eleven examples from the ABODA dataset
+mentioned in section~\ref{sec:suspicious_luggage_dataset}. These examples, the
+ground truth annotations derived from them, and the annotation script
+(section~\ref{sec:annotation_script}) can be found in a forked repository at
+\url{https://github.com/maxnaro/ABODA}. The resulting annotated dataset
+consisted of eleven samples with one or more abandonment events.
+
+% Some ABODA results below
+
+% ============================================================
+% EVALUATION SUMMARY
+% ============================================================
+%   video1.avi[event_0]      TP  frame_err=134  IoU=0.560
+%   video10.avi[event_0]     TP  frame_err=5  IoU=0.715
+%   video10.avi[event_1]     TP  frame_err=5  IoU=0.676
+%   video10.avi[false_positive] FP  (false alarm at frame 1055)
+%   video11.avi[event_0]     FP+FN  frame_err=1059 (outside tolerance)
+%   video11.avi[false_positive] FP  (false alarm at frame 3080)
+%   video11.avi[false_positive] FP  (false alarm at frame 3420)
+%   video2.avi[event_0]      FP+FN  frame_err=1906 (outside tolerance)
+%   video3.avi[event_0]      TP  frame_err=77  IoU=0.486
+%   video3.avi[false_positive] FP  (false alarm at frame 809)
+%   video4.avi[event_0]      TP  frame_err=177  IoU=0.661
+%   video5.avi[event_0]      FP+FN  frame_err=484 (outside tolerance)
+%   video5.avi[false_positive] FP  (false alarm at frame 739)
+%   video5.avi[false_positive] FP  (false alarm at frame 879)
+%   video5.avi[false_positive] FP  (false alarm at frame 1037)
+%   video5.avi[false_positive] FP  (false alarm at frame 1248)
+%   video6.avi[event_0]      TP  frame_err=35  IoU=0.501
+%   video6.avi[false_positive] FP  (false alarm at frame 3904)
+%   video6.avi[false_positive] FP  (false alarm at frame 6306)
+%   video7.avi[event_0]      TP  frame_err=5  IoU=0.569
+%   video7.avi[event_1]      TP  frame_err=58  IoU=0.627
+%   video7.avi[false_positive] FP  (false alarm at frame 3472)
+%   video8.avi[event_0]      TP  frame_err=5  IoU=0.742
+%   video8.avi[event_1]      FP+FN  frame_err=804 (outside tolerance)
+%   video8.avi[false_positive] FP  (false alarm at frame 1665)
+%   video9.avi[event_0]      TP  frame_err=5  IoU=0.684
+%   video9.avi[event_1]      TP  frame_err=13  IoU=0.510
+%   video9.avi[false_positive] FP  (false alarm at frame 898)
+%   video9.avi[false_positive] FP  (false alarm at frame 1102)
+% ------------------------------------------------------------
+%   TP=11  FP=18  FN=4  TN=0
+%   Precision:        0.379
+%   Recall:           0.733
+%   F1:               0.500
+%   Mean frame error: 47.2
+%   Mean IoU:         0.612
+% ============================================================
+
+% ============================================================
+% EVALUATION SUMMARY
+% ============================================================
+%   video1.avi[event_0]      TP  frame_err=42  IoU=0.559
+%   video10.avi[event_0]     TP  frame_err=5  IoU=0.715
+%   video10.avi[event_1]     TP  frame_err=70  IoU=0.668
+%   video10.avi[false_positive] FP  (false alarm at frame 1056)
+%   video11.avi[event_0]     FP+FN  frame_err=2130 (outside tolerance)
+%   video11.avi[false_positive] FP  (false alarm at frame 3080)
+%   video11.avi[false_positive] FP  (false alarm at frame 3096)
+%   video11.avi[false_positive] FP  (false alarm at frame 3584)
+%   video11.avi[false_positive] FP  (false alarm at frame 4021)
+%   video2.avi[event_0]      FN  (missed)
+%   video3.avi[event_0]      FN  (missed)
+%   video4.avi[event_0]      TP  frame_err=101  IoU=0.667
+%   video5.avi[event_0]      TP  frame_err=106  IoU=0.352
+%   video6.avi[event_0]      TP  frame_err=73  IoU=0.464
+%   video6.avi[false_positive] FP  (false alarm at frame 6150)
+%   video6.avi[false_positive] FP  (false alarm at frame 6240)
+%   video6.avi[false_positive] FP  (false alarm at frame 6294)
+%   video7.avi[event_0]      TP  frame_err=5  IoU=0.569
+%   video7.avi[event_1]      TP  frame_err=17  IoU=0.629
+%   video7.avi[false_positive] FP  (false alarm at frame 3473)
+%   video8.avi[event_0]      TP  frame_err=5  IoU=0.742
+%   video8.avi[event_1]      TP  frame_err=29  IoU=0.778
+%   video8.avi[false_positive] FP  (false alarm at frame 1665)
+%   video8.avi[false_positive] FP  (false alarm at frame 3408)
+%   video9.avi[event_0]      TP  frame_err=5  IoU=0.684
+%   video9.avi[event_1]      TP  frame_err=84  IoU=0.513
+%   video9.avi[false_positive] FP  (false alarm at frame 903)
+%   video9.avi[false_positive] FP  (false alarm at frame 1105)
+% ------------------------------------------------------------
+%   TP=12  FP=14  FN=3  TN=0
+%   Precision:        0.462
+%   Recall:           0.800
+%   F1:               0.585
+%   Mean frame error: 45.2
+%   Mean IoU:         0.612
+% ============================================================
+
+% ============================================================
+% EVALUATION SUMMARY
+% ============================================================
+%   video1.avi[event_0]      TP  frame_err=42  IoU=0.559
+%   video10.avi[event_0]     TP  frame_err=5  IoU=0.715
+%   video10.avi[event_1]     TP  frame_err=70  IoU=0.668
+%   video10.avi[false_positive] FP  (false alarm at frame 1056)
+%   video11.avi[event_0]     FP+FN  frame_err=2130 (outside tolerance)
+%   video11.avi[false_positive] FP  (false alarm at frame 3080)
+%   video11.avi[false_positive] FP  (false alarm at frame 3584)
+%   video2.avi[event_0]      FN  (missed)
+%   video3.avi[event_0]      FN  (missed)
+%   video4.avi[event_0]      TP  frame_err=102  IoU=0.661
+%   video5.avi[event_0]      TP  frame_err=106  IoU=0.352
+%   video6.avi[event_0]      TP  frame_err=74  IoU=0.466
+%   video7.avi[event_0]      TP  frame_err=5  IoU=0.569
+%   video7.avi[event_1]      TP  frame_err=17  IoU=0.629
+%   video7.avi[false_positive] FP  (false alarm at frame 3473)
+%   video8.avi[event_0]      TP  frame_err=5  IoU=0.742
+%   video8.avi[event_1]      TP  frame_err=29  IoU=0.778
+%   video8.avi[false_positive] FP  (false alarm at frame 1665)
+%   video8.avi[false_positive] FP  (false alarm at frame 3408)
+%   video9.avi[event_0]      TP  frame_err=6  IoU=0.679
+%   video9.avi[event_1]      TP  frame_err=84  IoU=0.513
+%   video9.avi[false_positive] FP  (false alarm at frame 1105)
+% ------------------------------------------------------------
+%   TP=12  FP=8  FN=3  TN=0
+%   Precision:        0.600
+%   Recall:           0.800
+%   F1:               0.686
+%   Mean frame error: 45.4
+%   Mean IoU:         0.611
+% ============================================================
+
+% ============================================================
+% EVALUATION SUMMARY
+% ============================================================
+%   video1.avi[event_0]      TP  frame_err=61  IoU=0.565
+%   video10.avi[event_0]     TP  frame_err=5  IoU=0.715
+%   video10.avi[event_1]     TP  frame_err=70  IoU=0.668
+%   video10.avi[false_positive] FP  (false alarm at frame 1056)
+%   video11.avi[event_0]     TP  frame_err=156  IoU=0.656
+%   video11.avi[false_positive] FP  (false alarm at frame 3080)
+%   video11.avi[false_positive] FP  (false alarm at frame 3584)
+%   video2.avi[event_0]      FN  (missed)
+%   video3.avi[event_0]      TP  frame_err=3  IoU=0.479
+%   video4.avi[event_0]      TP  frame_err=102  IoU=0.661
+%   video5.avi[event_0]      TP  frame_err=46  IoU=0.344
+%   video6.avi[event_0]      TP  frame_err=38  IoU=0.503
+%   video6.avi[false_positive] FP  (false alarm at frame 3979)
+%   video6.avi[false_positive] FP  (false alarm at frame 4042)
+%   video7.avi[event_0]      TP  frame_err=5  IoU=0.569
+%   video7.avi[event_1]      TP  frame_err=17  IoU=0.629
+%   video7.avi[false_positive] FP  (false alarm at frame 3473)
+%   video8.avi[event_0]      TP  frame_err=6  IoU=0.732
+%   video8.avi[event_1]      TP  frame_err=13  IoU=0.769
+%   video8.avi[false_positive] FP  (false alarm at frame 1665)
+%   video8.avi[false_positive] FP  (false alarm at frame 3408)
+%   video9.avi[event_0]      TP  frame_err=5  IoU=0.684
+%   video9.avi[event_1]      TP  frame_err=60  IoU=0.515
+%   video9.avi[false_positive] FP  (false alarm at frame 1105)
+% ------------------------------------------------------------
+%   TP=14  FP=9  FN=1  TN=0
+%   Precision:        0.609
+%   Recall:           0.933
+%   F1:               0.737
+%   Mean frame error: 41.9
+%   Mean IoU:         0.606
+% ============================================================
