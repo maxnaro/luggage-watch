@@ -141,6 +141,15 @@ prevalence in the literature and my efforts to contact the authors. The
 utilisation of AVSS-2007 was restricted to a single example video sequence,
 which was used in conjunction with the aforementioned procured datasets.
 
+This left the evaluation of the end-to-end pipeline to be based on a
+combination of two datasets: (i) the ABODA dataset, which provides a variety of
+scenarios that mainly vary in environmental factors such as lighting, camera
+angles, and crowd density; and (ii) the IITP20 dataset, which covers the gaps
+in the ABODA dataset by providing challenging scenarios in terms of occlusion
+and edge cases of abandonment. Since neither dataset contains frame-level
+annotations of ground-truth labels, manual review of the videos was used to
+determine the expected behaviour of the system for each scenario
+(section~\ref{sec:ground_truth_annotation_methodology}).
 \subsection{Model Training and Optimisation}
 \label{sec:model_training_optimisation}
 
