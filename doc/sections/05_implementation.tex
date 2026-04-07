@@ -364,16 +364,14 @@ testing process. The configuration file can be found in the appendix
 \begin{itemize}
 	\item \textbf{Inference Interval and Real-time Tradeoff:} The
 	      \texttt{interval} parameter, which specifies the number
-	      of frames to skip between inferences, was set to $3$
-	      to balance the tradeoff between inference performance and real-time
-	      processing. Using a lower interval (e.g., $1$) would allow for more
-	      frequent detections but in practice led to increased latency and
-	      reduced frame rates, while a higher interval reduced the computational
-	      load at the expense of missing brief events. Ultimately, an interval
-	      of $3$ was found to provide a good balance for the target application,
-	      as the temporal logic of the system is designed to detect abandoned luggage over a
-	      span of several seconds, so missing detections in a few frames does
-	      not significantly impact the overall performance.
+	      of frames to skip between inferences. The final iteration
+	      used a value of \texttt{0} to perform inference on every frame,
+	      which is crucial for maintaining accurate tracking inputs and
+	      ensuring the temporal logic of the system can function correctly. However,
+	      previous iterations used higher values in combination with larger detection models,
+	      this allowed for a trade-off between inference performance and real-time processing.
+	      The final configuration was chosen to ensure the system can operate in real-time on
+	      the target hardware, while still providing accurate and timely detections for the abandonment logic.
 	\item \textbf{Aspect Ratio and Padding Behaviour:} The \texttt{maintain-aspect-ratio}
 	      parameter was set to \texttt{1} (true) to ensure that the aspect ratio of the input
 	      is maintained during resizing, along with the \texttt{symmetric-padding} being set
@@ -460,15 +458,52 @@ splitting the tracking outputs (objects and IDs) into separate lists for person
 and luggage classes, piping that information into the processing function,
 where the OSD metadata and final outputs are produced.
 
+\paragraph{Frame PTS timing.}
+
+Temporal calculations throughout the abandonment logic (timers, grace periods,
+TTLs) accept an optional timestamp parameter. When processing live camera
+feeds, the system's monotonic clock (\texttt{time.monotonic}) provides a
+suitable time base, as wall-clock progression and video progression are
+inherently synchronised. However, when processing pre-recorded video in an
+asynchronous testing scenario can cause wall-clock time to diverge from the
+actual video timeline significantly. To support both modes, the probe extracts
+the GStreamer buffer presentation timestamp (\texttt{buf\_pts}) from each
+frame's metadata and converts it to seconds. This timestamp reflects the
+position in the media stream, ensuring that temporal thresholds behave
+consistently when replaying recorded footage. When \texttt{buf\_pts} is
+unavailable, the system falls back to the monotonic clock, which remains the
+natural time source for live input.
+
+\paragraph{Headless mode.}
+
+The pipeline builder supports a \texttt{--headless} command-line flag that
+replaces the display sink (\texttt{nveglglessink}) with a \texttt{fakesink}.
+This allows the pipeline to run on systems without a display server (e.g., SSH
+sessions, CI environments, automated evaluation runs). The builder also
+auto-detects the absence of a display server via the \texttt{DISPLAY} and
+\texttt{WAYLAND\_DISPLAY} environment variables, falling back to
+\texttt{fakesink} transparently. In headless mode, clock synchronisation is
+disabled on the sink (\texttt{sync=False}) so that processing runs as fast as
+the hardware allows rather than pacing to the video's native frame rate.
+
+\paragraph{Event logger integration.}
+
+An optional event logger can be attached to the probe via
+\texttt{set\_event\_logger}. When present, each frame's luggage state and
+bounding boxes are forwarded to the logger after processing, enabling
+frame-level recording for offline evaluation without modifying the core
+detection logic. This hook is used by the evaluation framework described in
+section~\ref{sec:testing_and_evaluation}.
+
 \subsection{Abandonment Detection Logic}
 
 The logic for abandonment can be split into two main components: (i) processing
 each frame's tracking outputs, iterating through the detected luggage items and
 determining their environmental contexts; (ii) maintaining the state of each
-luggage item across frame, by retaining a context object for each item -
+luggage item across frames, by retaining a context object for each item ---
 tracking its ID, the ID of its owner (if any), its state (e.g., attended,
-unattended, abandoned) , its last bounding box, and the (monotonically
-increasing) timestamp of its last update.
+unattended, abandoned), its last bounding box, and the frame-derived timestamp
+of its last update.
 
 \subsubsection{Processing Tracking Outputs}
 
@@ -499,25 +534,37 @@ can be seen in the class diagram in figure~\ref{fig:states_class_diagram}.
 	\label{fig:states_class_diagram}
 \end{figure*}
 
-The \texttt{LuggageContext} implementation functions as a per-object memory
-that bridges frame-wise tracker outputs and state-based abandonment logic. For
-each tracked luggage ID, the context stores persistent attributes (owner
-hypothesis, last observed bounding box, and current state), then updates them
-once per frame using a fixed evaluation order: movement estimation from
-inter-frame box displacement, attendance estimation from owner proximity (or
-nearest-owner assignment when no owner is set), and delegation of transition
-decisions to the active state object. This ordering ensures deterministic
-behaviour and clear responsibility boundaries between context management and
-transition policy. The nearest-owner assignment step is radius-constrained to
-reduce spurious associations in crowded scenes, at the cost of occasionally
-losing ownership under heavy occlusion. Overall, this context-centric design
-provides a practical implementation of temporal reasoning while keeping
-state-transition logic modular and extensible.
+The \texttt{LuggageContext} dataclass functions as a per-object memory that
+bridges frame-wise tracker outputs and state-based abandonment logic. For each
+tracked luggage ID, the context stores four groups of persistent attributes:
 
-This encompasses the first component of the abandonment logic, processing of
-each frame's metadata into a structured context and evaluating the state of
-each luggage item based on its current context and the defined criteria for
-each state's transitions.
+\begin{itemize}
+	\item \textbf{Core identity and state:} tracking ID, current \texttt{State}
+	      object, last observed bounding box, and timestamps for creation and
+	      last detection (used by the lifecycle manager for TTL and relinking
+	      decisions; section~\ref{sec:context_lifecycle}).
+	\item \textbf{Ownership:} owner ID hypothesis, owner's last known bounding
+	      box, owner-missing timestamp, and an owner-confirmed flag with its
+	      associated observation timer (used by the ownership and attendance
+	      logic; section~\ref{sec:ownership_assignment}).
+	\item \textbf{Hysteresis counters:} frame counters for unattended-entry and
+	      unattended-reset confirmation, and owner-candidate confirmation
+	      counters (used by the state transition hysteresis;
+	      section~\ref{sec:state_transition_invariants}).
+	\item \textbf{Timer resume state:} the elapsed unattended time and exit
+	      timestamp from the last \texttt{Unattended} period, enabling the
+	      abandonment timer to resume across brief attended flips
+	      (section~\ref{sec:state_transition_invariants}).
+\end{itemize}
+
+Each frame, the \texttt{update} method evaluates these attributes in a fixed
+order: (i)~movement estimation from inter-frame bounding box displacement,
+(ii)~attendance estimation via the owner evaluation pipeline,
+(iii)~owner-observation accumulation, (iv)~hysteresis counter updates, and
+(v)~delegation of the transition decision to the active \texttt{State} object.
+This ordering ensures deterministic behaviour and clear responsibility
+boundaries --- the context manages signal computation and counter bookkeeping,
+while the state objects contain only transition policy.
 
 \subsubsection{Context Lifecycle Management}
 \label{sec:context_lifecycle}
@@ -1049,9 +1096,10 @@ immediately escalate to critical alerts.
 The current implementation prioritises immediate visual alerting through the
 OSD. It does not yet emit persistent external alerts (e.g., via message bus
 events, structured logs, or notification webhooks) beyond development console
-output. An extension is to trigger one-shot events on state transitions, which
-could be consumed by external monitoring systems or operator dashboards for
-enhanced situational awareness and response coordination.
+outputs and evaluation logging. An extension is to trigger one-shot events on
+state transitions, which could be consumed by external monitoring systems or
+operator dashboards for enhanced situational awareness and response
+coordination.
 
 \subsubsection{Computational Complexity and Runtime Cost}
 
@@ -1130,8 +1178,8 @@ Detector misses, partial occlusion, and motion blur can cause short gaps in
 tracking output. State-dependent TTLs (section~\ref{sec:context_lifecycle})
 retain contexts through these gaps, normal contexts for up to 12\,s and
 abandoned contexts for up to 45\,s, while scored relinking re-associates IDs
-that reappear nearby. Residual risk remains; dropouts exceeding the TTL still cause
-irreversible context loss.
+that reappear nearby. Residual risk remains; dropouts exceeding the TTL still
+cause irreversible context loss.
 
 \paragraph{Boundary sensitivity of fixed thresholds.}
 
@@ -1140,8 +1188,8 @@ with varying depth, camera angle, or frame resolution can shift object scale
 and change the effective meaning of these thresholds. All thresholds are now
 configurable at runtime via environment variables (prefixed \texttt{LW\_}),
 enabling per-scene calibration without recompilation. The fundamental
-limitation. fixed pixel thresholds in a perspective-varying scene,
-remains; depth-aware distance normalisation is a direction for future work.
+limitation. fixed pixel thresholds in a perspective-varying scene, remains;
+depth-aware distance normalisation is a direction for future work.
 
 \paragraph{Hysteresis trade-offs.}
 
@@ -1150,9 +1198,9 @@ section~\ref{sec:state_transition_invariants} stabilise the state machine but
 introduce a latency cost: genuine rapid state changes (e.g., a person quickly
 dropping a bag and walking away) are delayed by the confirmation-frame
 requirement. Similarly, the timer resume window means that a brief
-re-attendance episode does not reset the abandonment countdown, desirable
-for preventing repeated timer resets, but could penalise a genuine retrieval
-that happens to fall within the resume window. These are deliberate trade-offs
+re-attendance episode does not reset the abandonment countdown, desirable for
+preventing repeated timer resets, but could penalise a genuine retrieval that
+happens to fall within the resume window. These are deliberate trade-offs
 favouring stability over responsiveness, tunable via the confirmation-frame and
 resume-window thresholds.
 
