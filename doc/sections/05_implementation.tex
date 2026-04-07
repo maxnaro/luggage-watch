@@ -520,14 +520,63 @@ each luggage item based on its current context and the defined criteria for
 each state's transitions.
 
 \subsubsection{Context Lifecycle Management}
+\label{sec:context_lifecycle}
 
-Each context object is created when a new luggage item is detected by the
-tracker, and is deleted when the luggage item remains undetected for a given
-grace period. The time-to-live for each context is determined by constant
-defined in the configuration, specifying the allowed duration of undetection
-before the context is removed. This lifecycle management ensures robustness to
-temporary occlusions and missed detections, while also preventing the
-indefinite retention of contexts for objects that have left the scene.
+\paragraph{Original lifecycle.}
+
+In the initial design, each context object was created when a new luggage
+tracking ID appeared and deleted when that ID had not been seen for a fixed
+time-to-live (TTL). This was simple and sufficient when tracker IDs were
+stable, but brittle when the tracker reassigned IDs, a common occurrence in
+crowded scenes where occlusions cause a luggage item to lose and regain its
+track. Under the original scheme, an ID reassignment would discard all
+accumulated state (owner, timers, state machine position) and start a fresh
+context, resetting any progress towards abandonment detection.
+
+\paragraph{State-dependent TTL.}
+
+The fixed TTL has been replaced with a state-dependent scheme. Normal contexts
+expire after \texttt{CONTEXT\_TTL\_SECONDS} (default~12\,s) of undetection.
+Abandoned contexts use a longer TTL of
+\texttt{ABANDONED\_CONTEXT\_TTL\_SECONDS} (default~45\,s). This asymmetry is
+deliberate: an abandoned luggage item that temporarily leaves the tracker
+output (due to occlusion or a dropped frame) should not lose its accumulated
+state --- the operational value of maintaining an abandonment alert outweighs
+the memory cost of a longer-lived context.
+
+\paragraph{Context relinking.}
+
+When a new luggage ID appears with no existing context, the system does not
+immediately create a fresh context. Instead, it searches existing contexts
+whose IDs are no longer present in the current frame for a possible match. A
+candidate context must satisfy all of the following eligibility criteria:
+
+\begin{itemize}
+	\item \textbf{Missing duration:} the context's ID must have been absent for
+	      no longer than a state-dependent window (default~4\,s for normal
+	      contexts, 8\,s for abandoned).
+	\item \textbf{Spatial distance:} the new bounding box must be within a
+	      state-dependent tolerance of the context's last known position
+	      (default~100\,px for normal contexts, 180\,px for abandoned).
+	\item \textbf{Area ratio:} the ratio of the larger bounding box area to the
+	      smaller must not exceed a configurable threshold (default~2.5),
+	      preventing relinking when the new detection differs substantially in
+	      size from the original.
+\end{itemize}
+
+When multiple candidates qualify, the system selects the best match using a
+$(\textit{distance},\; \textit{missing\_age},\; \textit{area\_ratio})$ scoring
+tuple, preferring the spatially closest, most recently seen, and most similarly
+sized context. The matched context is then transferred from the old ID to the
+new one, preserving all accumulated state: owner hypothesis, state machine
+position, timers, and confirmation counters. If no match is found, a fresh
+context is created.
+
+Abandoned contexts receive wider spatial and temporal gates for relinking,
+reflecting the higher cost of losing an abandonment detection compared to
+creating a spurious new context. Lifecycle events (creation, relinking, expiry)
+are exposed through an optional debug callback, used during development and
+evaluation to trace context behaviour without impacting pipeline performance.
 
 \subsubsection{Ownership Assignment and Re-identification}
 \label{sec:ownership_assignment}
