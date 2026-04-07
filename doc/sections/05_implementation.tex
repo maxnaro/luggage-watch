@@ -633,7 +633,7 @@ described above, is summarised in
 algorithm~\ref{alg:ownership_evaluation_impl}.
 
 \begin{algorithm*}[!htb]
-	\caption{Per-frame ownership evaluation (implementation).}
+	\caption{Per-frame ownership evaluation (implementation, replacing~\ref{alg:association}).}
 	\label{alg:ownership_evaluation_impl}
 	\begin{algorithmic}[1]
 		\Require Luggage context $l$ with fields $l.bbox$, $l.owner$, $l.owner\_bbox$, $l.missing\_since$, $l.candidate$, $l.candidate\_frames$; tracked persons set $P$; current time $t$
@@ -658,7 +658,7 @@ algorithm~\ref{alg:ownership_evaluation_impl}.
 		\If{$d_{\text{shift}} \leq S_{\max}$} \Comment{Trajectory is spatially consistent}
 		\State $l.owner\_bbox \gets l.owner.bbox$, $l.missing\_since \gets null$\\
 		\Return $\Call{InRange}{l.bbox, l.owner.bbox}$ \Comment{Two-tier proximity}
-		\Else \Comment{Trajectory jump: treat owner as missing}
+		\Else \Comment{Trajectory jump $\implies$ treat owner as missing}
 		\If{$l.missing\_since = null$} \State $l.missing\_since \gets t$ \EndIf
 		\EndIf
 		\Else \Comment{Owner not in tracking output}
