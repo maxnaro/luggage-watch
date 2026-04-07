@@ -85,6 +85,7 @@ available and for the model to learn a more generalised representation of
 luggage which can help with the issue of generalisation.
 
 \subsubsection{Suspicious Luggage Dataset}
+\label{sec:suspicious_luggage_dataset}
 
 The purpose of the suspicious luggage dataset is to provide a source of data
 for testing the end-to-end DeepStream pipeline, not for training the primary
@@ -745,32 +746,34 @@ minimise missed detections in operational deployment.
 \subsubsection{State Transition Invariants}
 \label{sec:state_transition_invariants}
 
-The state machine enforces a set of invariants to ensure deterministic and
-stable behaviour.
+The state machine enforces a set of structural invariants to ensure
+deterministic and stable behaviour.
 
 \begin{itemize}
 	\item \textbf{Single Active State:} At any time, a luggage item has exactly
-	      one active state from the set \{\texttt{Attended}, \texttt{Unattended}, \texttt{Abandoned}\}.
-	      State updates are performed with explicit transitions, so simultaneous multi-state activation
-	      is not possible.
-	\item \textbf{Adjacency Invariance:} Transitions can only occur between adjacent states in the
-	      defined state transition graph (figure~\ref{fig:state_machine}). For example,
-	      no direct transition from \texttt{Attended} to \texttt{Abandoned} is possible without first
-	      passing through \texttt{Unattended}. This rule prevents immediate escalation to abandonment.
+	      one active state from the set \{\texttt{Attended}, \texttt{Unattended},
+	      \texttt{Abandoned}\}. State updates are performed with explicit
+	      transitions, so simultaneous multi-state activation is not possible.
+	\item \textbf{Adjacency Invariance:} Transitions can only occur between
+	      adjacent states in the defined state transition graph
+	      (figure~\ref{fig:state_machine}). No direct transition from
+	      \texttt{Attended} to \texttt{Abandoned} is possible without first
+	      passing through \texttt{Unattended}.
 	\item \textbf{Guard-conditioned Transitions:} Each transition is triggered by
-	      specific conditions evaluated in the context of the luggage item as seen defined in figure~\ref{fig:state_machine}.
-	\item \textbf{Recovery of Attendance:} Any evidence of re-attendance or movement whilst in an \texttt{Unattended}
-	      state immediately returns the object to \texttt{Attended}, resetting the abandonment timer.
-	\item \textbf{Persistence of Abandonment:} Once in the \texttt{Abandoned} state, the object remains
-	      abandoned.
+	      specific conditions evaluated in the context of the luggage item.
+	\item \textbf{Persistence of Abandonment:} Once in the \texttt{Abandoned}
+	      state, the object remains abandoned.
 \end{itemize}
 
-The state transitions can be defined formally as follows: let $s_t$ be the
-state at frame $t$, $a_t$ attendance, $m_t$ movement, and $\Delta t_u$ the
-elapsed time since becoming unattended with timeout $T_a$.
+\paragraph{Original transition function.}
+
+The initial design defined transitions as single-frame predicates: let $s_t$
+denote the state at frame~$t$, $a_t$ attendance, $m_t$ movement, and $\Delta
+	t_u$ the elapsed time since becoming unattended with timeout~$T_a$:
 
 \begin{small}
 	\begin{equation}
+		\label{eq:original_transition}
 		s_{t+1} = \begin{cases}
 			\text{Unatt} & \text{if } s_t = \text{Att} \wedge \neg a_t \wedge \neg m_t               \\
 			\text{Att}   & \text{if } s_t = \text{Unatt} \wedge (a_t \vee m_t)                       \\
@@ -782,6 +785,136 @@ elapsed time since becoming unattended with timeout $T_a$.
 		\end{cases}
 	\end{equation}
 \end{small}
+
+Under this formulation, every transition was decided on a single frame of
+evidence: one frame of $\neg a_t \wedge \neg m_t$ was sufficient to begin the
+unattended path, and one frame of $a_t \vee m_t$ could immediately reset the
+abandonment timer. In practice, a single spurious detection could flip the
+state, and a momentary attendance flicker caused by tracker noise could reset
+the timer entirely. This made the state machine vulnerable to the noisy output
+of the object tracker, motivating the introduction of multi-frame confirmation.
+
+\paragraph{Hysteresis via multi-frame confirmation.}
+
+To resist rapid oscillation between states, the implementation introduces a
+frame-level hysteresis mechanism. Rather than reacting to single-frame signals,
+the state machine accumulates evidence over consecutive frames and only commits
+to a transition once a configurable threshold is reached. Two per-luggage
+counters are maintained in \texttt{LuggageContext.update}:
+
+\begin{itemize}
+	\item \textbf{Entry counter}
+	      (\texttt{\_unattended\_entry\_frames}): incremented each frame where
+	      $\neg a_t \wedge \neg m_t$ holds while in the \texttt{Attended} state;
+	      reset to zero if either condition breaks. The \texttt{Attended} state
+	      only transitions to \texttt{Unattended} once this counter reaches
+	      \texttt{UNATTENDED\_ENTRY\_CONFIRM\_FRAMES} (default~3).
+	\item \textbf{Reset counter}
+	      (\texttt{\_unattended\_reset\_frames}): incremented each frame where
+	      $a_t$ holds while in the \texttt{Unattended} state; reset to zero
+	      otherwise. The \texttt{Unattended} state returns to \texttt{Attended}
+	      via attendance only once this counter reaches
+	      \texttt{UNATTENDED\_RESET\_CONFIRM\_FRAMES} (default~3).
+\end{itemize}
+
+Movement of the luggage ($m_t$) bypasses this hysteresis entirely: a single
+frame of movement in the \texttt{Unattended} state triggers an immediate return
+to \texttt{Attended}. This asymmetry is intentional --- physical displacement
+of the bounding box is a strong signal unlikely to be a tracker artefact,
+whereas proximity of a person can fluctuate due to tracker noise or brief
+occlusion.
+
+The \texttt{State.evaluate} methods themselves only read the resulting boolean
+properties (\texttt{unattended\_entry\_confirmed},
+\texttt{unattended\_reset\_confirmed}); the counting logic is centralised in
+\texttt{LuggageContext.update}, keeping it state-independent and consistent.
+
+\paragraph{Abandonment guards.}
+
+The \texttt{Unattended}~$\to$~\texttt{Abandoned} transition is additionally
+gated by two guards that extend beyond the base timeout:
+
+\begin{itemize}
+	\item \textbf{Owner history:} When
+	      \texttt{REQUIRE\_OWNER\_HISTORY\_FOR\_ABANDONED} is enabled (default),
+	      luggage cannot transition to \texttt{Abandoned} unless an owner was
+	      confirmed at some point (\texttt{owner\_confirmed\_once}). This
+	      prevents newly appeared, never-owned objects from triggering false
+	      alarms. In addition, when no owner was ever confirmed the base
+	      timeout~$T_a$ is multiplied by
+	      \texttt{OWNERLESS\_ABANDONMENT\_TIMEOUT\_MULTIPLIER} (default~$3\times$),
+	      extending the default 30\,s window to 90\,s and giving the system more
+	      time to establish ownership before escalating. It was important to include
+	      this as a configurable guard rather than a hard requirement,
+	      as in some scenarios ownership may or may not be needed for an object to be
+	      considered abandoned. For example, two separate test sets, ABODA and IITP20
+	      (section~\ref{sec:suspicious_luggage_dataset}) have conflicting
+	      definitions of abandonment with respect to ownership, so this guard allows the
+	      system to be adapted to different contexts without code changes.
+	\item \textbf{Minimum context age:} The luggage context must have existed for
+	      at least \texttt{MIN\_CONTEXT\_AGE\_FOR\_ABANDONED\_SECONDS}
+	      (default~3\,s) before abandonment is possible. This filters out
+	      transient detections that appear and immediately satisfy the unattended
+	      condition.
+\end{itemize}
+
+\paragraph{Unattended timer resume.}
+
+Complementing the frame-level hysteresis, a temporal hysteresis is applied to
+the abandonment timer itself. When luggage transitions from
+\texttt{Unattended}~$\to$~\texttt{Attended} and then re-enters
+\texttt{Unattended} within \texttt{UNATTENDED\_TIMER\_RESUME\_WINDOW\_SECONDS}
+(default~6\,s), the timer resumes from its previous elapsed value rather than
+restarting from zero. On exit from \texttt{Unattended}, the elapsed time and
+exit timestamp are saved; on re-entry within the window, the new state's entry
+time is backdated to preserve continuity. If the gap exceeds the window, a
+fresh timer starts. Together, the two layers of hysteresis, frame-level
+confirmation and timer-level resume, prevent both single-frame noise from
+causing spurious transitions and repeated brief interactions from indefinitely
+resetting the abandonment countdown.
+
+\paragraph{Updated transition function.}
+
+Incorporating the mechanisms above, the transition function becomes: let $C(k,
+	N)$ denote that predicate~$k$ has held for at least $N$~consecutive frames, and
+let $G(l)$ be the conjunction of abandonment guards for luggage~$l$:
+
+\begin{small}
+	\begin{equation}
+		\label{eq:updated_transition}
+		s_{t+1} = \begin{cases}
+			\text{Unatt} & \text{if } s_t = \text{Att} \wedge C(\neg a_t \wedge \neg m_t,\; N_e)           \\[1ex]
+			\text{Att}   & \text{if } s_t = \text{Unatt} \wedge m_t                                        \\
+			\text{Att}   & \text{if } s_t = \text{Unatt} \wedge C(a_t,\; N_r)                              \\[1ex]
+			\text{Abnd}  & \begin{aligned}[t]
+				               \text{if } s_t & = \text{Unatt} \wedge \neg a_t \wedge \neg m_t       \\[-0.5ex]
+				                              & \quad \wedge\; \Delta t_u \ge T_a(l) \;\wedge\; G(l)
+			               \end{aligned} \\[1ex]
+			\text{Abnd}  & \text{if } s_t = \text{Abnd}
+		\end{cases}
+	\end{equation}
+\end{small}
+
+\noindent where $N_e$ and $N_r$ are the entry and reset confirmation thresholds
+respectively, and:
+\begin{equation}
+	T_a(l) = \begin{cases}
+		T_a \cdot k_o & \text{if } \neg\, \textit{owner\_conf} \\
+		T_a           & \text{otherwise}
+	\end{cases}
+\end{equation}
+\begin{equation}
+	\begin{split}
+		G(l) ={} & \bigl(\textit{owner\_conf}
+		\;\vee\; \neg\,\textit{req\_hist}\bigr) \\
+		         & \wedge\;
+		\bigl(\textit{ctx\_age} \ge T_{\min}\bigr)
+	\end{split}
+\end{equation}
+
+\noindent with $k_o$ the ownerless timeout multiplier,
+\textit{owner\_conf} short for \texttt{owner\_confirmed\_once}, and
+\textit{req\_hist} for \texttt{REQUIRE\_OWNER\_HISTORY\_FOR\_ABANDONED}.
 
 \subsubsection{Alert Generation}
 
@@ -861,45 +994,52 @@ bound while reducing practical runtime overhead.
 The main failure modes of the abandonment detection logic include: tracker ID
 flips, ownership misattribution, and tracker ID loss.
 
-\textbf{Tracker ID flips.} A common failure mode in crowded scenes is when the
-tracker assigns a new ID to the same physical luggage item after occlusion or
-brief overlap. Without mitigation, this would reset the luggage context and
-could cause premature or missed abandonment decisions. To reduce this, the
-processing stage performs spatial continuity checks when a new luggage ID is
-observed: if the new box is within a tolerance radius of a recently seen
-context, the existing context is transferred to the new ID. This preserves
-state, owner hypothesis, and temporal history across ID changes.
+\paragraph{Tracker ID flips.}
 
-\textbf{Ownership misattribution.} Ownership is inferred using nearest-person
-proximity with a fixed radius gate. In dense scenes this can assign the wrong
-owner, especially when multiple people are co-located or crossing paths near
-luggage. The current mitigation is conservative gating: ownership is only
-assigned when candidates are sufficiently close, and owner identity is then
-kept persistent rather than re-selected every frame. This reduces rapid owner
-switching, but can still fail under prolonged crowding or strong perspective
-effects.
+A common failure mode in crowded scenes is when the tracker assigns a new ID to
+the same physical luggage item after occlusion or brief overlap. Without
+mitigation, this would reset the luggage context and could cause premature or
+missed abandonment decisions. To reduce this, the processing stage performs
+spatial continuity checks when a new luggage ID is observed: if the new box is
+within a tolerance radius of a recently seen context, the existing context is
+transferred to the new ID. This preserves state, owner hypothesis, and temporal
+history across ID changes.
 
-\textbf{Temporary tracker loss.} Detector misses, partial occlusion, and motion
-blur can cause short gaps in tracking output. If contexts were removed
-immediately, these gaps would fragment the temporal history and increase false
-alerts. The implementation therefore uses time-to-live (TTL) context retention,
-where missing IDs are only removed after a grace period. This supports
-re-association after short dropouts while preventing unbounded growth of stale
-contexts.
+\paragraph{Ownership misattribution.}
 
-\textbf{Boundary sensitivity of fixed thresholds.} Attendance, movement, and
-tracker-flip association all rely on pixel thresholds. Scenes with varying
-depth, camera angle, or frame resolution can shift object scale and therefore
-change the effective meaning of these thresholds. The practical mitigation is
-calibration by scenario (e.g., concourse versus corridor footage) and
-prioritisation of recall-oriented settings during safety-critical testing.
+Ownership is inferred using nearest-person proximity with a fixed radius gate.
+In dense scenes this can assign the wrong owner, especially when multiple
+people are co-located or crossing paths near luggage. The current mitigation is
+conservative gating: ownership is only assigned when candidates are
+sufficiently close, and owner identity is then kept persistent rather than
+re-selected every frame. This reduces rapid owner switching, but can still fail
+under prolonged crowding or strong perspective effects.
 
-\textbf{Visual ambiguity for operators.} Even when state estimation is correct,
-operators may misinterpret why a state was assigned if overlays are sparse. To
-improve explainability, the OSD shows object ID, state label, colour-coded box
-severity, and (for attended luggage) a line plus ownership radius overlay.
-These cues make the underlying decision basis more transparent during live
-monitoring.
+\paragraph{Temporary tracker loss.}
+
+Detector misses, partial occlusion, and motion blur can cause short gaps in
+tracking output. If contexts were removed immediately, these gaps would
+fragment the temporal history and increase false alerts. The implementation
+therefore uses time-to-live (TTL) context retention, where missing IDs are only
+removed after a grace period. This supports re-association after short dropouts
+while preventing unbounded growth of stale contexts.
+
+\paragraph{Boundary sensitivity of fixed thresholds.}
+
+Attendance, movement, and tracker-flip association all rely on pixel
+thresholds. Scenes with varying depth, camera angle, or frame resolution can
+shift object scale and therefore change the effective meaning of these
+thresholds. The practical mitigation is calibration by scenario (e.g.,
+concourse versus corridor footage) and prioritisation of recall-oriented
+settings during safety-critical testing.
+
+\paragraph{Visual ambiguity for operators.}
+
+Even when state estimation is correct, operators may misinterpret why a state
+was assigned if overlays are sparse. To improve explainability, the OSD shows
+object ID, state label, colour-coded box severity, and (for attended luggage) a
+line plus ownership radius overlay. These cues make the underlying decision
+basis more transparent during live monitoring.
 
 Despite these mitigations, limitations remain. The current system does not use
 interaction modelling (for example, hand-object contact), depth-aware distance
