@@ -348,10 +348,9 @@ figure~\ref{fig:pipeline}.
 
 Iterative development and testing of the pipeline was performed using
 pre-recorded video sequences from the procured suspicious luggage dataset,
-which allowed for debugging of the pipeline's functionality, the
-generation of TensorRT engine files, and validation of inference performance on
-the target hardware before implementing the rest of the system's logic and
-deployment.
+which allowed for debugging of the pipeline's functionality, the generation of
+TensorRT engine files, and validation of inference performance on the target
+hardware before implementing the rest of the system's logic and deployment.
 
 Configuration for the primary object detection stage of the pipeline is
 determined by a custom configuration file, which specifies parameters such as
@@ -489,9 +488,8 @@ The three states, \texttt{Attended}, \texttt{Unattended} and
 \texttt{Abandoned}, are derived from a single base class, and represent the
 different states of a luggage item. Each implements an \texttt{evaluate} method
 which, given a \texttt{LuggageContext} object, determines whether the luggage
-item meets the criteria for transitioning states. This object-oriented
-approach can be seen in the class diagram in
-figure~\ref{fig:states_class_diagram}.
+item meets the criteria for transitioning states. This object-oriented approach
+can be seen in the class diagram in figure~\ref{fig:states_class_diagram}.
 
 \begin{figure*}[!p]
 	\centering
@@ -532,48 +530,170 @@ indefinite retention of contexts for objects that have left the scene.
 
 \subsubsection{Ownership Assignment and Re-identification}
 
-Ownership assignment is performed when a luggage item is first observed,
-without a previous owner hypothesis. For each luggage item, the nearest person
-is selected if and only if the centre-point distance is within a fixed radius
-threshold defined in the configuration. Formally, for luggage box $b_l$, person
-boxes $\{b_p\}$, $d(x, y)$ denoting the Euclidean distance between centre
-points of $x$ and $y$ and radius for attendance $R_a$, the assigned owner is:
-
+The initial implementation of ownership assignment used a single-frame,
+centre-to-centre nearest-person heuristic. For each unowned luggage item, the
+nearest person was selected if and only if the Euclidean distance between
+bounding box centres fell within a fixed radius threshold. Formally, for
+luggage box $b_l$, person boxes $\{b_p\}$, $d(x, y)$ denoting the Euclidean
+distance between centre points of $x$ and $y$, and attendance radius $R_a$:
 \begin{align}
 	\text{owner}(l) = \argmin_p{d(b_l, b_p) \text{ s.t. } d(b_l, b_p) \leq R_a}.
 \end{align}
-If no candidate satisfies the radius constraint, no owner is assigned. This
-conservative approach reduces spurious ownership in crowded scenes, whilst
-remaining computationally lightweight.
+If no candidate satisfied the radius constraint, no owner was assigned. This
+baseline was computationally lightweight and sufficient for early pipeline
+testing. However, single-frame assignment proved unstable under tracker noise:
+a one-frame detection glitch could instantly assign the wrong owner, and the
+system had no mechanism to recover from misattribution or tolerate brief
+tracking dropouts. These limitations motivated a series of refinements to the
+ownership logic, described below.
 
-Once assigned, owner identity is treated as persistent in the luggage context,
-being reused across subsequent frames as long as the owner track remains
-present and spatially consistent with the luggage. Attendance is then evaluated
-from the owner's proximity, while state transitions are handled independently
-by the finite-state machine. Separating assignment from transition policies
-keeps the system deterministic.
+\paragraph{Edge-aware proximity.}
 
-Re-identification is implicitly handled by the tracking component of the
-pipeline, using a DeepSORT-based tracker that uses appearance embeddings and
-motion cues to maintain consistent track IDs for objects across frames. Within
-the application logic, re-identification is handled explicitly with methods
-that improve robustness, explored in
-section~\ref{sec:failure_modes_and_mitigation_strategies}.
+The original proximity check used only the Euclidean distance between bounding
+box centres. This can misrepresent the physical relationship between a person
+and their luggage: when a person stands directly beside or over a bag, the
+centre-to-centre distance may be large even though the luggage is clearly
+within the person's spatial footprint. To address this, the proximity check was
+replaced with a two-tier test. The first tier computes the shortest distance
+from the luggage centre to the nearest point on the person bounding box area (a
+clamped projection), denoted $d_{\text{edge}}$:
+\begin{align}
+	d_{\text{edge}}(b_l, b_p) = \left\lVert \mathbf{c}_l - \text{clamp}(\mathbf{c}_l, b_p) \right\rVert_2
+\end{align}
+where $\mathbf{c}_l$ is the luggage centre and
+$\text{clamp}(\mathbf{c}_l, b_p)$ projects $\mathbf{c}_l$ onto the nearest
+point within the axis-aligned extent of $b_p$. If
+$d_{\text{edge}} \leq R_{\text{edge}}$ (default $80$~px), the person is
+considered within range. Otherwise, the system falls back to the centre-to-centre
+distance $d(b_l, b_p) \leq R_a$ (default $200$~px). This two-tier check
+improves sensitivity to close-proximity ownership while retaining the broader
+radius for more distant associations.
 
-The main limitation of this approach is the reliance on a proximity-based
-heuristic, over an interaction-based one. In dense scenes the nearest person
-may not be the true owner, leading to misattribution and incorrect abandonment
-detections. Moreover, for scenes of varying depth, a fixed radius threshold may
-not be optimal, as the apparent size of objects and their spatial relationships
-can change with distance from the camera.
+\paragraph{Multi-frame confirmation.}
 
-% TODO: consider more robust ownership assignment heuristics, then write about them
+Rather than committing an owner on a single frame, the system now requires the
+same candidate to be the best match for $N_{\text{assign}}$ consecutive frames
+(default $3$) before the assignment is finalised. Each frame, the best
+candidate is selected using a composite key of $(d_{\text{edge}},\,
+	d_{\text{centre}})$, preferring candidates whose bounding box is physically
+closest to the luggage. If the best candidate changes before confirmation is
+reached, the confirmation counter resets. This filters out transient
+associations caused by tracker jitter or brief person crossings near the
+luggage.
 
-Per frame, ownership assignment has linear complexity in the number of detected
-people for each luggage item, giving an overall complexity of $O(n \cdot m)$
-for $n$ luggage items and $m$ people. This is acceptable for typical
-surveillance scenarios where the number of detected objects is relatively low,
-but may need to be optimised for very crowded scenes.
+\paragraph{Owner persistence and consistency checking.}
+
+Once assigned, the owner ID remains persistent across frames, carried forward
+from the original design. However, the system now validates the owner each
+frame by checking spatial consistency: if the owner's bounding box shifts by
+more than a configured threshold (default $120$~px) between consecutive frames,
+the system treats the ID as unreliable. This guards against person-tracker ID
+flips, where the tracker reassigns the same numeric ID to a different physical
+person. When an inconsistency is detected, the system enters the missing-owner
+path rather than accepting the shifted trajectory.
+
+When the owner disappears from the tracking output entirely, attendance is
+maintained for a configurable grace period (default $2$~s). This prevents a
+single missed detection frame from immediately triggering the unattended
+pathway, tolerating brief detector dropouts and partial occlusions without
+fragmenting the temporal history.
+
+\paragraph{Owner reassignment for person-tracker ID flips.}
+
+When the owner goes missing or fails the consistency check, the system attempts
+controlled reassignment within a time window (default $15$~s). A reassignment
+candidate must satisfy three conditions: (i) it must be within the attendance
+range of the luggage (using the same two-tier proximity check), (ii) its
+position must be spatially close to the owner's last known bounding box
+(default $\leq 140$~px shift), and (iii) it must persist as the best candidate
+for $N_{\text{reassign}}$ consecutive frames (default $3$). Candidate scoring
+uses a $(d_{\text{shift}},\, d_{\text{edge}},\, d_{\text{centre}})$ tuple,
+prioritising candidates that most closely resemble the original owner's
+position. If no candidate qualifies within the reassignment window, the owner
+is considered lost and the luggage falls through to the unattended pathway.
+
+\paragraph{Owner history as an abandonment guard.}
+
+The context tracks whether an owner has ever been confirmed for a given luggage
+item. An owner is marked as confirmed once it has been observed within
+attendance range for a minimum duration (default $0.5$~s, accumulated across
+frames). This flag is consumed by the state machine: when enabled, luggage
+cannot transition to the Abandoned state unless an owner was confirmed at some
+point. This prevents newly appeared objects that were never associated with an
+owner (e.g., a bag placed by someone outside the camera's field of view) from
+immediately triggering false abandonment alerts. When no owner history exists,
+the abandonment timeout is extended by a configurable multiplier (default
+$3\times$), providing additional time for an owner to be detected before
+escalation.
+
+The full per-frame ownership evaluation, incorporating the refinements
+described above, is summarised in
+algorithm~\ref{alg:ownership_evaluation_impl}.
+
+\begin{algorithm*}[!htb]
+	\caption{Per-frame ownership evaluation (implementation).}
+	\label{alg:ownership_evaluation_impl}
+	\begin{algorithmic}[1]
+		\Require Luggage context $l$ with fields $l.bbox$, $l.owner$, $l.owner\_bbox$, $l.missing\_since$, $l.candidate$, $l.candidate\_frames$; tracked persons set $P$; current time $t$
+		\Ensure $attended$ as attendance result for this frame
+		\If{$l.owner = null$} \Comment{No owner yet $\implies$ attempt initial assignment}
+		\State $best\_key \gets (\infty, \infty)$, $best\_person \gets null$
+		\ForAll{$p \in P$}
+		\State $d_e \gets \Call{EdgeDist}{l.bbox, p.bbox}$ \Comment{Luggage centre to person box area}
+		\State $d_c \gets \Call{CentreDist}{l.bbox, p.bbox}$ \Comment{Centre-to-centre distance}
+		\If{$(d_e \leq R_{\text{edge}} \vee d_c \leq R_a) \wedge (d_e, d_c) < best\_key$}
+		\State $best\_key \gets (d_e, d_c)$, $best\_person \gets p$
+		\EndIf
+		\EndFor
+		\If{$\neg\Call{ConfirmCandidate}{l, best\_person, N_{\text{assign}}}$} \Return \textsc{False} \EndIf
+		\State $l.owner \gets best\_person$, $l.owner\_bbox \gets best\_person.bbox$
+		\State $l.missing\_since \gets null$\\
+		\Return \textsc{True}
+		\EndIf
+		\Statex
+		\If{$l.owner \in P$} \Comment{Owner visible in tracking output}
+		\State $d_{\text{shift}} \gets \Call{CentreDist}{l.owner.bbox, l.owner\_bbox}$
+		\If{$d_{\text{shift}} \leq S_{\max}$} \Comment{Trajectory is spatially consistent}
+		\State $l.owner\_bbox \gets l.owner.bbox$, $l.missing\_since \gets null$\\
+		\Return $\Call{InRange}{l.bbox, l.owner.bbox}$ \Comment{Two-tier proximity}
+		\Else \Comment{Trajectory jump: treat owner as missing}
+		\If{$l.missing\_since = null$} \State $l.missing\_since \gets t$ \EndIf
+		\EndIf
+		\Else \Comment{Owner not in tracking output}
+		\If{$l.missing\_since = null$} \State $l.missing\_since \gets t$ \EndIf
+		\EndIf
+		\Statex
+		\If{$t - l.missing\_since \leq W_{\text{reassign}}$} \Comment{Within reassignment window}
+		\State $c \gets \Call{ReassignCandidate}{l.bbox, l.owner\_bbox, P}$
+		\If{$\Call{ConfirmCandidate}{l, c, N_{\text{reassign}}}$}
+		\State $l.owner \gets c$, $l.owner\_bbox \gets c.bbox$, $l.missing\_since \gets null$\\
+		\Return $\Call{InRange}{l.bbox, c.bbox}$
+		\EndIf
+		\EndIf\\
+		\Return $t - l.missing\_since \leq G_{\text{grace}}$ \Comment{Grace period}
+	\end{algorithmic}
+\end{algorithm*}
+
+\paragraph{Limitations.}
+
+The ownership logic remains fundamentally a proximity-based heuristic rather
+than an interaction-based one. In dense scenes the nearest person may not be
+the true owner, and for scenes of varying depth, fixed pixel thresholds may not
+be optimal as the apparent size of objects and their spatial relationships
+change with distance from the camera. The mitigations described above
+(multi-frame confirmation, consistency checking, and controlled reassignment)
+reduce the frequency and impact of misattribution, but cannot eliminate it
+entirely. More advanced approaches such as hand-object contact modelling or
+depth-aware distance normalisation remain directions for future work.
+
+\paragraph{Complexity.}
+
+Per frame, initial ownership assignment retains linear complexity in the number
+of detected people for each luggage item, giving $O(n \cdot m)$ for $n$ luggage
+items and $m$ people. Consistency checking and confirmation counters add $O(1)$
+per luggage item. Reassignment, when triggered, performs a constant-bounded
+scan over people (gated by the reassignment time window), so the overall
+worst-case complexity remains $O(n \cdot m)$.
 
 \subsubsection{Movement and Attendance Heuristics}
 
@@ -706,8 +826,8 @@ tracked objects in a frame.
 In the processing stage, person bounding boxes are first materialised in
 $O(P)$. For each luggage item, context update combines (i) movement and
 attendance checks that are constant-time when an owner hypothesis already
-exists, and (ii) nearest-owner assignment that is linear in people in the
-worst case, giving $O(P)$ per unassigned luggage item. Tracker-flip handling
+exists, and (ii) nearest-owner assignment that is linear in people in the worst
+case, giving $O(P)$ per unassigned luggage item. Tracker-flip handling
 introduces an additional scan over existing contexts, giving up to $O(T)$ per
 luggage item in the worst case. Context garbage collection for lost IDs is
 linear in retained contexts, $O(T)$.
@@ -715,7 +835,7 @@ linear in retained contexts, $O(T)$.
 Combining these terms gives a worst-case per-frame bound for the abandonment
 logic of:
 \begin{equation}
-O(LT + LP + P + T)
+	O(LT + LP + P + T)
 \end{equation}
 which is commonly simplified to $O(L(T+P))$ for moderate-to-large
 object counts. In practical steady-state operation, average cost is typically
