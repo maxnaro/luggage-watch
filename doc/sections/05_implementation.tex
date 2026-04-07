@@ -530,6 +530,7 @@ temporary occlusions and missed detections, while also preventing the
 indefinite retention of contexts for objects that have left the scene.
 
 \subsubsection{Ownership Assignment and Re-identification}
+\label{sec:ownership_assignment}
 
 The initial implementation of ownership assignment used a single-frame,
 centre-to-centre nearest-person heuristic. For each unowned luggage item, the
@@ -698,50 +699,106 @@ worst-case complexity remains $O(n \cdot m)$.
 
 \subsubsection{Movement and Attendance Heuristics}
 
+\paragraph{Movement.}
+
 Movement detection is performed by computing the inter-frame displacement of
 each luggage bounding box's centre point. If the displacement exceeds a
 configurable threshold, the luggage item is classified as moving; otherwise it
 is classified as stationary. Formally, for luggage box $b_l^{t}$ at frame $t$
 and $b_l^{t-1}$ at frame $t-1$:
-\begin{align}
-	\texttt{is\_moving} = \begin{cases} \text{True} & \text{if } d(b_l^{t}, b_l^{t-1}) \ge \tau_m \\ \text{False} & \text{otherwise} \end{cases}
-\end{align}
-where $\tau_m$ is the movement threshold and $d(x, y)$ denotes the Euclidean
-distance between centre points of $x$ and $y$. This simple heuristic avoids
-overfitting to accumulated tracking noise and provides a clear empirical signal
-for distinguishing intentional motion from detection jitter. The threshold is
-typically set proportional to the object scale to maintain robustness across
-different camera resolutions and zoom levels.
+\begin{equation}
+	\texttt{is\_moving} = \begin{cases}
+		\text{True}  & \text{if } d(b_l^{t}, b_l^{t-1}) \ge \tau_m \\
+		\text{False} & \text{otherwise}
+	\end{cases}
+\end{equation}
+where $\tau_m$ is the movement threshold (a fixed pixel value, default~25~px,
+configurable at runtime) and $d(x, y)$ denotes the Euclidean distance between
+centre points of $x$ and $y$. This simple heuristic avoids overfitting to
+accumulated tracking noise and provides a clear empirical signal for
+distinguishing intentional motion from detection jitter. On the first frame of
+a newly detected luggage item, no prior bounding box is available, so
+\texttt{is\_moving} defaults to True --- this prevents newly appeared objects
+from immediately satisfying the unattended entry condition.
 
-Attendance is determined by evaluating spatial proximity between the luggage
-and its assigned owner. If an owner has been assigned and is currently tracked,
-attendance is True if the centre-to-centre distance remains within a
-configurable attendance radius; otherwise it is False:
-\begin{align}
+\paragraph{Original attendance heuristic.}
+
+The initial attendance check was a single centre-to-centre proximity test. If
+an owner had been assigned and was currently tracked, attendance was True when
+the distance remained within a configurable radius:
+\begin{equation}
 	\texttt{is\_attended} =
 	\begin{cases}
-		d(b_l, b_p^{\text{owner}}) \le R_a & \begin{tabular}{@{}l@{}}if\\owner is\\assigned\\and\\visible\end{tabular} \\[2.5ex]
-		\text{False}                       & \text{otherwise}
+		d(b_l, b_p^{\text{owner}}) \le R_a
+			& \text{if owner visible} \\[1ex]
+		\text{False}
+			& \text{otherwise}
 	\end{cases}
-\end{align}
-where $R_a$ is the attendance radius and $b_p^{\text{owner}}$ is the owner's
-bounding box. When no owner has been assigned, the owner-assignment step
-implicitly performs an attendance check as part of determining whether to
-assign a new owner; if no person is within the attendance radius, the luggage
-is considered unattended. By decoupling movement and attendance signals this
-way, the state machine can distinguish between transient motion (wind,
-tracking artifacts, gentle nudging) and intentional carrying or retrieval
-by an owner.
+\end{equation}
+where $R_a$ is the attendance radius and $b_p^{\text{owner}}$ the owner's
+bounding box. When no owner had been assigned, the assignment step implicitly
+performed an attendance check: if no person was within the radius, the luggage
+was unattended. This formulation was sufficient for early testing but did not
+account for edge-aware proximity, grace periods during tracker dropouts, or
+owner consistency checking --- all of which now feed into the attendance signal.
 
-The parameters $\tau_m$ and $R_a$ are configuration constants that require
-tuning based on expected scene characteristics. A strict (small) movement
-threshold increases sensitivity to abandonment but risks false positives from
-environmental motion or gradual settling. A lax threshold may miss subtle
-repositioning. Similarly, a tight attendance radius prioritises accuracy but
-may cause rapid owner loss under occlusion or crowding, while a generous radius
-tolerates dense scenarios at the cost of potential ownership misattribution.
-The typical values used in development prioritise recall over precision to
-minimise missed detections in operational deployment.
+\paragraph{Updated attendance signal.}
+
+In the current implementation, \texttt{is\_attended} is the output of
+\texttt{\_evaluate\_owner\_attendance}, which evaluates one of several paths
+depending on the ownership state of the luggage item:
+\begin{equation}
+	\texttt{is\_attended} =
+	\begin{cases}
+		\textsc{InRange}(b_l, b_o)
+			& \begin{tabular}{@{}l@{}}owner visible\\and consistent\end{tabular} \\[2ex]
+		\textsc{InRange}(b_l, b_{o'})
+			& \begin{tabular}{@{}l@{}}reassignment\\succeeds\end{tabular} \\[2ex]
+		t_{\text{now}} - t_{\text{miss}} \le T_g
+			& \begin{tabular}{@{}l@{}}owner missing,\\no reassignment\end{tabular} \\[2ex]
+		\textsc{Assign}(b_l, P)
+			& \begin{tabular}{@{}l@{}}no owner\\assigned\end{tabular}
+	\end{cases}
+\end{equation}
+where \textsc{InRange} is the two-tier proximity check described in
+section~\ref{sec:ownership_assignment} ($d_{\text{edge}} \le R_{\text{edge}}$
+or $d \le R_a$), $T_g$ is the owner-lost grace period (default~2\,s),
+$t_{\text{miss}}$ the timestamp at which the owner was last seen, and
+\textsc{Assign} returns True if initial owner assignment succeeds.
+
+The attendance signal is therefore no longer a pure spatial predicate: it
+incorporates temporal state via the grace period and ownership lifecycle logic
+via the assignment and reassignment paths. This means that \texttt{is\_attended}
+can be True even when the assigned owner is not currently visible in the
+tracking output, provided the grace period has not yet expired. In practice,
+this prevents brief detector dropouts from immediately triggering the
+unattended pathway.
+
+\paragraph{Signal decoupling.}
+
+By computing movement and attendance as independent signals, the state machine
+can distinguish between transient motion (wind, tracking artefacts, gentle
+nudging) and intentional carrying or retrieval by an owner. The richer
+attendance signal --- with its grace period and consistency checking ---
+further stabilises this decoupling: brief tracker dropouts no longer cause
+attendance to flicker between frames, reducing noise in the input to the
+hysteresis mechanism described in
+section~\ref{sec:state_transition_invariants}.
+
+\paragraph{Parameter sensitivity.}
+
+The movement threshold $\tau_m$ and the attendance radii ($R_{\text{edge}}$
+and $R_a$) are configuration constants that require tuning based on expected
+scene characteristics. A strict (small) movement threshold increases
+sensitivity to abandonment but risks false positives from environmental motion
+or gradual settling; a lax threshold may miss subtle repositioning. For the
+attendance radii, the edge radius $R_{\text{edge}}$ governs close-proximity
+detection (a person standing directly beside their luggage), while the broader
+centre radius $R_a$ covers more distant associations. Tightening either radius
+improves precision but risks rapid owner loss under occlusion or crowding;
+widening them tolerates dense scenarios at the cost of potential
+misattribution. The values used in development prioritise recall over precision
+to minimise missed detections in operational deployment.
 
 \subsubsection{State Transition Invariants}
 \label{sec:state_transition_invariants}
