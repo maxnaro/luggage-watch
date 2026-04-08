@@ -141,9 +141,6 @@ prevalence in the literature and my efforts to contact the authors. The
 utilisation of AVSS-2007 was restricted to a single example video sequence,
 which was used in conjunction with the aforementioned procured datasets.
 
-% TODO: determine ground-truth protocol for evaluation of the end-to-end pipeline,
-%       e.g., frame-level labels of abandonment, bounding box annotations, etc.
-
 \subsection{Model Training and Optimisation}
 \label{sec:model_training_optimisation}
 
@@ -177,6 +174,7 @@ specifying the parameters of the training process as seen in
 listing~\ref{lst:config}.
 
 \subsubsection{Training Process and Iterative Optimisation}
+\label{sec:training_process}
 
 A transfer learning approach was applied where a pre-trained YOLO model was
 fine-tuned on the custom dataset. This approach allows the model to leverage
@@ -184,7 +182,7 @@ the general features learned from the large-scale COCO dataset, which can be
 beneficial for improving performance and reducing training time, especially
 when the custom dataset is relatively small. The pre-trained model used in the
 final iteration was \texttt{yolo26s.pt}, a compact and efficient model
-architecture, well suited for deployment on edge devices like the NVIDIA Jetson
+architecture well suited for deployment on edge devices like the NVIDIA Jetson
 Orin Nano.
 
 Model training was an iterative process, with multiple rounds of training and
@@ -198,100 +196,98 @@ metrics were considered, recall was prioritised because false negatives (missed
 detections) are operationally more severe than false positives in suspicious
 luggage detection.
 
+\paragraph{Early baseline.}
+
 An early baseline run used \texttt{yolo11l.pt} at \texttt{imgsz=640}, with
 \texttt{optimizer=auto}, \texttt{lr0=0.01}, \texttt{batch=16}, no backbone
-freezing, and uncached loading. A later optimised run used \texttt{yolo26s.pt}
-at \texttt{imgsz=1280}, \texttt{optimizer=AdamW}, \texttt{lr0=0.001},
-\texttt{batch=0.8} (auto-scaled by available VRAM), \texttt{freeze=10}, and
-\texttt{cache=disk}. The rationale behind these changes was: (i) increase input
-resolution to improve small-object localisation for luggage items, (ii) improve
-optimisation stability with AdamW and a lower initial learning rate, (iii)
-preserve transferable low-level visual features by freezing early backbone
-layers, and (iv) improve training throughput and memory efficiency using disk
-caching and adaptive batch sizing at higher resolution.
+freezing, and uncached loading. This run completed $37$ epochs with final
+metrics of mAP@0.5:0.95~$=0.2645$, mAP@0.5~$=0.4125$, precision~$=0.4931$, and
+recall~$=0.4096$. These results established a performance floor and highlighted
+the need for a more systematic training strategy.
+
+\paragraph{Two-phase training.}
+
+The final training methodology uses a two-phase approach at \texttt{imgsz=640},
+configured via a single JSON file that defines both phases and their
+parameters. The input resolution was reduced from the intermediate $1280$
+experiments to $640$ to meet the latency constraints of the target edge
+hardware whilst still offering sufficient resolution for the luggage detection
+task.
+
+\textbf{Phase~1 --- base training} uses the pre-trained \texttt{yolo26s.pt}
+checkpoint with all layers unfrozen (\texttt{freeze=0}), training for up to
+$200$ epochs with aggressive data augmentation: copy-paste augmentation at
+$30\%$, vertical flipping at $50\%$, rotation up to $45\degree$, scaling at
+$0.2$, and shear at $5.0$. The learning rate starts at $0.0008$ with AdamW,
+and early stopping with a patience of $40$ epochs halts training once
+validation performance plateaus. Phase~1 ran for $176$ epochs before early
+stopping, achieving mAP@0.5~$=0.6006$, mAP@0.5:0.95~$=0.3267$,
+precision~$=0.7116$, and recall~$=0.5337$. The purpose of this phase is to
+learn general features across the full network from the mixed-source dataset,
+using aggressive augmentation to maximise the effective diversity of the
+training data.
+
+\textbf{Phase~2 --- fine-tuning} loads the best weights from phase~1 and
+freezes the first $12$ backbone layers (\texttt{freeze=12}), training only the
+detection head for up to $100$ epochs. The learning rate is reduced by
+$100\times$ to $0.00008$, and augmentation is made conservative: copy-paste and
+vertical flipping are disabled, rotation is reduced to $5\degree$, scaling to
+$0.08$, mosaic probability to $0.5$, and dropout of $0.1$ is applied for
+regularisation. The class loss weight is increased from $0.5$ to $1.2$ to
+emphasise classification accuracy during fine-tuning. Phase~2 ran for the full
+$100$ epochs, achieving mAP@0.5~$=0.8609$, mAP@0.5:0.95~$=0.4379$,
+precision~$=0.8770$, and recall~$=0.8523$.
 
 Table~\ref{tab:training_run_comparison} summarises the principal differences
-between the early baseline run and the later optimised configuration.
+between the early baseline, Phase~1, and Phase~2 configurations.
 
 \begin{table*}[!p]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
 		\toprule
-		\textbf{Parameter}    & \textbf{Early baseline run} & \textbf{Later optimised run} & \textbf{Optimisation rationale}                                                                         \\
+		\textbf{Parameter} & \textbf{Early baseline} & \textbf{Phase 1 (base)} & \textbf{Phase 2 (fine-tune)} \\
 		\midrule
-		Model                 & \texttt{yolo11l.pt}         & \texttt{yolo26s.pt}          & Move from an older large model to a newer, smaller architecture with a better speed-accuracy trade-off. \\
+		Model              & \texttt{yolo11l.pt}     & \texttt{yolo26s.pt}     & Phase 1 best weights         \\
 		\addlinespace
-		Input size            & \texttt{640}                & \texttt{1280}                & Improve localisation of smaller luggage instances in wide-angle surveillance imagery.                   \\
+		Input size         & \texttt{640}            & \texttt{640}            & \texttt{640}                 \\
 		\addlinespace
-		Optimizer             & \texttt{auto}               & \texttt{AdamW}               & Use a more controlled optimiser with stronger regularisation behaviour during fine-tuning.              \\
+		Epochs (actual)    & 37                      & 176 / 200               & 100 / 100                    \\
 		\addlinespace
-		Initial learning rate & \texttt{0.01}               & \texttt{0.001}               & Reduce the risk of unstable updates and overshooting during convergence.                                \\
+		Optimizer / LR     & auto / 0.01             & AdamW / 0.0008          & AdamW / 0.00008              \\
 		\addlinespace
-		Batch configuration   & \texttt{16}                 & \texttt{0.8}                 & Allow automatic batch scaling based on available VRAM when training at higher resolution.               \\
+		Layer freezing     & None                    & None                    & \texttt{freeze=12}           \\
 		\addlinespace
-		Layer freezing        & None                        & \texttt{freeze=10}           & Preserve transferable low-level features from pre-training and reduce overfitting.                      \\
+		Augmentation       & Default                 & Aggressive              & Conservative + dropout 0.1   \\
 		\addlinespace
-		Dataset cache         & \texttt{false}              & \texttt{disk}                & Reduce data loading overhead and improve throughput during longer training runs.                        \\
+		Patience           & 100                     & 40                      & 25                           \\
 		\addlinespace
-		Patience              & \texttt{100}                & \texttt{30}                  & Stop earlier once validation improvement plateaus, reducing wasted compute.                             \\
+		Dataset cache      & None                    & Disk                    & RAM                          \\
 		\bottomrule
 	\end{tabularx}
-	\caption{Comparison of the early baseline training configuration and the later optimised run.}
+	\caption{Comparison of the early baseline, Phase~1 (base), and Phase~2 (fine-tune) training configurations.}
 	\label{tab:training_run_comparison}
 \end{table*}
 
-Another additional optimisation step that was applied was the use of early
-stopping with a patience of $30$ epochs, which allows the training process to
-stop early if the validation metrics do not improve for the specified number of
-epochs. This can help to prevent overfitting and reduce training time. For
-example, in another training run, the model was trained for $100$ epochs with
-early stopping enabled, and the training process stopped at epoch $87$ when the
-validation metrics plateaued (see figure ~\ref{fig:plateau_map5095}),
-indicating that the model had likely converged and further training would not
-yield significant improvements. This optimisation step can be particularly
-beneficial when training on a limited dataset, as it helps to avoid overfitting
-and ensures that the model generalises well to unseen data.
+\paragraph{Training results.}
 
-Furthermore, data augmentation techniques were applied during training to
-improve the model's generalisation capabilities. These techniques included
-random horizontal flipping, scaling, and colour jittering (all implemented
-natively by the \texttt{auto\_augment} feature of the framework), which help
-the model to learn invariant features and improve its robustness to variations
-in the input data. Data mosaicing, a technique where multiple images are
-combined into a single training example, was also applied to further enhance
-the diversity; mosaicing was disabled in the last 10 epochs to allow the model
-to fine-tune on simpler examples as it converged.
+The two-phase approach produced substantial improvements over the early
+baseline. Phase~2 achieved mAP@0.5~$=0.8609$ (versus $0.4125$ baseline,
+$+108.7\%$), mAP@0.5:0.95~$=0.4379$ (versus $0.2645$, $+65.6\%$),
+precision~$=0.8770$ (versus $0.4931$, $+77.9\%$), and recall~$=0.8523$ (versus
+$0.4096$, $+108.1\%$). These gains are cumulative across architecture, dataset,
+and training strategy changes and should be interpreted as system-level
+improvement rather than isolated effects of any single parameter.
 
-\begin{figure*}[!p]
-	\centering
-	\includegraphics[width=0.8\textwidth]{figures/plateau_map5095.png}
-	\caption{Example of a training run where early stopping was applied, showing the plateauing of the mAP@0.5:0.95 metric at epoch 87.}
-	\label{fig:plateau_map5095}
-\end{figure*}
-
-This progression produced substantial validation gains. The early run log
-contains $37$ epochs with final metrics of mAP@0.5:0.95 $=0.2645$, mAP@0.5
-$=0.4125$, precision $=0.4931$, and recall $=0.4096$. The optimised run
-completed $100$ epochs with final metrics of mAP@0.5:0.95 $=0.3951$, mAP@0.5
-$=0.6095$, precision $=0.6716$, and recall $=0.5798$. Relative to the baseline,
-this corresponds to approximately $+49.4\%$ mAP@0.5:0.95, $+47.7\%$ mAP@0.5,
-$+36.2\%$ precision, and $+41.6\%$ recall. This is represented graphically in
-figure~\ref{fig:early_baseline_vs_later_optimised_metrics}.
-
-\begin{figure*}[!p]
-	\centering
-	\includegraphics[width=0.8\textwidth]{figures/early_baseline_vs_later_optimised_metrics.png}
-	\caption{Comparison of the validation metrics between the early baseline run and the later optimised run.}
-	\label{fig:early_baseline_vs_later_optimised_metrics}
-\end{figure*}
-
-These improvements indicate that the optimisation strategy was effective for
-the target application, particularly for reducing missed detections. However,
-the comparison is not a fully controlled ablation because architecture,
-resolution, and training duration were changed simultaneously; therefore, the
-reported gains should be interpreted as cumulative system-level improvement
-rather than isolated effects of any single hyperparameter.
+Early stopping was used in both phases to prevent overfitting: Phase~1
+triggered early stopping at epoch~$176$ (patience~$40$), while Phase~2 ran its
+full $100$ epochs without triggering (patience~$25$). Data augmentation was
+applied throughout training, with the augmentation strategy deliberately varied
+between phases --- aggressive in Phase~1 to maximise diversity during full
+network training, and conservative in Phase~2 to stabilise the detection head
+during fine-tuning. Mosaicing was disabled in the final epochs of each phase
+(\texttt{close\_mosaic}) to allow the model to converge on unaugmented
+examples.
 
 \subsection{Model Export}
 \label{sec:model_export}
@@ -313,8 +309,9 @@ use DeepStream, and by extension \citeauthor{luciano2026deepstreamyolo}'s
 \citeauthor{luciano2026deepstreamyolo}'s export script ensured compatibility
 and optimised performance when deploying the model.
 
-The containerised export implementation forwards parameters into the
-DeepStream-compatible YOLO26 exporter. The exporter applies model-level changes
+The containerised export implementation forwards parameters from the central
+configuration file (\texttt{config.json}) into the DeepStream-compatible YOLO26
+exporter via the unified entrypoint. The exporter applies model-level changes
 required for compatibility with downstream DeepStream parsing: the detection
 head is switched to export mode, output formatting is adapted for ONNX export,
 and the final tensor is transformed into a compact per-detection layout of
@@ -322,10 +319,16 @@ and the final tensor is transformed into a compact per-detection layout of
 emitted from the trained class names to preserve class-index alignment at
 inference time.
 
-The main export configuration used in this project is summarised in the
-appendix~\ref{sec:config}, with the key parameters being: \texttt{format=onnx}
-to specify the export format, and \texttt{imgsz=1280} to maintain the input
-resolution used during training.
+The initial export used \texttt{imgsz=1280} to match the training resolution of
+the early baseline model. After migrating to the two-phase training pipeline
+described in Section~\ref{sec:training_process}, the input resolution was
+reduced to $640 \times 640$ to match the new training configuration. The
+current export loads the Phase~2 fine-tuned weights
+(\texttt{tuned\_26s/weights/best.pt}), applies FP16 half-precision quantisation
+(\texttt{half=true}) to halve model size and accelerate inference on the
+Jetson's GPU, and outputs the final artefact as \texttt{tuned.onnx}. The ONNX
+graph is simplified (\texttt{simplify=true}) and uses opset~18. The full export
+configuration is summarised in the appendix~\ref{sec:config}.
 
 In practice, this produced an ONNX model suitable for subsequent TensorRT
 engine generation on the Jetson platform while retaining compatibility with the
