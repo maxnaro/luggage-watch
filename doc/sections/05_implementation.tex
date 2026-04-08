@@ -4,52 +4,75 @@
 
 \subsubsection{Object Detection Dataset}
 
-The training dataset for the object detection model was sourced from the
-Microsoft COCO dataset \citep{lin2014microsoft}. As mentioned prior, the COCO
-dataset is a large-scale source of over $200,000$ labelled images across 80
-object categories. The entirety of the dataset would lead to redundancy with a
-majority of classes being out of scope for the target application. Therefore, a
-subset of the COCO dataset was created, containing only images including the
-\texttt{person}, \texttt{backpack}, \texttt{handbag} and \texttt{suitcase}
-classes, which I then aggregated into a single \texttt{luggage} class. This
-resulted in a training dataset of $8,887$ images split into training and
-validation splits of $8,397$ and $490$ images, respectively. This split ensured
-that the validation set contained a representative sample of the training data,
-allowing for an accurate assessment of the model's performance during training
-and optimisations whilst the training set provided a sufficient amount of data
-for the model to learn from.
+\paragraph{Original COCO-only dataset.}
 
-Originally, I had intended to use datasets specific to the abandoned luggage
-detection domain, such as ABODA, however these datasets failed to include the
-amount of variation needed for training a robust model. Many annotated
-datasets, created from the source footage, led to overfitting and poor
-generalisation on test examples due to their smaller size, limited diversity in
-viewpoints, and repeated scene context. The COCO dataset, while lacking the
-domain specificity, offers a much larger variety of examples, covering a wide
-range of environments, lighting conditions, and object appearances.
+The initial training dataset was sourced exclusively from the Microsoft COCO
+dataset \citep{lin2014microsoft}, filtered for the \texttt{person},
+\texttt{backpack}, \texttt{handbag}, and \texttt{suitcase} classes, with the
+three luggage types aggregated into a single \texttt{luggage} class.
+Oversampling of underrepresented luggage sub-classes (e.g., duplicating
+\texttt{handbag} images) was applied to balance class representation.
+Domain-specific datasets such as ABODA were considered but proved too small and
+repetitive, leading to overfitting and poor generalisation. COCO, while lacking
+CCTV-native footage, offered a much larger variety of environments, lighting
+conditions, and object appearances. However, COCO alone provided a narrow
+luggage vocabulary (only three sub-types) and limited viewpoint diversity,
+motivating the introduction of a second source.
 
-Another benefit of using the COCO dataset is the ease of access and
-availability of annotations that are compatible with the latest YOLO models. A
-python script was used to filter the COCO dataset, specify the YOLO annotation
-format, balance class instances, remap classes to a single \texttt{luggage}
-class, and oversample specific classes (\ref{sec:model_training_optimisation})
-to create a more varied and proportionate training dataset.
+\paragraph{Mixed-source pipeline.}
 
-Constructing the dataset programmatically allowed for a specific and
-reproducible balance between the detected classes, which is crucial in the
-context of abandoned luggage detection, where smaller objects such as bags may
-be underrepresented in typical dataset. The target \texttt{person} budget was
-constrained by $N_{\text{person},\text{allowed}}=r\cdot N_{\text{luggage}}$,
-where $r$ is the target class instance ratio. Utilising balancing and
-oversampling techniques resulted in an overall class instance ratio of
-$\frac{13092}{6543} \approx 2.0:1$ between the \texttt{person} and
-\texttt{luggage} classes shown in
-figure~\ref{fig:dataset_class_distribution_after}; the reasoning behind this
-method is covered in more detail in the model training and optimisation section
-(\ref{sec:model_training_optimisation}). An example of the class distribution
-of the dataset before and after the balancing and oversampling techniques were
-applied is shown in figures~\ref{fig:dataset_class_distribution_before} and
-\ref{fig:dataset_class_distribution_after}, respectively.
+The current dataset pipeline pulls from both COCO~2017 and Open Images~V7
+\citep{krasin2017openimages} using FiftyOne, with the total sample budget split
+between the two sources by a configurable ratio (default $2{:}1$ OID-to-COCO).
+
+\textbf{COCO~2017} contributes the same four classes as the original pipeline
+(\texttt{person}, \texttt{backpack}, \texttt{handbag}, \texttt{suitcase}),
+remapped to \texttt{person} and \texttt{luggage}. Per-subclass oversampling
+weights (e.g., \texttt{handbag=3}) can still be applied before remapping to
+compensate for under-representation of difficult luggage types.
+
+\textbf{Open Images~V7} provides a broader vocabulary: six person-related
+classes (\texttt{Person}, \texttt{Man}, \texttt{Woman}, \texttt{Boy},
+\texttt{Girl}, \texttt{Human body}) mapped to \texttt{person}, and five
+luggage-related classes (\texttt{Backpack}, \texttt{Suitcase},
+\texttt{Handbag}, \texttt{Briefcase}, \texttt{Luggage and bags}) mapped to
+\texttt{luggage}. The additional classes --- particularly \texttt{Briefcase}
+and \texttt{Luggage and bags} --- and the gendered and age-specific person
+labels increase the diversity of both appearance and annotation style compared
+to the COCO-only baseline.
+
+The source-ratio parameter controls the relative contribution of each source
+and can be adjusted to weight either annotation diversity (more OID) or
+annotation quality (more COCO). Additionally, the pipeline supports merging
+supplementary local YOLO-format datasets (e.g., Roboflow exports) with
+automatic label normalisation via a set of aliases (e.g.,
+\texttt{bag}~$\to$~\texttt{luggage},
+\texttt{pedestrian}~$\to$~\texttt{person}), enabling domain-specific data to be
+incorporated without manual reformatting.
+
+\paragraph{Class balancing and filtering.}
+
+Two post-processing steps are applied after source merging:
+
+\begin{itemize}
+	\item \textbf{Min-area filtering:} Luggage annotations with a normalised
+	      bounding box area below a configurable threshold (default~$0.001$,
+	      approximately $32\times32$~px at $1024\times1024$ resolution) are
+	      removed. This prevents the model from learning from tiny, ambiguous
+	      annotations that are unlikely to yield useful detections at inference
+	      time.
+	\item \textbf{Person down-sampling:} Rather than relying solely on
+	      oversampling to balance the dataset, the pipeline down-samples
+	      person-only images to achieve a target person-to-luggage instance
+	      ratio (default~$2{:}1$). A person-instance budget is computed from
+	      the luggage count, and person-only images are retained until the
+	      budget is met. This avoids inflating the dataset with excessive
+	      person-only images that would dilute luggage representation.
+\end{itemize}
+
+The resulting dataset used for the final training runs contained $36{,}130$
+person instances and $27{,}258$ luggage instances, yielding an effective ratio
+of approximately $1.33{:}1$.
 
 \begin{figure*}[!htb]
 	\centering
@@ -61,28 +84,21 @@ applied is shown in figures~\ref{fig:dataset_class_distribution_before} and
 \begin{figure*}[!htb]
 	\centering
 	\includegraphics[width=0.8\textwidth]{figures/dataset_class_distribution_after.jpg}
-	\caption{Class distribution of the dataset after aggregation, balancing and oversampling techniques were applied.}
+	\caption{Class distribution of the dataset after aggregation, balancing and filtering techniques were applied.}
 	\label{fig:dataset_class_distribution_after}
 \end{figure*}
 
-Oversampling was applied to the constituent classes of the \texttt{luggage}
-class, which inferred upon review of the model's performance. This was
-implemented by duplicating images containing the underrepresented classes,
-defined by a parameter assigning weights to each class e.g.,
-``\texttt{backpack=2,handbag=3,suitcase=1}'' for the given COCO classes. This
-method allowed the model to learn the features of more difficult classes, such
-as \texttt{handbag}s, which it struggled to detect in the early stages of
-training.
+\paragraph{Limitations.}
 
-A limitation of using the COCO dataset and the sampling techniques used is the
-inherent lack of domain specificity, whilst the dataset contains a wide variety
-of examples, its lack of CCTV-native footage can lead to models struggling to
-generalise to the target application. Aggregating multiple classes into a
-single \texttt{luggage} class can also lead to a loss of granularity in the
-model's understanding of different types of luggage, however, this is a
-necessary trade-off to ensure a sufficient amount of training data was
-available and for the model to learn a more generalised representation of
-luggage which can help with the issue of generalisation.
+The mixed-source approach partially addresses the CCTV-native footage gap, Open
+Images contains a wider variety of scenes and viewpoints than COCO alone, but
+neither source is specifically drawn from surveillance footage, so the domain
+gap remains. Aggregating multiple luggage sub-types into a single
+\texttt{luggage} class sacrifices granularity in the model's understanding of
+different luggage types; however, this trade-off is necessary to ensure
+sufficient training data for the aggregated class and to encourage a
+generalised luggage representation that transfers better to unseen deployment
+environments.
 
 \subsubsection{Suspicious Luggage Dataset}
 \label{sec:suspicious_luggage_dataset}
