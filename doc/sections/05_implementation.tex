@@ -505,6 +505,39 @@ tracking its ID, the ID of its owner (if any), its state (e.g., attended,
 unattended, abandoned), its last bounding box, and the frame-derived timestamp
 of its last update.
 
+The system design proposed a state machine with single-frame transitions
+(figure~\ref{fig:state_machine}), a nearest-person ownership heuristic
+(algorithm~\ref{alg:association}), and a fixed abandonment timer
+(algorithm~\ref{alg:state_transitions}). During implementation and iterative
+testing, several limitations of this initial design became apparent.
+Single-frame transitions were highly susceptible to tracker noise, causing
+rapid state oscillation. The simple proximity-based ownership assignment could
+not tolerate brief detector dropouts or person-tracker ID flips. A fixed
+context TTL discarded valuable state for abandoned items that momentarily left
+the tracker output.
+
+The implementation therefore introduces a number of refinements to the original
+design, while preserving the three-state structure and adjacency invariants.
+Figure~\ref{fig:state_machine_impl} shows the updated state machine, and the
+subsections that follow describe each change in detail: state-dependent context
+lifecycle management (section~\ref{sec:context_lifecycle}), multi-tier
+ownership with confirmation and reassignment
+(section~\ref{sec:ownership_assignment}), hysteresis-based state transitions
+with abandonment guards (section~\ref{sec:state_transition_invariants}), and a
+richer attendance signal incorporating grace periods and consistency checking.
+
+\begin{figure*}[!htb]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/plantuml/state_machine_impl.png}
+	\caption{Updated state machine reflecting the implemented transition logic.
+		Compared to the design (figure~\ref{fig:state_machine}), entry into
+		\texttt{Unattended} and attendance-based recovery now require multi-frame
+		confirmation, the abandonment timer can resume across brief attended flips,
+		and the \texttt{Abandoned} transition is gated by owner-history and
+		context-age guards.}
+	\label{fig:state_machine_impl}
+\end{figure*}
+
 \subsubsection{Processing Tracking Outputs}
 
 The parameters passed to the processing function by the tracker probe include a
@@ -529,7 +562,7 @@ can be seen in the class diagram in figure~\ref{fig:states_class_diagram}.
 
 \begin{figure*}[!p]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/plantuml/states_class_diagram.png}
+	\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{figures/plantuml/states_class_diagram.png}
 	\caption{Class diagram representing the object-oriented implementation of the luggage state machine.}
 	\label{fig:states_class_diagram}
 \end{figure*}
