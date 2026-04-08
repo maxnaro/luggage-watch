@@ -131,8 +131,8 @@ examples featuring marked changes in lighting condition, nighttime scenarios,
 indoor and outdoor environments.
 
 In addition, authors \citet{amin2021large} provide a dataset of scenarios split
-into abandoned and non-abandoned scenarios, with graded levels of difficulty.
-This dataset has been used in literature by authors
+into abandoned and non-abandoned scenarios, with graded levels of difficulty;
+the IITP20 dataset. This dataset has been used in literature by authors
 \citet{abandoned2025vrsalovic}.
 
 Unfortunately, the PETS2006 \citep{thirde2006pets} and AVSS-2007
@@ -797,15 +797,15 @@ algorithm~\ref{alg:ownership_evaluation_impl}.
 		\EndFor
 		\If{$\neg\Call{ConfirmCandidate}{l, best\_person, N_{\text{assign}}}$} \Return \textsc{False} \EndIf
 		\State $l.owner \gets best\_person$, $l.owner\_bbox \gets best\_person.bbox$
-		\State $l.missing\_since \gets null$\\
-		\Return \textsc{True}
+		\State $l.missing\_since \gets null$
+		\State \Return \textsc{True}
 		\EndIf
 		\Statex
 		\If{$l.owner \in P$} \Comment{Owner visible in tracking output}
 		\State $d_{\text{shift}} \gets \Call{CentreDist}{l.owner.bbox, l.owner\_bbox}$
 		\If{$d_{\text{shift}} \leq S_{\max}$} \Comment{Trajectory is spatially consistent}
-		\State $l.owner\_bbox \gets l.owner.bbox$, $l.missing\_since \gets null$\\
-		\Return $\Call{InRange}{l.bbox, l.owner.bbox}$ \Comment{Two-tier proximity}
+		\State $l.owner\_bbox \gets l.owner.bbox$, $l.missing\_since \gets null$
+		\State \Return $\Call{InRange}{l.bbox, l.owner.bbox}$ \Comment{Two-tier proximity}
 		\Else \Comment{Trajectory jump $\implies$ treat owner as missing}
 		\If{$l.missing\_since = null$} \State $l.missing\_since \gets t$ \EndIf
 		\EndIf
@@ -816,11 +816,11 @@ algorithm~\ref{alg:ownership_evaluation_impl}.
 		\If{$t - l.missing\_since \leq W_{\text{reassign}}$} \Comment{Within reassignment window}
 		\State $c \gets \Call{ReassignCandidate}{l.bbox, l.owner\_bbox, P}$
 		\If{$\Call{ConfirmCandidate}{l, c, N_{\text{reassign}}}$}
-		\State $l.owner \gets c$, $l.owner\_bbox \gets c.bbox$, $l.missing\_since \gets null$\\
-		\Return $\Call{InRange}{l.bbox, c.bbox}$
+		\State $l.owner \gets c$, $l.owner\_bbox \gets c.bbox$, $l.missing\_since \gets null$
+		\State \Return $\Call{InRange}{l.bbox, c.bbox}$
 		\EndIf
-		\EndIf\\
-		\Return $t - l.missing\_since \leq G_{\text{grace}}$ \Comment{Grace period}
+		\EndIf
+		\State \Return $t - l.missing\_since \leq G_{\text{grace}}$ \Comment{Grace period}
 	\end{algorithmic}
 \end{algorithm*}
 
