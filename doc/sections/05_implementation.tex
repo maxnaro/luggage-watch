@@ -1186,13 +1186,6 @@ and ownership line/circle drawing is $O(1)$ per attended luggage item (with
 bounded metadata pool management). Memory complexity is dominated by persistent
 context storage, $O(T)$, plus per-frame temporary maps $O(P+L)$.
 
-One implementation detail affects realised runtime: frame-level processing and
-overlay updates are currently called from inside the object-iteration loop in
-the probe callback. This multiplies effective work within a frame and increases
-constant factors compared with a single invocation per frame. Refactoring those
-calls to execute once after object collection would preserve the asymptotic
-bound while reducing practical runtime overhead.
-
 \subsubsection{Failure Modes and Mitigation Strategies}
 \label{sec:failure_modes_and_mitigation_strategies}
 
