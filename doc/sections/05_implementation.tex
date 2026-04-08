@@ -4,52 +4,75 @@
 
 \subsubsection{Object Detection Dataset}
 
-The training dataset for the object detection model was sourced from the
-Microsoft COCO dataset \citep{lin2014microsoft}. As mentioned prior, the COCO
-dataset is a large-scale source of over $200,000$ labelled images across 80
-object categories. The entirety of the dataset would lead to redundancy with a
-majority of classes being out of scope for the target application. Therefore, a
-subset of the COCO dataset was created, containing only images including the
-\texttt{person}, \texttt{backpack}, \texttt{handbag} and \texttt{suitcase}
-classes, which I then aggregated into a single \texttt{luggage} class. This
-resulted in a training dataset of $8,887$ images split into training and
-validation splits of $8,397$ and $490$ images, respectively. This split ensured
-that the validation set contained a representative sample of the training data,
-allowing for an accurate assessment of the model's performance during training
-and optimisations whilst the training set provided a sufficient amount of data
-for the model to learn from.
+\paragraph{Original COCO-only dataset.}
 
-Originally, I had intended to use datasets specific to the abandoned luggage
-detection domain, such as ABODA, however these datasets failed to include the
-amount of variation needed for training a robust model. Many annotated
-datasets, created from the source footage, led to overfitting and poor
-generalisation on test examples due to their smaller size, limited diversity in
-viewpoints, and repeated scene context. The COCO dataset, while lacking the
-domain specificity, offers a much larger variety of examples, covering a wide
-range of environments, lighting conditions, and object appearances.
+The initial training dataset was sourced exclusively from the Microsoft COCO
+dataset \citep{lin2014microsoft}, filtered for the \texttt{person},
+\texttt{backpack}, \texttt{handbag}, and \texttt{suitcase} classes, with the
+three luggage types aggregated into a single \texttt{luggage} class.
+Oversampling of underrepresented luggage sub-classes (e.g., duplicating
+\texttt{handbag} images) was applied to balance class representation.
+Domain-specific datasets such as ABODA were considered but proved too small and
+repetitive, leading to overfitting and poor generalisation. COCO, while lacking
+CCTV-native footage, offered a much larger variety of environments, lighting
+conditions, and object appearances. However, COCO alone provided a narrow
+luggage vocabulary (only three sub-types) and limited viewpoint diversity,
+motivating the introduction of a second source.
 
-Another benefit of using the COCO dataset is the ease of access and
-availability of annotations that are compatible with the latest YOLO models. A
-python script was used to filter the COCO dataset, specify the YOLO annotation
-format, balance class instances, remap classes to a single \texttt{luggage}
-class, and oversample specific classes (\ref{sec:model_training_optimisation})
-to create a more varied and proportionate training dataset.
+\paragraph{Mixed-source pipeline.}
 
-Constructing the dataset programmatically allowed for a specific and
-reproducible balance between the detected classes, which is crucial in the
-context of abandoned luggage detection, where smaller objects such as bags may
-be underrepresented in typical dataset. The target \texttt{person} budget was
-constrained by $N_{\text{person},\text{allowed}}=r\cdot N_{\text{luggage}}$,
-where $r$ is the target class instance ratio. Utilising balancing and
-oversampling techniques resulted in an overall class instance ratio of
-$\frac{13092}{6543} \approx 2.0:1$ between the \texttt{person} and
-\texttt{luggage} classes shown in
-figure~\ref{fig:dataset_class_distribution_after}; the reasoning behind this
-method is covered in more detail in the model training and optimisation section
-(\ref{sec:model_training_optimisation}). An example of the class distribution
-of the dataset before and after the balancing and oversampling techniques were
-applied is shown in figures~\ref{fig:dataset_class_distribution_before} and
-\ref{fig:dataset_class_distribution_after}, respectively.
+The current dataset pipeline pulls from both COCO~2017 and Open Images~V7
+\citep{krasin2017openimages} using FiftyOne, with the total sample budget split
+between the two sources by a configurable ratio (default $2{:}1$ OID-to-COCO).
+
+\textbf{COCO~2017} contributes the same four classes as the original pipeline
+(\texttt{person}, \texttt{backpack}, \texttt{handbag}, \texttt{suitcase}),
+remapped to \texttt{person} and \texttt{luggage}. Per-subclass oversampling
+weights (e.g., \texttt{handbag=3}) can still be applied before remapping to
+compensate for under-representation of difficult luggage types.
+
+\textbf{Open Images~V7} provides a broader vocabulary: six person-related
+classes (\texttt{Person}, \texttt{Man}, \texttt{Woman}, \texttt{Boy},
+\texttt{Girl}, \texttt{Human body}) mapped to \texttt{person}, and five
+luggage-related classes (\texttt{Backpack}, \texttt{Suitcase},
+\texttt{Handbag}, \texttt{Briefcase}, \texttt{Luggage and bags}) mapped to
+\texttt{luggage}. The additional classes --- particularly \texttt{Briefcase}
+and \texttt{Luggage and bags} --- and the gendered and age-specific person
+labels increase the diversity of both appearance and annotation style compared
+to the COCO-only baseline.
+
+The source-ratio parameter controls the relative contribution of each source
+and can be adjusted to weight either annotation diversity (more OID) or
+annotation quality (more COCO). Additionally, the pipeline supports merging
+supplementary local YOLO-format datasets (e.g., Roboflow exports) with
+automatic label normalisation via a set of aliases (e.g.,
+\texttt{bag}~$\to$~\texttt{luggage},
+\texttt{pedestrian}~$\to$~\texttt{person}), enabling domain-specific data to be
+incorporated without manual reformatting.
+
+\paragraph{Class balancing and filtering.}
+
+Two post-processing steps are applied after source merging:
+
+\begin{itemize}
+	\item \textbf{Min-area filtering:} Luggage annotations with a normalised
+	      bounding box area below a configurable threshold (default~$0.001$,
+	      approximately $32\times32$~px at $1024\times1024$ resolution) are
+	      removed. This prevents the model from learning from tiny, ambiguous
+	      annotations that are unlikely to yield useful detections at inference
+	      time.
+	\item \textbf{Person down-sampling:} Rather than relying solely on
+	      oversampling to balance the dataset, the pipeline down-samples
+	      person-only images to achieve a target person-to-luggage instance
+	      ratio (default~$2{:}1$). A person-instance budget is computed from
+	      the luggage count, and person-only images are retained until the
+	      budget is met. This avoids inflating the dataset with excessive
+	      person-only images that would dilute luggage representation.
+\end{itemize}
+
+The resulting dataset used for the final training runs contained $36{,}130$
+person instances and $27{,}258$ luggage instances, yielding an effective ratio
+of approximately $1.33{:}1$.
 
 \begin{figure*}[!htb]
 	\centering
@@ -61,30 +84,24 @@ applied is shown in figures~\ref{fig:dataset_class_distribution_before} and
 \begin{figure*}[!htb]
 	\centering
 	\includegraphics[width=0.8\textwidth]{figures/dataset_class_distribution_after.jpg}
-	\caption{Class distribution of the dataset after aggregation, balancing and oversampling techniques were applied.}
+	\caption{Class distribution of the dataset after aggregation, balancing and filtering techniques were applied.}
 	\label{fig:dataset_class_distribution_after}
 \end{figure*}
 
-Oversampling was applied to the constituent classes of the \texttt{luggage}
-class, which inferred upon review of the model's performance. This was
-implemented by duplicating images containing the underrepresented classes,
-defined by a parameter assigning weights to each class e.g.,
-``\texttt{backpack=2,handbag=3,suitcase=1}'' for the given COCO classes. This
-method allowed the model to learn the features of more difficult classes, such
-as \texttt{handbag}s, which it struggled to detect in the early stages of
-training.
+\paragraph{Limitations.}
 
-A limitation of using the COCO dataset and the sampling techniques used is the
-inherent lack of domain specificity, whilst the dataset contains a wide variety
-of examples, its lack of CCTV-native footage can lead to models struggling to
-generalise to the target application. Aggregating multiple classes into a
-single \texttt{luggage} class can also lead to a loss of granularity in the
-model's understanding of different types of luggage, however, this is a
-necessary trade-off to ensure a sufficient amount of training data was
-available and for the model to learn a more generalised representation of
-luggage which can help with the issue of generalisation.
+The mixed-source approach partially addresses the CCTV-native footage gap, Open
+Images contains a wider variety of scenes and viewpoints than COCO alone, but
+neither source is specifically drawn from surveillance footage, so the domain
+gap remains. Aggregating multiple luggage sub-types into a single
+\texttt{luggage} class sacrifices granularity in the model's understanding of
+different luggage types; however, this trade-off is necessary to ensure
+sufficient training data for the aggregated class and to encourage a
+generalised luggage representation that transfers better to unseen deployment
+environments.
 
 \subsubsection{Suspicious Luggage Dataset}
+\label{sec:suspicious_luggage_dataset}
 
 The purpose of the suspicious luggage dataset is to provide a source of data
 for testing the end-to-end DeepStream pipeline, not for training the primary
@@ -114,8 +131,8 @@ examples featuring marked changes in lighting condition, nighttime scenarios,
 indoor and outdoor environments.
 
 In addition, authors \citet{amin2021large} provide a dataset of scenarios split
-into abandoned and non-abandoned scenarios, with graded levels of difficulty.
-This dataset has been used in literature by authors
+into abandoned and non-abandoned scenarios, with graded levels of difficulty;
+the IITP20 dataset. This dataset has been used in literature by authors
 \citet{abandoned2025vrsalovic}.
 
 Unfortunately, the PETS2006 \citep{thirde2006pets} and AVSS-2007
@@ -123,9 +140,6 @@ Unfortunately, the PETS2006 \citep{thirde2006pets} and AVSS-2007
 prevalence in the literature and my efforts to contact the authors. The
 utilisation of AVSS-2007 was restricted to a single example video sequence,
 which was used in conjunction with the aforementioned procured datasets.
-
-% TODO: determine ground-truth protocol for evaluation of the end-to-end pipeline,
-%       e.g., frame-level labels of abandonment, bounding box annotations, etc.
 
 \subsection{Model Training and Optimisation}
 \label{sec:model_training_optimisation}
@@ -160,6 +174,7 @@ specifying the parameters of the training process as seen in
 listing~\ref{lst:config}.
 
 \subsubsection{Training Process and Iterative Optimisation}
+\label{sec:training_process}
 
 A transfer learning approach was applied where a pre-trained YOLO model was
 fine-tuned on the custom dataset. This approach allows the model to leverage
@@ -167,7 +182,7 @@ the general features learned from the large-scale COCO dataset, which can be
 beneficial for improving performance and reducing training time, especially
 when the custom dataset is relatively small. The pre-trained model used in the
 final iteration was \texttt{yolo26s.pt}, a compact and efficient model
-architecture, well suited for deployment on edge devices like the NVIDIA Jetson
+architecture well suited for deployment on edge devices like the NVIDIA Jetson
 Orin Nano.
 
 Model training was an iterative process, with multiple rounds of training and
@@ -181,100 +196,98 @@ metrics were considered, recall was prioritised because false negatives (missed
 detections) are operationally more severe than false positives in suspicious
 luggage detection.
 
+\paragraph{Early baseline.}
+
 An early baseline run used \texttt{yolo11l.pt} at \texttt{imgsz=640}, with
 \texttt{optimizer=auto}, \texttt{lr0=0.01}, \texttt{batch=16}, no backbone
-freezing, and uncached loading. A later optimised run used \texttt{yolo26s.pt}
-at \texttt{imgsz=1280}, \texttt{optimizer=AdamW}, \texttt{lr0=0.001},
-\texttt{batch=0.8} (auto-scaled by available VRAM), \texttt{freeze=10}, and
-\texttt{cache=disk}. The rationale behind these changes was: (i) increase input
-resolution to improve small-object localisation for luggage items, (ii) improve
-optimisation stability with AdamW and a lower initial learning rate, (iii)
-preserve transferable low-level visual features by freezing early backbone
-layers, and (iv) improve training throughput and memory efficiency using disk
-caching and adaptive batch sizing at higher resolution.
+freezing, and uncached loading. This run completed $37$ epochs with final
+metrics of mAP@0.5:0.95~$=0.2645$, mAP@0.5~$=0.4125$, precision~$=0.4931$, and
+recall~$=0.4096$. These results established a performance floor and highlighted
+the need for a more systematic training strategy.
+
+\paragraph{Two-phase training.}
+
+The final training methodology uses a two-phase approach at \texttt{imgsz=640},
+configured via a single JSON file that defines both phases and their
+parameters. The input resolution was reduced from the intermediate $1280$
+experiments to $640$ to meet the latency constraints of the target edge
+hardware whilst still offering sufficient resolution for the luggage detection
+task.
+
+\textbf{Phase~1 --- base training} uses the pre-trained \texttt{yolo26s.pt}
+checkpoint with all layers unfrozen (\texttt{freeze=0}), training for up to
+$200$ epochs with aggressive data augmentation: copy-paste augmentation at
+$30\%$, vertical flipping at $50\%$, rotation up to $45\degree$, scaling at
+$0.2$, and shear at $5.0$. The learning rate starts at $0.0008$ with AdamW,
+and early stopping with a patience of $40$ epochs halts training once
+validation performance plateaus. Phase~1 ran for $176$ epochs before early
+stopping, achieving mAP@0.5~$=0.6006$, mAP@0.5:0.95~$=0.3267$,
+precision~$=0.7116$, and recall~$=0.5337$. The purpose of this phase is to
+learn general features across the full network from the mixed-source dataset,
+using aggressive augmentation to maximise the effective diversity of the
+training data.
+
+\textbf{Phase~2 --- fine-tuning} loads the best weights from phase~1 and
+freezes the first $12$ backbone layers (\texttt{freeze=12}), training only the
+detection head for up to $100$ epochs. The learning rate is reduced by
+$100\times$ to $0.00008$, and augmentation is made conservative: copy-paste and
+vertical flipping are disabled, rotation is reduced to $5\degree$, scaling to
+$0.08$, mosaic probability to $0.5$, and dropout of $0.1$ is applied for
+regularisation. The class loss weight is increased from $0.5$ to $1.2$ to
+emphasise classification accuracy during fine-tuning. Phase~2 ran for the full
+$100$ epochs, achieving mAP@0.5~$=0.8609$, mAP@0.5:0.95~$=0.4379$,
+precision~$=0.8770$, and recall~$=0.8523$.
 
 Table~\ref{tab:training_run_comparison} summarises the principal differences
-between the early baseline run and the later optimised configuration.
+between the early baseline, Phase~1, and Phase~2 configurations.
 
 \begin{table*}[!p]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
 		\toprule
-		\textbf{Parameter}    & \textbf{Early baseline run} & \textbf{Later optimised run} & \textbf{Optimisation rationale}                                                                         \\
+		\textbf{Parameter} & \textbf{Early baseline} & \textbf{Phase 1 (base)} & \textbf{Phase 2 (fine-tune)} \\
 		\midrule
-		Model                 & \texttt{yolo11l.pt}         & \texttt{yolo26s.pt}          & Move from an older large model to a newer, smaller architecture with a better speed-accuracy trade-off. \\
+		Model              & \texttt{yolo11l.pt}     & \texttt{yolo26s.pt}     & Phase 1 best weights         \\
 		\addlinespace
-		Input size            & \texttt{640}                & \texttt{1280}                & Improve localisation of smaller luggage instances in wide-angle surveillance imagery.                   \\
+		Input size         & \texttt{640}            & \texttt{640}            & \texttt{640}                 \\
 		\addlinespace
-		Optimizer             & \texttt{auto}               & \texttt{AdamW}               & Use a more controlled optimiser with stronger regularisation behaviour during fine-tuning.              \\
+		Epochs (actual)    & 37                      & 176 / 200               & 100 / 100                    \\
 		\addlinespace
-		Initial learning rate & \texttt{0.01}               & \texttt{0.001}               & Reduce the risk of unstable updates and overshooting during convergence.                                \\
+		Optimizer / LR     & auto / 0.01             & AdamW / 0.0008          & AdamW / 0.00008              \\
 		\addlinespace
-		Batch configuration   & \texttt{16}                 & \texttt{0.8}                 & Allow automatic batch scaling based on available VRAM when training at higher resolution.               \\
+		Layer freezing     & None                    & None                    & \texttt{freeze=12}           \\
 		\addlinespace
-		Layer freezing        & None                        & \texttt{freeze=10}           & Preserve transferable low-level features from pre-training and reduce overfitting.                      \\
+		Augmentation       & Default                 & Aggressive              & Conservative + dropout 0.1   \\
 		\addlinespace
-		Dataset cache         & \texttt{false}              & \texttt{disk}                & Reduce data loading overhead and improve throughput during longer training runs.                        \\
+		Patience           & 100                     & 40                      & 25                           \\
 		\addlinespace
-		Patience              & \texttt{100}                & \texttt{30}                  & Stop earlier once validation improvement plateaus, reducing wasted compute.                             \\
+		Dataset cache      & None                    & Disk                    & RAM                          \\
 		\bottomrule
 	\end{tabularx}
-	\caption{Comparison of the early baseline training configuration and the later optimised run.}
+	\caption{Comparison of the early baseline, Phase~1 (base), and Phase~2 (fine-tune) training configurations.}
 	\label{tab:training_run_comparison}
 \end{table*}
 
-Another additional optimisation step that was applied was the use of early
-stopping with a patience of $30$ epochs, which allows the training process to
-stop early if the validation metrics do not improve for the specified number of
-epochs. This can help to prevent overfitting and reduce training time. For
-example, in another training run, the model was trained for $100$ epochs with
-early stopping enabled, and the training process stopped at epoch $87$ when the
-validation metrics plateaued (see figure ~\ref{fig:plateau_map5095}),
-indicating that the model had likely converged and further training would not
-yield significant improvements. This optimisation step can be particularly
-beneficial when training on a limited dataset, as it helps to avoid overfitting
-and ensures that the model generalises well to unseen data.
+\paragraph{Training results.}
 
-Furthermore, data augmentation techniques were applied during training to
-improve the model's generalisation capabilities. These techniques included
-random horizontal flipping, scaling, and colour jittering (all implemented
-natively by the \texttt{auto\_augment} feature of the framework), which help
-the model to learn invariant features and improve its robustness to variations
-in the input data. Data mosaicing, a technique where multiple images are
-combined into a single training example, was also applied to further enhance
-the diversity; mosaicing was disabled in the last 10 epochs to allow the model
-to fine-tune on simpler examples as it converged.
+The two-phase approach produced substantial improvements over the early
+baseline. Phase~2 achieved mAP@0.5~$=0.8609$ (versus $0.4125$ baseline,
+$+108.7\%$), mAP@0.5:0.95~$=0.4379$ (versus $0.2645$, $+65.6\%$),
+precision~$=0.8770$ (versus $0.4931$, $+77.9\%$), and recall~$=0.8523$ (versus
+$0.4096$, $+108.1\%$). These gains are cumulative across architecture, dataset,
+and training strategy changes and should be interpreted as system-level
+improvement rather than isolated effects of any single parameter.
 
-\begin{figure*}[!p]
-	\centering
-	\includegraphics[width=0.8\textwidth]{figures/plateau_map5095.png}
-	\caption{Example of a training run where early stopping was applied, showing the plateauing of the mAP@0.5:0.95 metric at epoch 87.}
-	\label{fig:plateau_map5095}
-\end{figure*}
-
-This progression produced substantial validation gains. The early run log
-contains $37$ epochs with final metrics of mAP@0.5:0.95 $=0.2645$, mAP@0.5
-$=0.4125$, precision $=0.4931$, and recall $=0.4096$. The optimised run
-completed $100$ epochs with final metrics of mAP@0.5:0.95 $=0.3951$, mAP@0.5
-$=0.6095$, precision $=0.6716$, and recall $=0.5798$. Relative to the baseline,
-this corresponds to approximately $+49.4\%$ mAP@0.5:0.95, $+47.7\%$ mAP@0.5,
-$+36.2\%$ precision, and $+41.6\%$ recall. This is represented graphically in
-figure~\ref{fig:early_baseline_vs_later_optimised_metrics}.
-
-\begin{figure*}[!p]
-	\centering
-	\includegraphics[width=0.8\textwidth]{figures/early_baseline_vs_later_optimised_metrics.png}
-	\caption{Comparison of the validation metrics between the early baseline run and the later optimised run.}
-	\label{fig:early_baseline_vs_later_optimised_metrics}
-\end{figure*}
-
-These improvements indicate that the optimisation strategy was effective for
-the target application, particularly for reducing missed detections. However,
-the comparison is not a fully controlled ablation because architecture,
-resolution, and training duration were changed simultaneously; therefore, the
-reported gains should be interpreted as cumulative system-level improvement
-rather than isolated effects of any single hyperparameter.
+Early stopping was used in both phases to prevent overfitting: Phase~1
+triggered early stopping at epoch~$176$ (patience~$40$), while Phase~2 ran its
+full $100$ epochs without triggering (patience~$25$). Data augmentation was
+applied throughout training, with the augmentation strategy deliberately varied
+between phases --- aggressive in Phase~1 to maximise diversity during full
+network training, and conservative in Phase~2 to stabilise the detection head
+during fine-tuning. Mosaicing was disabled in the final epochs of each phase
+(\texttt{close\_mosaic}) to allow the model to converge on unaugmented
+examples.
 
 \subsection{Model Export}
 \label{sec:model_export}
@@ -296,8 +309,9 @@ use DeepStream, and by extension \citeauthor{luciano2026deepstreamyolo}'s
 \citeauthor{luciano2026deepstreamyolo}'s export script ensured compatibility
 and optimised performance when deploying the model.
 
-The containerised export implementation forwards parameters into the
-DeepStream-compatible YOLO26 exporter. The exporter applies model-level changes
+The containerised export implementation forwards parameters from the central
+configuration file (\texttt{config.json}) into the DeepStream-compatible YOLO26
+exporter via the unified entrypoint. The exporter applies model-level changes
 required for compatibility with downstream DeepStream parsing: the detection
 head is switched to export mode, output formatting is adapted for ONNX export,
 and the final tensor is transformed into a compact per-detection layout of
@@ -305,10 +319,16 @@ and the final tensor is transformed into a compact per-detection layout of
 emitted from the trained class names to preserve class-index alignment at
 inference time.
 
-The main export configuration used in this project is summarised in the
-appendix~\ref{sec:config}, with the key parameters being: \texttt{format=onnx}
-to specify the export format, and \texttt{imgsz=1280} to maintain the input
-resolution used during training.
+The initial export used \texttt{imgsz=1280} to match the training resolution of
+the early baseline model. After migrating to the two-phase training pipeline
+described in Section~\ref{sec:training_process}, the input resolution was
+reduced to $640 \times 640$ to match the new training configuration. The
+current export loads the Phase~2 fine-tuned weights
+(\texttt{tuned\_26s/weights/best.pt}), applies FP16 half-precision quantisation
+(\texttt{half=true}) to halve model size and accelerate inference on the
+Jetson's GPU, and outputs the final artefact as \texttt{tuned.onnx}. The ONNX
+graph is simplified (\texttt{simplify=true}) and uses opset~18. The full export
+configuration is summarised in the appendix~\ref{sec:config}.
 
 In practice, this produced an ONNX model suitable for subsequent TensorRT
 engine generation on the Jetson platform while retaining compatibility with the
@@ -348,10 +368,9 @@ figure~\ref{fig:pipeline}.
 
 Iterative development and testing of the pipeline was performed using
 pre-recorded video sequences from the procured suspicious luggage dataset,
-which allowed for debugging of the pipeline's functionality, the
-generation of TensorRT engine files, and validation of inference performance on
-the target hardware before implementing the rest of the system's logic and
-deployment.
+which allowed for debugging of the pipeline's functionality, the generation of
+TensorRT engine files, and validation of inference performance on the target
+hardware before implementing the rest of the system's logic and deployment.
 
 Configuration for the primary object detection stage of the pipeline is
 determined by a custom configuration file, which specifies parameters such as
@@ -364,16 +383,14 @@ testing process. The configuration file can be found in the appendix
 \begin{itemize}
 	\item \textbf{Inference Interval and Real-time Tradeoff:} The
 	      \texttt{interval} parameter, which specifies the number
-	      of frames to skip between inferences, was set to $3$
-	      to balance the tradeoff between inference performance and real-time
-	      processing. Using a lower interval (e.g., $1$) would allow for more
-	      frequent detections but in practice led to increased latency and
-	      reduced frame rates, while a higher interval reduced the computational
-	      load at the expense of missing brief events. Ultimately, an interval
-	      of $3$ was found to provide a good balance for the target application,
-	      as the temporal logic of the system is designed to detect abandoned luggage over a
-	      span of several seconds, so missing detections in a few frames does
-	      not significantly impact the overall performance.
+	      of frames to skip between inferences. The final iteration
+	      used a value of \texttt{0} to perform inference on every frame,
+	      which is crucial for maintaining accurate tracking inputs and
+	      ensuring the temporal logic of the system can function correctly. However,
+	      previous iterations used higher values in combination with larger detection models;
+	      this allowed for a trade-off between inference performance and real-time processing.
+	      The final configuration was chosen to ensure the system can operate in real-time on
+	      the target hardware, while still providing accurate and timely detections for the abandonment logic.
 	\item \textbf{Aspect Ratio and Padding Behaviour:} The \texttt{maintain-aspect-ratio}
 	      parameter was set to \texttt{1} (true) to ensure that the aspect ratio of the input
 	      is maintained during resizing, along with the \texttt{symmetric-padding} being set
@@ -460,15 +477,85 @@ splitting the tracking outputs (objects and IDs) into separate lists for person
 and luggage classes, piping that information into the processing function,
 where the OSD metadata and final outputs are produced.
 
+\paragraph{Frame PTS timing.}
+
+Temporal calculations throughout the abandonment logic (timers, grace periods,
+TTLs) accept an optional timestamp parameter. When processing live camera
+feeds, the system's monotonic clock (\texttt{time.monotonic}) provides a
+suitable time base, as wall-clock progression and video progression are
+inherently synchronised. However, processing pre-recorded video in an
+asynchronous testing scenario can cause wall-clock time to diverge from the
+actual video timeline significantly. To support both modes, the probe extracts
+the GStreamer buffer presentation timestamp (\texttt{buf\_pts}) from each
+frame's metadata and converts it to seconds. This timestamp reflects the
+position in the media stream, ensuring that temporal thresholds behave
+consistently when replaying recorded footage. When \texttt{buf\_pts} is
+unavailable, the system falls back to the monotonic clock, which remains the
+natural time source for live input.
+
+\paragraph{Headless mode.}
+
+The pipeline builder supports a \texttt{--headless} command-line flag that
+replaces the display sink (\texttt{nveglglessink}) with a \texttt{fakesink}.
+This allows the pipeline to run on systems without a display server (e.g., SSH
+sessions, CI environments, automated evaluation runs). The builder also
+auto-detects the absence of a display server via the \texttt{DISPLAY} and
+\texttt{WAYLAND\_DISPLAY} environment variables, falling back to
+\texttt{fakesink} transparently. In headless mode, clock synchronisation is
+disabled on the sink (\texttt{sync=False}) so that processing runs as fast as
+the hardware allows rather than pacing to the video's native frame rate.
+
+\paragraph{Event logger integration.}
+
+An optional event logger can be attached to the probe via
+\texttt{set\_event\_logger}. When present, each frame's luggage state and
+bounding boxes are forwarded to the logger after processing, enabling
+frame-level recording for offline evaluation without modifying the core
+detection logic. This hook is used by the evaluation framework described in
+section~\ref{sec:testing_and_evaluation}.
+
 \subsection{Abandonment Detection Logic}
 
 The logic for abandonment can be split into two main components: (i) processing
 each frame's tracking outputs, iterating through the detected luggage items and
 determining their environmental contexts; (ii) maintaining the state of each
-luggage item across frame, by retaining a context object for each item -
+luggage item across frames, by retaining a context object for each item ---
 tracking its ID, the ID of its owner (if any), its state (e.g., attended,
-unattended, abandoned) , its last bounding box, and the (monotonically
-increasing) timestamp of its last update.
+unattended, abandoned), its last bounding box, and the frame-derived timestamp
+of its last update.
+
+The system design proposed a state machine with single-frame transitions
+(figure~\ref{fig:state_machine}), a nearest-person ownership heuristic
+(algorithm~\ref{alg:association}), and a fixed abandonment timer
+(algorithm~\ref{alg:state_transitions}). During implementation and iterative
+testing, several limitations of this initial design became apparent.
+Single-frame transitions were highly susceptible to tracker noise, causing
+rapid state oscillation. The simple proximity-based ownership assignment could
+not tolerate brief detector dropouts or person-tracker ID flips. A fixed
+context TTL discarded valuable state for abandoned items that momentarily left
+the tracker output.
+
+The implementation therefore introduces a number of refinements to the original
+design, while preserving the three-state structure and adjacency invariants.
+Figure~\ref{fig:state_machine_impl} shows the updated state machine, and the
+subsections that follow describe each change in detail: state-dependent context
+lifecycle management (section~\ref{sec:context_lifecycle}), multi-tier
+ownership with confirmation and reassignment
+(section~\ref{sec:ownership_assignment}), hysteresis-based state transitions
+with abandonment guards (section~\ref{sec:state_transition_invariants}), and a
+richer attendance signal incorporating grace periods and consistency checking.
+
+\begin{figure*}[!htb]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/plantuml/state_machine_impl.png}
+	\caption{Updated state machine reflecting the implemented transition logic.
+		Compared to the design (figure~\ref{fig:state_machine}), entry into
+		\texttt{Unattended} and attendance-based recovery now require multi-frame
+		confirmation, the abandonment timer can resume across brief attended flips,
+		and the \texttt{Abandoned} transition is gated by owner-history and
+		context-age guards.}
+	\label{fig:state_machine_impl}
+\end{figure*}
 
 \subsubsection{Processing Tracking Outputs}
 
@@ -489,168 +576,408 @@ The three states, \texttt{Attended}, \texttt{Unattended} and
 \texttt{Abandoned}, are derived from a single base class, and represent the
 different states of a luggage item. Each implements an \texttt{evaluate} method
 which, given a \texttt{LuggageContext} object, determines whether the luggage
-item meets the criteria for transitioning states. This object-oriented
-approach can be seen in the class diagram in
-figure~\ref{fig:states_class_diagram}.
+item meets the criteria for transitioning states. This object-oriented approach
+can be seen in the class diagram in figure~\ref{fig:states_class_diagram}.
 
 \begin{figure*}[!p]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/plantuml/states_class_diagram.png}
+	\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{figures/plantuml/states_class_diagram.png}
 	\caption{Class diagram representing the object-oriented implementation of the luggage state machine.}
 	\label{fig:states_class_diagram}
 \end{figure*}
 
-The \texttt{LuggageContext} implementation functions as a per-object memory
-that bridges frame-wise tracker outputs and state-based abandonment logic. For
-each tracked luggage ID, the context stores persistent attributes (owner
-hypothesis, last observed bounding box, and current state), then updates them
-once per frame using a fixed evaluation order: movement estimation from
-inter-frame box displacement, attendance estimation from owner proximity (or
-nearest-owner assignment when no owner is set), and delegation of transition
-decisions to the active state object. This ordering ensures deterministic
-behaviour and clear responsibility boundaries between context management and
-transition policy. The nearest-owner assignment step is radius-constrained to
-reduce spurious associations in crowded scenes, at the cost of occasionally
-losing ownership under heavy occlusion. Overall, this context-centric design
-provides a practical implementation of temporal reasoning while keeping
-state-transition logic modular and extensible.
+The \texttt{LuggageContext} dataclass functions as a per-object memory that
+bridges frame-wise tracker outputs and state-based abandonment logic. For each
+tracked luggage ID, the context stores four groups of persistent attributes:
 
-This encompasses the first component of the abandonment logic, processing of
-each frame's metadata into a structured context and evaluating the state of
-each luggage item based on its current context and the defined criteria for
-each state's transitions.
+\begin{itemize}
+	\item \textbf{Core identity and state:} tracking ID, current \texttt{State}
+	      object, last observed bounding box, and timestamps for creation and
+	      last detection (used by the lifecycle manager for TTL and relinking
+	      decisions; section~\ref{sec:context_lifecycle}).
+	\item \textbf{Ownership:} owner ID hypothesis, owner's last known bounding
+	      box, owner-missing timestamp, and an owner-confirmed flag with its
+	      associated observation timer (used by the ownership and attendance
+	      logic; section~\ref{sec:ownership_assignment}).
+	\item \textbf{Hysteresis counters:} frame counters for unattended-entry and
+	      unattended-reset confirmation, and owner-candidate confirmation
+	      counters (used by the state transition hysteresis;
+	      section~\ref{sec:state_transition_invariants}).
+	\item \textbf{Timer resume state:} the elapsed unattended time and exit
+	      timestamp from the last \texttt{Unattended} period, enabling the
+	      abandonment timer to resume across brief attended flips
+	      (section~\ref{sec:state_transition_invariants}).
+\end{itemize}
+
+Each frame, the \texttt{update} method evaluates these attributes in a fixed
+order: (i)~movement estimation from inter-frame bounding box displacement,
+(ii)~attendance estimation via the owner evaluation pipeline,
+(iii)~owner-observation accumulation, (iv)~hysteresis counter updates, and
+(v)~delegation of the transition decision to the active \texttt{State} object.
+This ordering ensures deterministic behaviour and clear responsibility
+boundaries --- the context manages signal computation and counter bookkeeping,
+while the state objects contain only transition policy.
 
 \subsubsection{Context Lifecycle Management}
+\label{sec:context_lifecycle}
 
-Each context object is created when a new luggage item is detected by the
-tracker, and is deleted when the luggage item remains undetected for a given
-grace period. The time-to-live for each context is determined by constant
-defined in the configuration, specifying the allowed duration of undetection
-before the context is removed. This lifecycle management ensures robustness to
-temporary occlusions and missed detections, while also preventing the
-indefinite retention of contexts for objects that have left the scene.
+\paragraph{Original lifecycle.}
+
+In the initial design, each context object was created when a new luggage
+tracking ID appeared and deleted when that ID had not been seen for a fixed
+time-to-live (TTL). This was simple and sufficient when tracker IDs were
+stable, but brittle when the tracker reassigned IDs, a common occurrence in
+crowded scenes where occlusions cause a luggage item to lose and regain its
+track. Under the original scheme, an ID reassignment would discard all
+accumulated state (owner, timers, state machine position) and start a fresh
+context, resetting any progress towards abandonment detection.
+
+\paragraph{State-dependent TTL.}
+
+The fixed TTL has been replaced with a state-dependent scheme. Normal contexts
+expire after \texttt{CONTEXT\_TTL\_SECONDS} (default~12\,s) of undetection.
+Abandoned contexts use a longer TTL of
+\texttt{ABANDONED\_CONTEXT\_TTL\_SECONDS} (default~45\,s). This asymmetry is
+deliberate: an abandoned luggage item that temporarily leaves the tracker
+output (due to occlusion or a dropped frame) should not lose its accumulated
+state --- the operational value of maintaining an abandonment alert outweighs
+the memory cost of a longer-lived context.
+
+\paragraph{Context relinking.}
+
+When a new luggage ID appears with no existing context, the system does not
+immediately create a fresh context. Instead, it searches existing contexts
+whose IDs are no longer present in the current frame for a possible match. A
+candidate context must satisfy all of the following eligibility criteria:
+
+\begin{itemize}
+	\item \textbf{Missing duration:} the context's ID must have been absent for
+	      no longer than a state-dependent window (default~4\,s for normal
+	      contexts, 8\,s for abandoned).
+	\item \textbf{Spatial distance:} the new bounding box must be within a
+	      state-dependent tolerance of the context's last known position
+	      (default~100\,px for normal contexts, 180\,px for abandoned).
+	\item \textbf{Area ratio:} the ratio of the larger bounding box area to the
+	      smaller must not exceed a configurable threshold (default~2.5),
+	      preventing relinking when the new detection differs substantially in
+	      size from the original.
+\end{itemize}
+
+When multiple candidates qualify, the system selects the best match using a
+$(\textit{distance},\; \textit{missing\_age},\; \textit{area\_ratio})$ scoring
+tuple, preferring the spatially closest, most recently seen, and most similarly
+sized context. The matched context is then transferred from the old ID to the
+new one, preserving all accumulated state: owner hypothesis, state machine
+position, timers, and confirmation counters. If no match is found, a fresh
+context is created.
+
+Abandoned contexts receive wider spatial and temporal gates for relinking,
+reflecting the higher cost of losing an abandonment detection compared to
+creating a spurious new context. Lifecycle events (creation, relinking, expiry)
+are exposed through an optional debug callback, used during development and
+evaluation to trace context behaviour without impacting pipeline performance.
 
 \subsubsection{Ownership Assignment and Re-identification}
+\label{sec:ownership_assignment}
 
-Ownership assignment is performed when a luggage item is first observed,
-without a previous owner hypothesis. For each luggage item, the nearest person
-is selected if and only if the centre-point distance is within a fixed radius
-threshold defined in the configuration. Formally, for luggage box $b_l$, person
-boxes $\{b_p\}$, $d(x, y)$ denoting the Euclidean distance between centre
-points of $x$ and $y$ and radius for attendance $R_a$, the assigned owner is:
-
+The initial implementation of ownership assignment used a single-frame,
+centre-to-centre nearest-person heuristic. For each unowned luggage item, the
+nearest person was selected if and only if the Euclidean distance between
+bounding box centres fell within a fixed radius threshold. Formally, for
+luggage box $b_l$, person boxes $\{b_p\}$, $d(x, y)$ denoting the Euclidean
+distance between centre points of $x$ and $y$, and attendance radius $R_a$:
 \begin{align}
 	\text{owner}(l) = \argmin_p{d(b_l, b_p) \text{ s.t. } d(b_l, b_p) \leq R_a}.
 \end{align}
-If no candidate satisfies the radius constraint, no owner is assigned. This
-conservative approach reduces spurious ownership in crowded scenes, whilst
-remaining computationally lightweight.
+If no candidate satisfied the radius constraint, no owner was assigned. This
+baseline was computationally lightweight and sufficient for early pipeline
+testing. However, single-frame assignment proved unstable under tracker noise:
+a one-frame detection glitch could instantly assign the wrong owner, and the
+system had no mechanism to recover from misattribution or tolerate brief
+tracking dropouts. These limitations motivated a series of refinements to the
+ownership logic, described below.
 
-Once assigned, owner identity is treated as persistent in the luggage context,
-being reused across subsequent frames as long as the owner track remains
-present and spatially consistent with the luggage. Attendance is then evaluated
-from the owner's proximity, while state transitions are handled independently
-by the finite-state machine. Separating assignment from transition policies
-keeps the system deterministic.
+\paragraph{Edge-aware proximity.}
 
-Re-identification is implicitly handled by the tracking component of the
-pipeline, using a DeepSORT-based tracker that uses appearance embeddings and
-motion cues to maintain consistent track IDs for objects across frames. Within
-the application logic, re-identification is handled explicitly with methods
-that improve robustness, explored in
-section~\ref{sec:failure_modes_and_mitigation_strategies}.
+The original proximity check used only the Euclidean distance between bounding
+box centres. This can misrepresent the physical relationship between a person
+and their luggage: when a person stands directly beside or over a bag, the
+centre-to-centre distance may be large even though the luggage is clearly
+within the person's spatial footprint. To address this, the proximity check was
+replaced with a two-tier test. The first tier computes the shortest distance
+from the luggage centre to the nearest point on the person bounding box area (a
+clamped projection), denoted $d_{\text{edge}}$:
+\begin{align}
+	d_{\text{edge}}(b_l, b_p) = \left\lVert \mathbf{c}_l - \text{clamp}(\mathbf{c}_l, b_p) \right\rVert_2
+\end{align}
+where $\mathbf{c}_l$ is the luggage centre and
+$\text{clamp}(\mathbf{c}_l, b_p)$ projects $\mathbf{c}_l$ onto the nearest
+point within the axis-aligned extent of $b_p$. If
+$d_{\text{edge}} \leq R_{\text{edge}}$ (default $80$~px), the person is
+considered within range. Otherwise, the system falls back to the centre-to-centre
+distance $d(b_l, b_p) \leq R_a$ (default $200$~px). This two-tier check
+improves sensitivity to close-proximity ownership while retaining the broader
+radius for more distant associations.
 
-The main limitation of this approach is the reliance on a proximity-based
-heuristic, over an interaction-based one. In dense scenes the nearest person
-may not be the true owner, leading to misattribution and incorrect abandonment
-detections. Moreover, for scenes of varying depth, a fixed radius threshold may
-not be optimal, as the apparent size of objects and their spatial relationships
-can change with distance from the camera.
+\paragraph{Multi-frame confirmation.}
 
-% TODO: consider more robust ownership assignment heuristics, then write about them
+Rather than committing an owner on a single frame, the system now requires the
+same candidate to be the best match for $N_{\text{assign}}$ consecutive frames
+(default $3$) before the assignment is finalised. Each frame, the best
+candidate is selected using a composite key of $(d_{\text{edge}},\,
+	d_{\text{centre}})$, preferring candidates whose bounding box is physically
+closest to the luggage. If the best candidate changes before confirmation is
+reached, the confirmation counter resets. This filters out transient
+associations caused by tracker jitter or brief person crossings near the
+luggage.
 
-Per frame, ownership assignment has linear complexity in the number of detected
-people for each luggage item, giving an overall complexity of $O(n \cdot m)$
-for $n$ luggage items and $m$ people. This is acceptable for typical
-surveillance scenarios where the number of detected objects is relatively low,
-but may need to be optimised for very crowded scenes.
+\paragraph{Owner persistence and consistency checking.}
+
+Once assigned, the owner ID remains persistent across frames, carried forward
+from the original design. However, the system now validates the owner each
+frame by checking spatial consistency: if the owner's bounding box shifts by
+more than a configured threshold (default $120$~px) between consecutive frames,
+the system treats the ID as unreliable. This guards against person-tracker ID
+flips, where the tracker reassigns the same numeric ID to a different physical
+person. When an inconsistency is detected, the system enters the missing-owner
+path rather than accepting the shifted trajectory.
+
+When the owner disappears from the tracking output entirely, attendance is
+maintained for a configurable grace period (default $2$~s). This prevents a
+single missed detection frame from immediately triggering the unattended
+pathway, tolerating brief detector dropouts and partial occlusions without
+fragmenting the temporal history.
+
+\paragraph{Owner reassignment for person-tracker ID flips.}
+
+When the owner goes missing or fails the consistency check, the system attempts
+controlled reassignment within a time window (default $15$~s). A reassignment
+candidate must satisfy three conditions: (i) it must be within the attendance
+range of the luggage (using the same two-tier proximity check), (ii) its
+position must be spatially close to the owner's last known bounding box
+(default $\leq 140$~px shift), and (iii) it must persist as the best candidate
+for $N_{\text{reassign}}$ consecutive frames (default $3$). Candidate scoring
+uses a $(d_{\text{shift}},\, d_{\text{edge}},\, d_{\text{centre}})$ tuple,
+prioritising candidates that most closely resemble the original owner's
+position. If no candidate qualifies within the reassignment window, the owner
+is considered lost and the luggage falls through to the unattended pathway.
+
+\paragraph{Owner history as an abandonment guard.}
+
+The context tracks whether an owner has ever been confirmed for a given luggage
+item. An owner is marked as confirmed once it has been observed within
+attendance range for a minimum duration (default $0.5$~s, accumulated across
+frames). This flag is consumed by the state machine: when enabled, luggage
+cannot transition to the Abandoned state unless an owner was confirmed at some
+point. This prevents newly appeared objects that were never associated with an
+owner (e.g., a bag placed by someone outside the camera's field of view) from
+immediately triggering false abandonment alerts. When no owner history exists,
+the abandonment timeout is extended by a configurable multiplier (default
+$3\times$), providing additional time for an owner to be detected before
+escalation.
+
+The full per-frame ownership evaluation, incorporating the refinements
+described above, is summarised in
+algorithm~\ref{alg:ownership_evaluation_impl}.
+
+\begin{algorithm*}[!htb]
+	\caption{Per-frame ownership evaluation (implementation, replacing~\ref{alg:association}).}
+	\label{alg:ownership_evaluation_impl}
+	\begin{algorithmic}[1]
+		\Require Luggage context $l$ with fields $l.bbox$, $l.owner$, $l.owner\_bbox$, $l.missing\_since$, $l.candidate$, $l.candidate\_frames$; tracked persons set $P$; current time $t$
+		\Ensure $attended$ as attendance result for this frame
+		\If{$l.owner = null$} \Comment{No owner yet $\implies$ attempt initial assignment}
+		\State $best\_key \gets (\infty, \infty)$, $best\_person \gets null$
+		\ForAll{$p \in P$}
+		\State $d_e \gets \Call{EdgeDist}{l.bbox, p.bbox}$ \Comment{Luggage centre to person box area}
+		\State $d_c \gets \Call{CentreDist}{l.bbox, p.bbox}$ \Comment{Centre-to-centre distance}
+		\If{$(d_e \leq R_{\text{edge}} \vee d_c \leq R_a) \wedge (d_e, d_c) < best\_key$}
+		\State $best\_key \gets (d_e, d_c)$, $best\_person \gets p$
+		\EndIf
+		\EndFor
+		\If{$\neg\Call{ConfirmCandidate}{l, best\_person, N_{\text{assign}}}$} \Return \textsc{False} \EndIf
+		\State $l.owner \gets best\_person$, $l.owner\_bbox \gets best\_person.bbox$
+		\State $l.missing\_since \gets null$
+		\State \Return \textsc{True}
+		\EndIf
+		\Statex
+		\If{$l.owner \in P$} \Comment{Owner visible in tracking output}
+		\State $d_{\text{shift}} \gets \Call{CentreDist}{l.owner.bbox, l.owner\_bbox}$
+		\If{$d_{\text{shift}} \leq S_{\max}$} \Comment{Trajectory is spatially consistent}
+		\State $l.owner\_bbox \gets l.owner.bbox$, $l.missing\_since \gets null$
+		\State \Return $\Call{InRange}{l.bbox, l.owner.bbox}$ \Comment{Two-tier proximity}
+		\Else \Comment{Trajectory jump $\implies$ treat owner as missing}
+		\If{$l.missing\_since = null$} \State $l.missing\_since \gets t$ \EndIf
+		\EndIf
+		\Else \Comment{Owner not in tracking output}
+		\If{$l.missing\_since = null$} \State $l.missing\_since \gets t$ \EndIf
+		\EndIf
+		\Statex
+		\If{$t - l.missing\_since \leq W_{\text{reassign}}$} \Comment{Within reassignment window}
+		\State $c \gets \Call{ReassignCandidate}{l.bbox, l.owner\_bbox, P}$
+		\If{$\Call{ConfirmCandidate}{l, c, N_{\text{reassign}}}$}
+		\State $l.owner \gets c$, $l.owner\_bbox \gets c.bbox$, $l.missing\_since \gets null$
+		\State \Return $\Call{InRange}{l.bbox, c.bbox}$
+		\EndIf
+		\EndIf
+		\State \Return $t - l.missing\_since \leq G_{\text{grace}}$ \Comment{Grace period}
+	\end{algorithmic}
+\end{algorithm*}
+
+\paragraph{Limitations.}
+
+The ownership logic remains fundamentally a proximity-based heuristic rather
+than an interaction-based one. In dense scenes the nearest person may not be
+the true owner, and for scenes of varying depth, fixed pixel thresholds may not
+be optimal as the apparent size of objects and their spatial relationships
+change with distance from the camera. The mitigations described above
+(multi-frame confirmation, consistency checking, and controlled reassignment)
+reduce the frequency and impact of misattribution, but cannot eliminate it
+entirely. More advanced approaches such as hand-object contact modelling or
+depth-aware distance normalisation remain directions for future work.
+
+\paragraph{Complexity.}
+
+Per frame, initial ownership assignment retains linear complexity in the number
+of detected people for each luggage item, giving $O(n \cdot m)$ for $n$ luggage
+items and $m$ people. Consistency checking and confirmation counters add $O(1)$
+per luggage item. Reassignment, when triggered, performs a constant-bounded
+scan over people (gated by the reassignment time window), so the overall
+worst-case complexity remains $O(n \cdot m)$.
 
 \subsubsection{Movement and Attendance Heuristics}
+
+\paragraph{Movement.}
 
 Movement detection is performed by computing the inter-frame displacement of
 each luggage bounding box's centre point. If the displacement exceeds a
 configurable threshold, the luggage item is classified as moving; otherwise it
 is classified as stationary. Formally, for luggage box $b_l^{t}$ at frame $t$
 and $b_l^{t-1}$ at frame $t-1$:
-\begin{align}
-	\texttt{is\_moving} = \begin{cases} \text{True} & \text{if } d(b_l^{t}, b_l^{t-1}) \ge \tau_m \\ \text{False} & \text{otherwise} \end{cases}
-\end{align}
-where $\tau_m$ is the movement threshold and $d(x, y)$ denotes the Euclidean
-distance between centre points of $x$ and $y$. This simple heuristic avoids
-overfitting to accumulated tracking noise and provides a clear empirical signal
-for distinguishing intentional motion from detection jitter. The threshold is
-typically set proportional to the object scale to maintain robustness across
-different camera resolutions and zoom levels.
-
-Attendance is determined by evaluating spatial proximity between the luggage
-and its assigned owner. If an owner has been assigned and is currently tracked,
-attendance is True if the centre-to-centre distance remains within a
-configurable attendance radius; otherwise it is False:
-\begin{align}
-	\texttt{is\_attended} =
-	\begin{cases}
-		d(b_l, b_p^{\text{owner}}) \le R_a & \begin{tabular}{@{}l@{}}if\\owner is\\assigned\\and\\visible\end{tabular} \\[2.5ex]
-		\text{False}                       & \text{otherwise}
+\begin{equation}
+	m_t = \begin{cases}
+		\text{True}  & \text{if } d(b_l^{t}, b_l^{t-1}) \ge \tau_m \\
+		\text{False} & \text{otherwise}
 	\end{cases}
-\end{align}
-where $R_a$ is the attendance radius and $b_p^{\text{owner}}$ is the owner's
-bounding box. When no owner has been assigned, the owner-assignment step
-implicitly performs an attendance check as part of determining whether to
-assign a new owner; if no person is within the attendance radius, the luggage
-is considered unattended. By decoupling movement and attendance signals this
-way, the state machine can distinguish between transient motion (wind,
-tracking artifacts, gentle nudging) and intentional carrying or retrieval
-by an owner.
+\end{equation}
+where $\tau_m$ is the movement threshold (a fixed pixel value, default~25~px,
+configurable at runtime) and $d(x, y)$ denotes the Euclidean distance between
+centre points of $x$ and $y$. This simple heuristic avoids overfitting to
+accumulated tracking noise and provides a clear empirical signal for
+distinguishing intentional motion from detection jitter. On the first frame of
+a newly detected luggage item, no prior bounding box is available, so
+\texttt{is\_moving} defaults to True --- this prevents newly appeared objects
+from immediately satisfying the unattended entry condition.
 
-The parameters $\tau_m$ and $R_a$ are configuration constants that require
-tuning based on expected scene characteristics. A strict (small) movement
-threshold increases sensitivity to abandonment but risks false positives from
-environmental motion or gradual settling. A lax threshold may miss subtle
-repositioning. Similarly, a tight attendance radius prioritises accuracy but
-may cause rapid owner loss under occlusion or crowding, while a generous radius
-tolerates dense scenarios at the cost of potential ownership misattribution.
-The typical values used in development prioritise recall over precision to
-minimise missed detections in operational deployment.
+\paragraph{Original attendance heuristic.}
+
+The initial attendance check was a single centre-to-centre proximity test. If
+an owner had been assigned and was currently tracked, attendance was True when
+the distance remained within a configurable radius:
+\begin{equation}
+	a_t = \begin{cases}
+		d(b_l, b_p^{\text{owner}}) \le R_a
+		 & \text{if owner visible} \\[1ex]
+		\text{False}
+		 & \text{otherwise}
+	\end{cases}
+\end{equation}
+where $R_a$ is the attendance radius and $b_p^{\text{owner}}$ the owner's
+bounding box. When no owner had been assigned, the assignment step implicitly
+performed an attendance check: if no person was within the radius, the luggage
+was unattended. This formulation was sufficient for early testing but did not
+account for edge-aware proximity, grace periods during tracker dropouts, or
+owner consistency checking --- all of which now feed into the attendance signal.
+
+\paragraph{Updated attendance signal.}
+
+In the current implementation, \texttt{is\_attended} is the output of
+\texttt{\_evaluate\_owner\_attendance}, which evaluates one of several paths
+depending on the ownership state of the luggage item:
+\begin{equation}
+	a_t = \begin{cases}
+		\textsc{InRange}(b_l, b_o)
+		 & \text{owner visible} \\[1ex]
+		\textsc{InRange}(b_l, b_{o'})
+		 & \text{reassigned}    \\[1ex]
+		t - t_{\text{miss}} \le T_g
+		 & \text{owner missing} \\[1ex]
+		\textsc{Assign}(b_l, P)
+		 & \text{no owner}
+	\end{cases}
+\end{equation}
+where $\textsc{InRange}$ is the two-tier proximity
+check from section~\ref{sec:ownership_assignment}
+($d_{\text{edge}} \le R_{\text{edge}}$ or $d \le R_a$), $T_g$ is the
+owner-lost grace period (default~2\,s), $t_{\text{miss}}$ the timestamp at
+which the owner was last seen, and \textsc{Assign} returns True if initial
+owner assignment succeeds.
+
+The attendance signal is therefore no longer a pure spatial predicate: it
+incorporates temporal state via the grace period and ownership lifecycle logic
+via the assignment and reassignment paths. This means that
+\texttt{is\_attended} can be True even when the assigned owner is not currently
+visible in the tracking output, provided the grace period has not yet expired.
+In practice, this prevents brief detector dropouts from immediately triggering
+the unattended pathway.
+
+\paragraph{Signal decoupling.}
+
+By computing movement and attendance as independent signals, the state machine
+can distinguish between transient motion (wind, tracking artefacts, gentle
+nudging) and intentional carrying or retrieval by an owner. The richer
+attendance signal --- with its grace period and consistency checking ---
+further stabilises this decoupling: brief tracker dropouts no longer cause
+attendance to flicker between frames, reducing noise in the input to the
+hysteresis mechanism described in
+section~\ref{sec:state_transition_invariants}.
+
+\paragraph{Parameter sensitivity.}
+
+The movement threshold $\tau_m$ and the attendance radii ($R_{\text{edge}}$ and
+$R_a$) are configuration constants that require tuning based on expected scene
+characteristics. A strict (small) movement threshold increases sensitivity to
+abandonment but risks false positives from environmental motion or gradual
+settling; a lax threshold may miss subtle repositioning. For the attendance
+radii, the edge radius $R_{\text{edge}}$ governs close-proximity detection (a
+person standing directly beside their luggage), while the broader centre radius
+$R_a$ covers more distant associations. Tightening either radius improves
+precision but risks rapid owner loss under occlusion or crowding; widening them
+tolerates dense scenarios at the cost of potential misattribution. The values
+used in development prioritise recall over precision to minimise missed
+detections in operational deployment.
 
 \subsubsection{State Transition Invariants}
 \label{sec:state_transition_invariants}
 
-The state machine enforces a set of invariants to ensure deterministic and
-stable behaviour.
+The state machine enforces a set of structural invariants to ensure
+deterministic and stable behaviour.
 
 \begin{itemize}
 	\item \textbf{Single Active State:} At any time, a luggage item has exactly
-	      one active state from the set \{\texttt{Attended}, \texttt{Unattended}, \texttt{Abandoned}\}.
-	      State updates are performed with explicit transitions, so simultaneous multi-state activation
-	      is not possible.
-	\item \textbf{Adjacency Invariance:} Transitions can only occur between adjacent states in the
-	      defined state transition graph (figure~\ref{fig:state_machine}). For example,
-	      no direct transition from \texttt{Attended} to \texttt{Abandoned} is possible without first
-	      passing through \texttt{Unattended}. This rule prevents immediate escalation to abandonment.
+	      one active state from the set \{\texttt{Attended}, \texttt{Unattended},
+	      \texttt{Abandoned}\}. State updates are performed with explicit
+	      transitions, so simultaneous multi-state activation is not possible.
+	\item \textbf{Adjacency Invariance:} Transitions can only occur between
+	      adjacent states in the defined state transition graph
+	      (figure~\ref{fig:state_machine}). No direct transition from
+	      \texttt{Attended} to \texttt{Abandoned} is possible without first
+	      passing through \texttt{Unattended}.
 	\item \textbf{Guard-conditioned Transitions:} Each transition is triggered by
-	      specific conditions evaluated in the context of the luggage item as seen defined in figure~\ref{fig:state_machine}.
-	\item \textbf{Recovery of Attendance:} Any evidence of re-attendance or movement whilst in an \texttt{Unattended}
-	      state immediately returns the object to \texttt{Attended}, resetting the abandonment timer.
-	\item \textbf{Persistence of Abandonment:} Once in the \texttt{Abandoned} state, the object remains
-	      abandoned.
+	      specific conditions evaluated in the context of the luggage item.
+	\item \textbf{Persistence of Abandonment:} Once in the \texttt{Abandoned}
+	      state, the object remains abandoned.
 \end{itemize}
 
-The state transitions can be defined formally as follows: let $s_t$ be the
-state at frame $t$, $a_t$ attendance, $m_t$ movement, and $\Delta t_u$ the
-elapsed time since becoming unattended with timeout $T_a$.
+\paragraph{Original transition function.}
+
+The initial design defined transitions as single-frame predicates: let $s_t$
+denote the state at frame~$t$, $a_t$ attendance, $m_t$ movement, and $\Delta
+	t_u$ the elapsed time since becoming unattended with timeout~$T_a$:
 
 \begin{small}
 	\begin{equation}
+		\label{eq:original_transition}
 		s_{t+1} = \begin{cases}
 			\text{Unatt} & \text{if } s_t = \text{Att} \wedge \neg a_t \wedge \neg m_t               \\
 			\text{Att}   & \text{if } s_t = \text{Unatt} \wedge (a_t \vee m_t)                       \\
@@ -662,6 +989,136 @@ elapsed time since becoming unattended with timeout $T_a$.
 		\end{cases}
 	\end{equation}
 \end{small}
+
+Under this formulation, every transition was decided on a single frame of
+evidence: one frame of $\neg a_t \wedge \neg m_t$ was sufficient to begin the
+unattended path, and one frame of $a_t \vee m_t$ could immediately reset the
+abandonment timer. In practice, a single spurious detection could flip the
+state, and a momentary attendance flicker caused by tracker noise could reset
+the timer entirely. This made the state machine vulnerable to the noisy output
+of the object tracker, motivating the introduction of multi-frame confirmation.
+
+\paragraph{Hysteresis via multi-frame confirmation.}
+
+To resist rapid oscillation between states, the implementation introduces a
+frame-level hysteresis mechanism. Rather than reacting to single-frame signals,
+the state machine accumulates evidence over consecutive frames and only commits
+to a transition once a configurable threshold is reached. Two per-luggage
+counters are maintained in \texttt{LuggageContext.update}:
+
+\begin{itemize}
+	\item \textbf{Entry counter}
+	      (\texttt{\_unattended\_entry\_frames}): incremented each frame where
+	      $\neg a_t \wedge \neg m_t$ holds while in the \texttt{Attended} state;
+	      reset to zero if either condition breaks. The \texttt{Attended} state
+	      only transitions to \texttt{Unattended} once this counter reaches
+	      \texttt{UNATTENDED\_ENTRY\_CONFIRM\_FRAMES} (default~3).
+	\item \textbf{Reset counter}
+	      (\texttt{\_unattended\_reset\_frames}): incremented each frame where
+	      $a_t$ holds while in the \texttt{Unattended} state; reset to zero
+	      otherwise. The \texttt{Unattended} state returns to \texttt{Attended}
+	      via attendance only once this counter reaches
+	      \texttt{UNATTENDED\_RESET\_CONFIRM\_FRAMES} (default~3).
+\end{itemize}
+
+Movement of the luggage ($m_t$) bypasses this hysteresis entirely: a single
+frame of movement in the \texttt{Unattended} state triggers an immediate return
+to \texttt{Attended}. This asymmetry is intentional --- physical displacement
+of the bounding box is a strong signal unlikely to be a tracker artefact,
+whereas proximity of a person can fluctuate due to tracker noise or brief
+occlusion.
+
+The \texttt{State.evaluate} methods themselves only read the resulting boolean
+properties (\texttt{unattended\_entry\_confirmed},
+\texttt{unattended\_reset\_confirmed}); the counting logic is centralised in
+\texttt{LuggageContext.update}, keeping it state-independent and consistent.
+
+\paragraph{Abandonment guards.}
+
+The \texttt{Unattended}~$\to$~\texttt{Abandoned} transition is additionally
+gated by two guards that extend beyond the base timeout:
+
+\begin{itemize}
+	\item \textbf{Owner history:} When
+	      \texttt{REQUIRE\_OWNER\_HISTORY\_FOR\_ABANDONED} is enabled (default),
+	      luggage cannot transition to \texttt{Abandoned} unless an owner was
+	      confirmed at some point (\texttt{owner\_confirmed\_once}). This
+	      prevents newly appeared, never-owned objects from triggering false
+	      alarms. In addition, when no owner was ever confirmed the base
+	      timeout~$T_a$ is multiplied by
+	      \texttt{OWNERLESS\_ABANDONMENT\_TIMEOUT\_MULTIPLIER} (default~$3\times$),
+	      extending the default 30\,s window to 90\,s and giving the system more
+	      time to establish ownership before escalating. It was important to include
+	      this as a configurable guard rather than a hard requirement,
+	      as in some scenarios ownership may or may not be needed for an object to be
+	      considered abandoned. For example, two separate test sets, ABODA and IITP20
+	      (section~\ref{sec:suspicious_luggage_dataset}) have conflicting
+	      definitions of abandonment with respect to ownership, so this guard allows the
+	      system to be adapted to different contexts without code changes.
+	\item \textbf{Minimum context age:} The luggage context must have existed for
+	      at least \texttt{MIN\_CONTEXT\_AGE\_FOR\_ABANDONED\_SECONDS}
+	      (default~3\,s) before abandonment is possible. This filters out
+	      transient detections that appear and immediately satisfy the unattended
+	      condition.
+\end{itemize}
+
+\paragraph{Unattended timer resume.}
+
+Complementing the frame-level hysteresis, a temporal hysteresis is applied to
+the abandonment timer itself. When luggage transitions from
+\texttt{Unattended}~$\to$~\texttt{Attended} and then re-enters
+\texttt{Unattended} within \texttt{UNATTENDED\_TIMER\_RESUME\_WINDOW\_SECONDS}
+(default~6\,s), the timer resumes from its previous elapsed value rather than
+restarting from zero. On exit from \texttt{Unattended}, the elapsed time and
+exit timestamp are saved; on re-entry within the window, the new state's entry
+time is backdated to preserve continuity. If the gap exceeds the window, a
+fresh timer starts. Together, the two layers of hysteresis, frame-level
+confirmation and timer-level resume, prevent both single-frame noise from
+causing spurious transitions and repeated brief interactions from indefinitely
+resetting the abandonment countdown.
+
+\paragraph{Updated transition function.}
+
+Incorporating the mechanisms above, the transition function becomes: let $C(k,
+	N)$ denote that predicate~$k$ has held for at least $N$~consecutive frames, and
+let $G(l)$ be the conjunction of abandonment guards for luggage~$l$:
+
+\begin{small}
+	\begin{equation}
+		\label{eq:updated_transition}
+		s_{t+1} = \begin{cases}
+			\text{Unatt} & \text{if } s_t = \text{Att} \wedge C(\neg a_t \wedge \neg m_t,\; N_e)           \\[1ex]
+			\text{Att}   & \text{if } s_t = \text{Unatt} \wedge m_t                                        \\
+			\text{Att}   & \text{if } s_t = \text{Unatt} \wedge C(a_t,\; N_r)                              \\[1ex]
+			\text{Abnd}  & \begin{aligned}[t]
+				               \text{if } s_t & = \text{Unatt} \wedge \neg a_t \wedge \neg m_t       \\[-0.5ex]
+				                              & \quad \wedge\; \Delta t_u \ge T_a(l) \;\wedge\; G(l)
+			               \end{aligned} \\[1ex]
+			\text{Abnd}  & \text{if } s_t = \text{Abnd}
+		\end{cases}
+	\end{equation}
+\end{small}
+
+\noindent where $N_e$ and $N_r$ are the entry and reset confirmation thresholds
+respectively, and:
+\begin{equation}
+	T_a(l) = \begin{cases}
+		T_a \cdot k_o & \text{if } \neg\, \textit{owner\_conf} \\
+		T_a           & \text{otherwise}
+	\end{cases}
+\end{equation}
+\begin{equation}
+	\begin{split}
+		G(l) ={} & \bigl(\textit{owner\_conf}
+		\;\vee\; \neg\,\textit{req\_hist}\bigr) \\
+		         & \wedge\;
+		\bigl(\textit{ctx\_age} \ge T_{\min}\bigr)
+	\end{split}
+\end{equation}
+
+\noindent with $k_o$ the ownerless timeout multiplier,
+\textit{owner\_conf} short for \texttt{owner\_confirmed\_once}, and
+\textit{req\_hist} for \texttt{REQUIRE\_OWNER\_HISTORY\_FOR\_ABANDONED}.
 
 \subsubsection{Alert Generation}
 
@@ -691,23 +1148,24 @@ immediately escalate to critical alerts.
 The current implementation prioritises immediate visual alerting through the
 OSD. It does not yet emit persistent external alerts (e.g., via message bus
 events, structured logs, or notification webhooks) beyond development console
-output. An extension is to trigger one-shot events on state transitions, which
-could be consumed by external monitoring systems or operator dashboards for
-enhanced situational awareness and response coordination.
+outputs and evaluation logging. An extension is to trigger one-shot events on
+state transitions, which could be consumed by external monitoring systems or
+operator dashboards for enhanced situational awareness and response
+coordination.
 
 \subsubsection{Computational Complexity and Runtime Cost}
 
 The abandonment logic is designed to remain computationally lightweight on edge
 hardware by combining constant-time geometric checks with bounded linear scans.
 Let $L$ be the number of tracked luggage items, $P$ the number of tracked
-people, $T$ the number of active luggage contexts, and $O$ the total number of
-tracked objects in a frame.
+people, $T$ the number of active luggage contexts, and $\mathcal{O}$ the total
+number of tracked objects in a frame.
 
 In the processing stage, person bounding boxes are first materialised in
 $O(P)$. For each luggage item, context update combines (i) movement and
 attendance checks that are constant-time when an owner hypothesis already
-exists, and (ii) nearest-owner assignment that is linear in people in the
-worst case, giving $O(P)$ per unassigned luggage item. Tracker-flip handling
+exists, and (ii) nearest-owner assignment that is linear in people in the worst
+case, giving $O(P)$ per unassigned luggage item. Tracker-flip handling
 introduces an additional scan over existing contexts, giving up to $O(T)$ per
 luggage item in the worst case. Context garbage collection for lost IDs is
 linear in retained contexts, $O(T)$.
@@ -715,7 +1173,7 @@ linear in retained contexts, $O(T)$.
 Combining these terms gives a worst-case per-frame bound for the abandonment
 logic of:
 \begin{equation}
-O(LT + LP + P + T)
+	O(LT + LP + P + T)
 \end{equation}
 which is commonly simplified to $O(L(T+P))$ for moderate-to-large
 object counts. In practical steady-state operation, average cost is typically
@@ -723,71 +1181,87 @@ lower because many luggage items retain a valid owner and therefore bypass the
 full nearest-neighbour scan.
 
 The overlay stage remains linear in frame object count. Constructing the person
-centre map is $O(P)$, iterating tracked objects for text/box updates is $O(O)$,
-and ownership line/circle drawing is $O(1)$ per attended luggage item (with
-bounded metadata pool management). Memory complexity is dominated by persistent
-context storage, $O(T)$, plus per-frame temporary maps $O(P+L)$.
-
-One implementation detail affects realised runtime: frame-level processing and
-overlay updates are currently called from inside the object-iteration loop in
-the probe callback. This multiplies effective work within a frame and increases
-constant factors compared with a single invocation per frame. Refactoring those
-calls to execute once after object collection would preserve the asymptotic
-bound while reducing practical runtime overhead.
+centre map is $O(P)$, iterating tracked objects for text/box updates is
+$O(\mathcal{O})$, and ownership line/circle drawing is $O(1)$ per attended
+luggage item (with bounded metadata pool management). Memory complexity is
+dominated by persistent context storage, $O(T)$, plus per-frame temporary maps
+$O(P+L)$.
 
 \subsubsection{Failure Modes and Mitigation Strategies}
 \label{sec:failure_modes_and_mitigation_strategies}
 
-The main failure modes of the abandonment detection logic include: tracker ID
-flips, ownership misattribution, and tracker ID loss.
+The main failure modes of the abandonment detection logic are discussed below,
+together with the mitigations now in place and their residual limitations.
 
-\textbf{Tracker ID flips.} A common failure mode in crowded scenes is when the
-tracker assigns a new ID to the same physical luggage item after occlusion or
-brief overlap. Without mitigation, this would reset the luggage context and
-could cause premature or missed abandonment decisions. To reduce this, the
-processing stage performs spatial continuity checks when a new luggage ID is
-observed: if the new box is within a tolerance radius of a recently seen
-context, the existing context is transferred to the new ID. This preserves
-state, owner hypothesis, and temporal history across ID changes.
+\paragraph{Tracker ID flips.}
 
-\textbf{Ownership misattribution.} Ownership is inferred using nearest-person
-proximity with a fixed radius gate. In dense scenes this can assign the wrong
-owner, especially when multiple people are co-located or crossing paths near
-luggage. The current mitigation is conservative gating: ownership is only
-assigned when candidates are sufficiently close, and owner identity is then
-kept persistent rather than re-selected every frame. This reduces rapid owner
-switching, but can still fail under prolonged crowding or strong perspective
-effects.
+A common failure mode in crowded scenes is when the tracker assigns a new ID to
+the same physical luggage item after occlusion or brief overlap. Without
+mitigation, this resets the luggage context and can cause premature or missed
+abandonment decisions. The scored context relinking mechanism described in
+section~\ref{sec:context_lifecycle} addresses this by matching new IDs against
+recently missing contexts using spatial distance, missing duration, and
+bounding-box area ratio, with wider gates for abandoned contexts. Residual risk
+remains; relinking depends on spatial proximity, so if the tracker reassigns a
+bounding box to a substantially different position, the context cannot be
+recovered.
 
-\textbf{Temporary tracker loss.} Detector misses, partial occlusion, and motion
-blur can cause short gaps in tracking output. If contexts were removed
-immediately, these gaps would fragment the temporal history and increase false
-alerts. The implementation therefore uses time-to-live (TTL) context retention,
-where missing IDs are only removed after a grace period. This supports
-re-association after short dropouts while preventing unbounded growth of stale
-contexts.
+\paragraph{Ownership misattribution.}
 
-\textbf{Boundary sensitivity of fixed thresholds.} Attendance, movement, and
-tracker-flip association all rely on pixel thresholds. Scenes with varying
-depth, camera angle, or frame resolution can shift object scale and therefore
-change the effective meaning of these thresholds. The practical mitigation is
-calibration by scenario (e.g., concourse versus corridor footage) and
-prioritisation of recall-oriented settings during safety-critical testing.
+In dense scenes, multiple people may be co-located or crossing paths near
+luggage, making proximity-based ownership prone to assigning the wrong owner.
+The mitigations described in section~\ref{sec:ownership_assignment} ---
+two-tier edge-aware proximity, multi-frame confirmation, consistency checking,
+and controlled reassignment --- substantially reduce the frequency and impact
+of misattribution. Residual risk remains; the system remains a proximity-based
+heuristic and does not model physical interactions (e.g., hand-object contact)
+or normalise distances for perspective depth, so misattribution can still occur
+under prolonged crowding or strong perspective effects.
 
-\textbf{Visual ambiguity for operators.} Even when state estimation is correct,
-operators may misinterpret why a state was assigned if overlays are sparse. To
-improve explainability, the OSD shows object ID, state label, colour-coded box
-severity, and (for attended luggage) a line plus ownership radius overlay.
-These cues make the underlying decision basis more transparent during live
-monitoring.
+\paragraph{Temporary tracker loss.}
 
-Despite these mitigations, limitations remain. The current system does not use
-interaction modelling (for example, hand-object contact), depth-aware distance
-normalisation, or global multi-frame assignment optimisation. These are
-promising directions for future work to further reduce false positives and
+Detector misses, partial occlusion, and motion blur can cause short gaps in
+tracking output. State-dependent TTLs (section~\ref{sec:context_lifecycle})
+retain contexts through these gaps, normal contexts for up to 12\,s and
+abandoned contexts for up to 45\,s, while scored relinking re-associates IDs
+that reappear nearby. Residual risk remains; dropouts exceeding the TTL still
+cause irreversible context loss.
+
+\paragraph{Boundary sensitivity of fixed thresholds.}
+
+Attendance, movement, and relinking gates all rely on pixel thresholds. Scenes
+with varying depth, camera angle, or frame resolution can shift object scale
+and change the effective meaning of these thresholds. All thresholds are now
+configurable at runtime via environment variables (prefixed \texttt{LW\_}),
+enabling per-scene calibration without recompilation. The fundamental
+limitation of fixed pixel thresholds in a perspective-varying scene, remains;
+depth-aware distance normalisation is a direction for future work.
+
+\paragraph{Hysteresis trade-offs.}
+
+The frame-level and timer-level hysteresis described in
+section~\ref{sec:state_transition_invariants} stabilise the state machine but
+introduce a latency cost: genuine rapid state changes (e.g., a person quickly
+dropping a bag and walking away) are delayed by the confirmation-frame
+requirement. Similarly, the timer resume window means that a brief
+re-attendance episode does not reset the abandonment countdown, desirable for
+preventing repeated timer resets, but could penalise a genuine retrieval that
+happens to fall within the resume window. These are deliberate trade-offs
+favouring stability over responsiveness, tunable via the confirmation-frame and
+resume-window thresholds.
+
+\paragraph{Visual ambiguity for operators.}
+
+Even when state estimation is correct, operators may misinterpret why a state
+was assigned if overlays are sparse. To improve explainability, the OSD shows
+object ID, state label, colour-coded box severity, and (for attended luggage) a
+line plus ownership radius overlay. These cues make the underlying decision
+basis more transparent during live monitoring.
+
+\paragraph{Remaining limitations.}
+
+Despite the mitigations above, architectural limitations remain. The system
+does not use interaction modelling (e.g., hand-object contact), depth-aware
+distance normalisation, or global multi-frame assignment optimisation. These
+are promising directions for future work to further reduce false positives and
 identity drift in highly crowded scenes.
-
-\subsection{Deployment on NVIDIA Jetson Orin Nano}
-
-% TODO: write about the actual deployment process.
-

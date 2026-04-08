@@ -17,5 +17,4 @@ unattended --> abandoned : Timer Expired\n[Owner not returned]\n/ Alert
 
 unattended --> attended : Conditions Met\n[Object moves OR Owner returns]\n/ Clear timer
 
-abandoned --> [*] : Resolved
 @enduml

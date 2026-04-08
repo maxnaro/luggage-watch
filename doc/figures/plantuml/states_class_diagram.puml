@@ -5,26 +5,27 @@ skinparam classAttributeIconSize 0
 
 abstract class State {
 	{abstract} +name: str
-	+__eq__(other: str)
-	{abstract} +evaluate(context: LuggageContext, is_attended: bool, is_moving: bool): None
+	+__eq__(other: object): bool
+	{abstract} +evaluate(context, is_attended, is_moving, now_s): None
 }
 
 class Attended {
 	+name: str
-	+evaluate(context: LuggageContext, is_attended: bool, is_moving: bool): None
+	+evaluate(context, is_attended, is_moving, now_s): None
 }
 
 class Unattended {
 	-_abandonment_timeout: float
 	-_entered_at: float
+	+__init__(entered_at: float | None, now_s: float | None)
 	+name: str
-	+elapsed_time: float
-	+evaluate(context: LuggageContext, is_attended: bool, is_moving: bool): None
+	+elapsed_time(now_s): float
+	+evaluate(context, is_attended, is_moving, now_s): None
 }
 
 class Abandoned {
 	+name: str
-	+evaluate(context: LuggageContext, is_attended: bool, is_moving: bool): None
+	+evaluate(context, is_attended, is_moving, now_s): None
 }
 
 class LuggageContext {
@@ -33,9 +34,30 @@ class LuggageContext {
 	+state: State
 	+last_bbox: BBox | None
 	+last_seen: float
-	+transition_to(new_state: State): None
-	+update(luggage_bbox: BBox, person_bboxes: dict[int, BBox]): dict[str, str]
-	{static} -_get_nearest_person_id(luggage_bbox: BBox, person_bboxes: dict[int, BBox]): int | None
+	+created_at: float
+	+owner_last_bbox: BBox | None
+	+owner_missing_since: float | None
+	+owner_confirmed_once: bool
+	+owner_observed_seconds: float
+	-_last_unattended_elapsed_seconds: float
+	-_last_unattended_exit_at: float | None
+	-_owner_candidate_id: int | None
+	-_owner_candidate_frames: int
+	-_unattended_entry_frames: int
+	-_unattended_reset_frames: int
+	-_last_update_time_s: float | None
+	+unattended_entry_confirmed: bool <<property>>
+	+unattended_reset_confirmed: bool <<property>>
+	+transition_to(new_state, now_s): None
+	+can_transition_to_abandoned(now_s): bool
+	+update(luggage_bbox, person_bboxes, now_s): dict
+	-_evaluate_owner_attendance(luggage_bbox, person_bboxes, now): bool
+	-_attempt_initial_owner_assignment(luggage_bbox, person_bboxes): bool
+	-_attempt_owner_reassignment(luggage_bbox, person_bboxes, now): bool
+	-_get_best_owner_candidate(luggage_bbox, person_bboxes): tuple | None
+	-_confirm_owner_candidate(candidate_id): bool
+	-_is_owner_consistent(owner_bbox): bool
+	{static} -_is_within_owner_range(luggage_bbox, person_bbox): bool
 }
 
 class NvOSD_RectParams
@@ -47,8 +69,13 @@ class BBox {
 	+width: float
 	+height: float
 	+__init__(rect_params: NvOSD_RectParams)
-	+centre: tuple[float, float]
+	+centre: tuple[float, float] <<property>>
+	+left: float <<property>>
+	+top: float <<property>>
+	+right: float <<property>>
+	+bottom: float <<property>>
 	+distance_to(other: BBox): float
+	+centre_to_box_distance(other: BBox): float
 }
 
 State <|-- Attended
@@ -60,6 +87,7 @@ LuggageContext ..> Attended : default_factory
 LuggageContext ..> State : evaluate(...)
 State ..> LuggageContext : transition_to(...)
 LuggageContext ..> BBox : computes distance
+
 BBox ..> NvOSD_RectParams : constructed from
 
 Attended ..> Unattended : transition_to()
@@ -68,14 +96,20 @@ Unattended ..> Abandoned : transition_to()
 
 note right of LuggageContext
   update(...) is called once per frame.
-  It computes is_moving and is_attended,
-  then delegates transition logic to state.evaluate(...).
+  Fixed evaluation order:
+  (i) movement from bbox displacement,
+  (ii) attendance via owner evaluation,
+  (iii) owner observation accumulation,
+  (iv) hysteresis counter updates,
+  (v) delegation to state.evaluate(...).
 end note
 
 note right of BBox
 	centre returns the bbox midpoint.
-	distance_to(...) computes Euclidean distance
-	between centres of two bounding boxes.
+	distance_to computes centre-to-centre distance.
+	centre_to_box_distance computes shortest
+	distance from this centre to the other box area
+	(clamped projection).
 end note
 
 @enduml

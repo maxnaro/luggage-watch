@@ -1,0 +1,24 @@
+@startuml state_machine_impl
+hide empty description
+
+state "Attended" as attended
+state "Unattended" as unattended
+state "Abandoned" as abandoned
+
+[*] --> attended : Object Detected
+
+attended --> attended : Polling Cycle\n[moving OR attended]\n/ Reset entry counter
+
+attended --> unattended : Entry Confirmed\n[NOT attended AND NOT moving for N frames]\n/ Start or resume timer
+
+unattended --> unattended : Polling Cycle\n[Timer < timeout AND guards not met]
+
+unattended --> attended : Movement Detected\n[moving] (immediate)\n/ Save elapsed time
+
+unattended --> attended : Reset Confirmed\n[attended for N frames]\n/ Save elapsed time
+
+unattended --> abandoned : Timer Expired\n[elapsed >= timeout AND guards met]\n/ Alert
+
+abandoned --> [*] : Resolved
+
+@enduml
