@@ -387,7 +387,7 @@ testing process. The configuration file can be found in the appendix
 	      used a value of \texttt{0} to perform inference on every frame,
 	      which is crucial for maintaining accurate tracking inputs and
 	      ensuring the temporal logic of the system can function correctly. However,
-	      previous iterations used higher values in combination with larger detection models,
+	      previous iterations used higher values in combination with larger detection models;
 	      this allowed for a trade-off between inference performance and real-time processing.
 	      The final configuration was chosen to ensure the system can operate in real-time on
 	      the target hardware, while still providing accurate and timely detections for the abandonment logic.
@@ -483,7 +483,7 @@ Temporal calculations throughout the abandonment logic (timers, grace periods,
 TTLs) accept an optional timestamp parameter. When processing live camera
 feeds, the system's monotonic clock (\texttt{time.monotonic}) provides a
 suitable time base, as wall-clock progression and video progression are
-inherently synchronised. However, when processing pre-recorded video in an
+inherently synchronised. However, processing pre-recorded video in an
 asynchronous testing scenario can cause wall-clock time to diverge from the
 actual video timeline significantly. To support both modes, the probe extracts
 the GStreamer buffer presentation timestamp (\texttt{buf\_pts}) from each
@@ -1234,7 +1234,7 @@ with varying depth, camera angle, or frame resolution can shift object scale
 and change the effective meaning of these thresholds. All thresholds are now
 configurable at runtime via environment variables (prefixed \texttt{LW\_}),
 enabling per-scene calibration without recompilation. The fundamental
-limitation. fixed pixel thresholds in a perspective-varying scene, remains;
+limitation of fixed pixel thresholds in a perspective-varying scene, remains;
 depth-aware distance normalisation is a direction for future work.
 
 \paragraph{Hysteresis trade-offs.}
