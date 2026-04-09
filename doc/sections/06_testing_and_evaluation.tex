@@ -14,17 +14,61 @@ performance of the YOLO26 model was assessed using standard object detection
 metrics, including mean Average Precision (mAP) at various Intersection over
 Union (IoU) thresholds.
 
-% 	Class     Images  Instances      Box(P          R      mAP50  mAP50-95)
-% 	  all        111        202      0.891      0.816      0.859      0.436
-%  person         43         99      0.884      0.788      0.852      0.438
-% luggage         83        103      0.898      0.845      0.867      0.434
+The test split comprised $111$ images containing $202$ annotated instances
+($99$ person, $103$ luggage). Table~\ref{tab:detection_results} summarises the
+per-class results.
 
-% Speed: 1.3ms preprocess, 7.2ms inference, 0.0ms loss, 0.4ms postprocess per image
+\begin{table*}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{mAP@0.5} & \textbf{mAP@0.5:0.95} \\
+		\midrule
+		Person         & 0.884              & 0.788           & 0.852            & 0.438                 \\
+		\addlinespace
+		Luggage        & 0.898              & 0.845           & 0.867            & 0.434                 \\
+		\midrule
+		All            & 0.891              & 0.816           & 0.859            & 0.436                 \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Object detection results on the ABODA test split.}
+	\label{tab:detection_results}
+\end{table*}
 
-% mAP50:    0.8595
-% mAP50-95: 0.4361
-% Precision: 0.8911
-% Recall:    0.8163
+The model achieved an overall mAP@0.5 of $0.859$, with both classes performing
+comparably. Luggage detection slightly outperformed person detection in both
+precision ($0.898$ vs.\ $0.884$) and recall ($0.845$ vs.\ $0.788$), suggesting
+the fine-tuning phase successfully adapted the model to luggage instances in
+surveillance contexts.
+
+The precision-recall curve (figure~\ref{fig:pr_curve}) shows that both classes
+maintain high precision ($>0.9$) up to approximately $0.6$ recall before
+degrading. The confusion matrix (figure~\ref{fig:confusion_matrix}) reveals
+that inter-class confusion is minimal, only $2\%$ of true luggage instances are
+misclassified as person. The primary source of error is background false
+positives, where $55\%$ of background regions trigger person predictions and
+$45\%$ trigger luggage predictions. In the context of the downstream pipeline,
+these false positives are mitigated by the tracker's temporal consistency
+requirements, which filter out transient spurious detections.
+
+The relatively small test set ($111$ images) means these metrics should be
+interpreted with caution, as individual images can disproportionately influence
+the results.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{figures/object_detection/BoxPR_curve.png}
+	\caption{Precision-recall curve for person and luggage classes on the ABODA test split.}
+	\label{fig:pr_curve}
+\end{figure}
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{figures/object_detection/confusion_matrix_normalized.png}
+	\caption{Normalised confusion matrix showing per-class classification accuracy and background false positive rates.}
+	\label{fig:confusion_matrix}
+\end{figure}
 
 \paragraph{Limitations of object tracking evaluation.}
 
@@ -107,12 +151,12 @@ information for each video. This was implemented using Python and OpenCV,
 allowing for video playback control and scrubbing. An example of the script's
 interface is shown in figure~\ref{fig:annotation_script_screenshot}.
 
-\begin{figure*}[!htb]
+\begin{figure}[!htb]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/annotation_script_screenshot.png}
+	\includegraphics[width=\columnwidth]{figures/annotation_script_screenshot.png}
 	\caption{Screenshot of the annotation script interface, showing video playback controls and parameter input fields.}
 	\label{fig:annotation_script_screenshot}
-\end{figure*}
+\end{figure}
 
 \subsubsection{Datasets Used for Validation}
 
@@ -137,3 +181,64 @@ may have seen during training. This overlap means that pipeline results on
 ABODA may overstate the system's generalisation to truly unseen surveillance
 footage. The IITP20 and AVSS results, where no training overlap exists, provide
 a more reliable measure of out-of-domain performance.
+
+\subsubsection{Evaluation Script}
+
+With an established ground truth, an evaluation script was developed to run the
+pipeline, directly on the deployment hardware, against the test examples and
+compare the pipeline's abandonment detections with the ground truth.
+
+An \texttt{EventLogger} class was implemented to capture discrete abandonment
+events from the pipeline's output; detected events are matched against the
+ground truth event using the $\pm 360$ frame temporal tolerance to classify
+detections as TP, FP, FN, or TN (see
+section~\ref{sec:evaluation_metrics_for_object_detection},
+table~\ref{tab:evaluation_metrics_desc}). The resulting logging output
+comprising of the number of events per class, frame error and IoU per video.
+
+During processing, the script takes periodic snapshots of the systems resource
+usage via the \texttt{jtop} utility. This allows for the evaluation of the
+pipeline's computational efficiency while processing the test videos, providing
+insight into the system's performance under load.
+
+Once the script has processed all test videos, the logged events are aggregated
+to produce performance metrics for the pipeline. The metrics include:
+precision, recall, and F1-score at the event level --- mean IoU and mean frame
+error for the run as a whole; metrics are calculated using the formulae
+outlined in section~\ref{sec:evaluation_metrics_for_object_detection},
+table~\ref{tab:evaluation_metrics_formula_1}.
+
+\paragraph{Limitations.}
+
+The evaluation script is designed to be run on the deployment hardware,
+providing a realistic assessment of the pipeline's performance in its intended
+environment. However, it is limited by the fact that it can only evaluate the
+pipeline on the specific test videos for which ground truth annotations have
+been established. Additionally, the script's reliance on temporal event
+matching means that it may not capture nuances in detection timing or spatial
+accuracy beyond the defined tolerance thresholds.
+
+Evaluations were performed on hardware without the display sink component of
+the pipline active. This significantly reduces the time taken to run the
+pipeline (as videos can be processed at a much faster rate than real-time) but
+means that the evaluation results do not account for any performance impact of
+the display sink, which is a component of the deployed system. Anecdotally, the
+display sink was observed to have a negligible impact on the pipeline's
+performance, not compromising real-time performance, but this was not formally
+evaluated.
+
+\subsection{Evaluation Results}
+
+\subsubsection[ABODA and AVSS Examples]{ABODA \protect\citep{lin2015aboda} and AVSS Examples}
+
+\paragraph{ABODA.}
+
+\paragraph{AVSS.}
+
+\subsubsection[IITP20 Examples]{IITP20 Examples \protect\citep{amin2021large}}
+
+\paragraph{Easy cases.}
+
+\paragraph{Medium cases.}
+
+\paragraph{Hard cases.}
