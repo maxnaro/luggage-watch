@@ -78,20 +78,46 @@ of the original ABODA repository.
 	label={lst:annotation_format}
 ]
 {
-	"video_1.mp4": {
-		"has_abandonment": true,
-		"true_abandon_frame": 850,
-		"bag_roi": [100, 400, 50, 60] // [x, y, width, height]
-		"radius_px": 200,
-		"threshold_s": 15
-	},
-	"video_2_negative.mp4": {
-		"has_abandonment": false,
-		"true_abandon_frame": null,
-		"bag_roi": [],
-		"radius_px": 200,
-		"threshold_s": 15
-	}
+  "video1.avi": [
+    {
+      "has_abandonment": true,
+      "true_abandon_frame": 2016,
+      "bag_roi": [
+        133,
+        323,
+        54,
+        46
+      ],
+      "radius_px": 200,
+      "threshold_s": 15
+    }
+  ],
+  "video2.avi": [
+    {
+      "has_abandonment": true,
+      "true_abandon_frame": 449,
+      "bag_roi": [
+        329,
+        36,
+        48,
+        40
+      ],
+      "radius_px": 200,
+      "threshold_s": 15
+    },
+	{
+      "has_abandonment": true,
+      "true_abandon_frame": 2012,
+      "bag_roi": [
+        244,
+        23,
+        55,
+        11
+      ],
+      "radius_px": 200,
+      "threshold_s": 15
+    }
+  ]
 }
 \end{lstlisting}
 
