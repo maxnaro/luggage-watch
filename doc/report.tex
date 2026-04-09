@@ -1,11 +1,11 @@
-\documentclass{article}
+\documentclass[twocolumn]{article}
 
 \usepackage{fancyhdr}
 \usepackage{natbib}
 \usepackage[a4paper, margin=3cm]{geometry}
 \usepackage{graphicx}
 \usepackage{csquotes}
-\usepackage{multicol}
+\usepackage{flushend}
 \usepackage{amsmath}
 \usepackage{booktabs}
 \usepackage{tabularx}
@@ -114,23 +114,24 @@
 \end{titlepage}
 
 \clearpage
+\onecolumn
 \tableofcontents
 \clearpage
 
-\begin{multicols*}{2}
-	\raggedright
-	\sloppy
-	\input{sections/01_introduction.tex}
-	\input{sections/02_literature_review.tex}
-	\input{sections/03_requirements_analysis.tex}
-	\input{sections/04_system_design.tex}
-	\input{sections/05_implementation.tex}
-	\input{sections/06_testing_and_evaluation.tex}
-	\input{sections/07_conclusion.tex}
-\end{multicols*}
+\twocolumn
+\raggedright
+\sloppy
+\input{sections/01_introduction.tex}
+\input{sections/02_literature_review.tex}
+\input{sections/03_requirements_analysis.tex}
+\input{sections/04_system_design.tex}
+\input{sections/05_implementation.tex}
+\input{sections/06_testing_and_evaluation.tex}
+\input{sections/07_conclusion.tex}
 \fussy
 
 \clearpage
+\onecolumn
 \appendix
 \input{sections/08_appendix.tex}
 
