@@ -16,8 +16,9 @@ Domain-specific datasets such as ABODA were considered but proved too small and
 repetitive to serve as the sole training source, leading to overfitting and
 poor generalisation. However, ABODA was later incorporated as a supplementary
 source during the fine-tuning phase (Phase~2) to improve domain adaptation for
-CCTV-style surveillance footage. COCO, while lacking CCTV-native footage,
-offered a much larger variety of environments, lighting conditions, and object
+CCTV-style surveillance footage; ABODA annotations being sourced from Roboflow
+\citep{aradhya2024aboda}. COCO, while lacking CCTV-native footage, offered a
+much larger variety of environments, lighting conditions, and object
 appearances. However, COCO alone provided a narrow luggage vocabulary (only
 three sub-types) and limited viewpoint diversity, motivating the introduction
 of a second source.
@@ -127,11 +128,11 @@ including stationary luggage with the owner nearby, brief separations, and
 occlusions.
 
 Example datasets for suspicious luggage scenarios were sourced from the ABODA
-dataset (\url{https://github.com/kevinlin311tw/ABODA}), containing $11$ video
-sequences of various environments and scenarios. These videos were used for the
-testing and evaluation of the suspicious luggage detection pipeline, with
-examples featuring marked changes in lighting condition, nighttime scenarios,
-indoor and outdoor environments.
+dataset \citep{lin2015aboda}, containing $11$ video sequences of various
+environments and scenarios. These videos were used for the testing and
+evaluation of the suspicious luggage detection pipeline, with examples
+featuring marked changes in lighting condition, nighttime scenarios, indoor and
+outdoor environments.
 
 In addition, authors \citet{amin2021large} provide a dataset of scenarios split
 into abandoned and non-abandoned scenarios, with graded levels of difficulty;
