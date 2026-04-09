@@ -426,3 +426,49 @@ given in table~\ref{tab:eval_iitp20_hard} (appendix).
 	\caption{Pipeline evaluation summary on IITP20 hard cases.}
 	\label{tab:eval_iitp20_hard_summary}
 \end{table}
+
+\subsection{Hardware Utilisation}
+
+Hardware metrics were sampled at $1$-second intervals throughout each
+evaluation run using the \texttt{jtop} utility on the Jetson Orin Nano. No
+thermal throttling was observed during any run (thermal threshold:
+$85\degree\mathrm{C}$). Table~\ref{tab:hardware_summary} summarises the
+resource utilisation across all five evaluation runs.
+
+\begin{table*}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
+		\toprule
+		\textbf{Metric}             & \textbf{ABODA}    & \textbf{AVSS}     & \textbf{IITP20 Easy} & \textbf{IITP20 Medium} & \textbf{IITP20 Hard} \\
+		\midrule
+		Duration                    & 6m 21s            & 54s               & 22m 19s              & 41m 20s                & 22m 35s              \\
+		\addlinespace
+		GPU utilisation (avg / max) & 90 / 98\%         & 89 / 98\%         & 87 / 100\%           & 90 / 100\%             & 86 / 99\%            \\
+		\addlinespace
+		CPU utilisation (avg / max) & 29 / 37\%         & 28 / 48\%         & 29 / 58\%            & 28 / 49\%              & 29 / 55\%            \\
+		\addlinespace
+		RAM utilisation (avg / max) & 70 / 73\%         & 65 / 66\%         & 73 / 77\%            & 73 / 75\%              & 72 / 75\%            \\
+		\addlinespace
+		Temperature (avg / max)     & 63 / 64$\degree$C & 55 / 58$\degree$C & 62 / 64$\degree$C    & 64 / 65$\degree$C      & 63 / 65$\degree$C    \\
+		\addlinespace
+		Thermal throttling          & None              & None              & None                 & None                   & None                 \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Hardware utilisation during evaluation runs on the NVIDIA Jetson Orin Nano (headless mode, no display sink).}
+	\label{tab:hardware_summary}
+\end{table*}
+
+The GPU was consistently the bottleneck, sustaining $86$--$90\%$ average
+utilisation across all runs, with peaks reaching near $100\%$. CPU utilisation
+remained moderate ($\approx 29\%$ average), confirming that the pipeline's
+computational load is predominantly on the GPU as expected for a
+TensorRT-accelerated inference workload. RAM usage was stable at $70$--$73\%$,
+leaving sufficient headroom for the operating system and other processes.
+
+Temperatures remained well within the $85\degree\mathrm{C}$ throttling
+threshold, peaking at $65\degree\mathrm{C}$ during the longest run (IITP20
+medium, $41$ minutes). The absence of any thermal throttling across nearly $93$
+minutes of cumulative processing confirms that the Jetson Orin Nano can sustain
+the pipeline workload without performance degradation with the default cooling
+solution.
