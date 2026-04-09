@@ -166,7 +166,7 @@ ground truth annotations derived from them, and the annotation script
 (section~\ref{sec:annotation_script}) can be found in a forked repository at
 \url{https://github.com/maxnaro/ABODA}. The resulting annotated dataset
 consisted of eleven samples with one or more abandonment events. The IITP20
-dataset's $57$ video examples, the singular AVSS example and their annotations
+dataset's $55$ video examples, the singular AVSS example and their annotations
 are not included in the repository in order to respect the original datasets'
 licensing terms but were also used in the evaluation process.
 
@@ -219,11 +219,11 @@ matching means that it may not capture nuances in detection timing or spatial
 accuracy beyond the defined tolerance thresholds.
 
 Evaluations were performed on hardware without the display sink component of
-the pipline active. This significantly reduces the time taken to run the
+the pipeline active. This significantly reduces the time taken to run the
 pipeline (as videos can be processed at a much faster rate than real-time) but
 means that the evaluation results do not account for any performance impact of
 the display sink, which is a component of the deployed system. Anecdotally, the
-display sink was observed to have a negligible impact on the pipeline's
+display sink was observed to have a neg.ligible impact on the pipeline's
 performance, not compromising real-time performance, but this was not formally
 evaluated.
 
@@ -233,12 +233,196 @@ evaluated.
 
 \paragraph{ABODA.}
 
+The $11$ ABODA sequences ($15$ annotated events) are summarised in
+table~\ref{tab:eval_aboda_summary}; per-video results are given in
+table~\ref{tab:eval_aboda} (appendix).
+
+\begin{table}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X r}
+		\toprule
+		\textbf{Metric}              & \textbf{Value} \\
+		\midrule
+		Videos                       & 11             \\
+		\addlinespace
+		Events (positive / negative) & 15 / 0         \\
+		\addlinespace
+		TP / FP / FN / TN            & 12 / 4 / 3 / 0 \\
+		\addlinespace
+		Precision                    & 0.750          \\
+		\addlinespace
+		Recall                       & 0.800          \\
+		\addlinespace
+		F1                           & 0.774          \\
+		\addlinespace
+		Mean frame error             & 197.9          \\
+		\addlinespace
+		Mean IoU                     & 0.627          \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Pipeline evaluation summary on the ABODA dataset.}
+	\label{tab:eval_aboda_summary}
+\end{table}
+
+Expectedly, the pipeline performed the best on the ABODA examples, given the
+training domain overlap (section~\ref{sec:training_process}). The majority of
+video examples exhibited no false alarms on the background, with the logic
+filtering noise well in the absence of any confounding factors.
+
+The main sources of error were: ``video2'', which features a steep overhead
+angle, and ``video11'', which features a crowded scene with a far-away camera
+angle. ``video11'' is the main outlier of the dataset with no other examples
+matching its level of complexity, and demonstrated that the pipeline's logic is
+not robust enough to handle crowded scenes with significant occlusion and
+smaller detection sizes. ``video2'' saw the model struggle to detect the
+ownership consistently, with the tracking component losing the owner and
+misidentifying another person as the owner, which caused the abandonment event
+to be missed. The two examples demonstrate the limitations of the pipeline's
+logic from a detection and tracking perspective, where logic is unable to
+compensate for the ReID model's lack of domain generalisation in the case of
+``video2'', and the inference model's performance limitations in crowded scenes
+in the case of ``video11''.
+
+Metrics were generally strong across the ABODA examples, with a high precision
+of $0.750$ and recall of $0.800$ at the event level. The mean frame error of
+$197.9$ frames ($\approx 6.6$ seconds) is higher than ideal, but this is
+influenced by the fact that some events were detected significantly later than
+the ground truth anchor, which may be due to the system's hysteresis.
+
 \paragraph{AVSS.}
+
+Only a single AVSS video sequence was available for evaluation
+(table~\ref{tab:eval_avss_summary}).
+
+\begin{table}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X r}
+		\toprule
+		\textbf{Metric}              & \textbf{Value} \\
+		\midrule
+		Videos                       & 1              \\
+		\addlinespace
+		Events (positive / negative) & 1 / 0          \\
+		\addlinespace
+		TP / FP / FN / TN            & 1 / 1 / 0 / 0  \\
+		\addlinespace
+		Precision                    & 0.500          \\
+		\addlinespace
+		Recall                       & 1.000          \\
+		\addlinespace
+		F1                           & 0.667          \\
+		\addlinespace
+		Mean frame error             & 23.0           \\
+		\addlinespace
+		Mean IoU                     & 0.635          \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Pipeline evaluation summary on the AVSS example.}
+	\label{tab:eval_avss_summary}
+\end{table}
 
 \subsubsection[IITP20 Examples]{IITP20 Examples \protect\citep{amin2021large}}
 
 \paragraph{Easy cases.}
 
+The easy subset ($17$ videos, $12$ pos.itive and $5$ neg.ative samples) is
+summarised in table~\ref{tab:eval_iitp20_easy_summary}; per-video results are
+given in table~\ref{tab:eval_iitp20_easy} (appendix).
+
+\begin{table}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X r}
+		\toprule
+		\textbf{Metric}              & \textbf{Value} \\
+		\midrule
+		Videos                       & 17             \\
+		\addlinespace
+		Events (positive / negative) & 12 / 5         \\
+		\addlinespace
+		TP / FP / FN / TN            & 6 / 19 / 6 / 5 \\
+		\addlinespace
+		Precision                    & 0.240          \\
+		\addlinespace
+		Recall                       & 0.500          \\
+		\addlinespace
+		F1                           & 0.324          \\
+		\addlinespace
+		Mean frame error             & 94.0           \\
+		\addlinespace
+		Mean IoU                     & 0.665          \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Pipeline evaluation summary on IITP20 easy cases.}
+	\label{tab:eval_iitp20_easy_summary}
+\end{table}
+
 \paragraph{Medium cases.}
 
+The medium subset ($19$ videos, $14$ pos.itive and $5$ neg.ative samples) is
+summarised in table~\ref{tab:eval_iitp20_medium_summary}; per-video results are
+given in table~\ref{tab:eval_iitp20_medium} (appendix).
+
+\begin{table}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X r}
+		\toprule
+		\textbf{Metric}              & \textbf{Value}  \\
+		\midrule
+		Videos                       & 19              \\
+		\addlinespace
+		Events (positive / negative) & 14 / 5          \\
+		\addlinespace
+		TP / FP / FN / TN            & 9 / 40 / 10 / 5 \\
+		\addlinespace
+		Precision                    & 0.184           \\
+		\addlinespace
+		Recall                       & 0.474           \\
+		\addlinespace
+		F1                           & 0.265           \\
+		\addlinespace
+		Mean frame error             & 136.7           \\
+		\addlinespace
+		Mean IoU                     & 0.591           \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Pipeline evaluation summary on IITP20 medium cases.}
+	\label{tab:eval_iitp20_medium_summary}
+\end{table}
+
 \paragraph{Hard cases.}
+
+The hard subset ($19$ videos, $14$ pos.itive and $5$ neg.ative samples) is
+summarised in table~\ref{tab:eval_iitp20_hard_summary}; per-video results are
+given in table~\ref{tab:eval_iitp20_hard} (appendix).
+
+\begin{table}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X r}
+		\toprule
+		\textbf{Metric}              & \textbf{Value}  \\
+		\midrule
+		Videos                       & 19              \\
+		\addlinespace
+		Events (positive / negative) & 14 / 5          \\
+		\addlinespace
+		TP / FP / FN / TN            & 9 / 24 / 10 / 5 \\
+		\addlinespace
+		Precision                    & 0.273           \\
+		\addlinespace
+		Recall                       & 0.474           \\
+		\addlinespace
+		F1                           & 0.346           \\
+		\addlinespace
+		Mean frame error             & 89.1            \\
+		\addlinespace
+		Mean IoU                     & 0.415           \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Pipeline evaluation summary on IITP20 hard cases.}
+	\label{tab:eval_iitp20_hard_summary}
+\end{table}
