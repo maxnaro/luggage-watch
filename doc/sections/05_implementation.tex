@@ -1,6 +1,7 @@
 \section{Implementation}
 
 \subsection{Dataset Procurement}
+\label{sec:dataset_procurement}
 
 \subsubsection{Object Detection Dataset}
 
@@ -371,6 +372,7 @@ contained as submodule in the repository at
 cloned and worked on directly on the Jetson device via SSH.
 
 \subsection{DeepStream Pipeline Configuration}
+\label{sec:deepstream_pipeline_configuration}
 
 The implementation of the DeepStream pipeline involved the instantiation of a
 series of GStreamer elements, responsible for the different stages of video
@@ -429,6 +431,7 @@ testing process. The configuration file can be found in the appendix~\ref{lst:pr
 \end{itemize}
 
 \subsection{Object Tracking Integration}
+\label{sec:object_tracking_integration}
 
 Object tracking is a crucial component of the system, allowing for the
 consistent identification of objects across frames, which is essential for the
@@ -437,6 +440,7 @@ implemented as a \texttt{nvtracker} element of the pipeline using the
 \texttt{NvDeepSORT} algorithm.
 
 \subsubsection{Determining the Optimal Tracking Algorithm}
+\label{sec:tracker_selection}
 
 The choice of tracking algorithm was informed by a combination of researching
 current implementations
@@ -1136,6 +1140,7 @@ respectively, and:
 \textit{req\_hist} for \texttt{REQUIRE\_OWNER\_HISTORY\_FOR\_ABANDONED}.
 
 \subsubsection{Alert Generation}
+\label{sec:alert_generation}
 
 The alert generation stage converts the state-machine outputs into
 operator-visible signals in real time. After the tracking metadata is
