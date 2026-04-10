@@ -2,6 +2,7 @@
 \label{sec:testing_and_evaluation}
 
 \subsection{Object Detection and Tracking Performance}
+\label{sec:object_detection_and_tracking_performance}
 
 \paragraph{Object detection performance.}
 
@@ -270,25 +271,62 @@ training domain overlap (section~\ref{sec:training_process}). The majority of
 video examples exhibited no false alarms on the background, with the logic
 filtering noise well in the absence of any confounding factors.
 
-The main sources of error were: ``video2'', which features a steep overhead
-angle, and ``video11'', which features a crowded scene with a far-away camera
-angle. ``video11'' is the main outlier of the dataset with no other examples
-matching its level of complexity, and demonstrated that the pipeline's logic is
-not robust enough to handle crowded scenes with significant occlusion and
-smaller detection sizes. ``video2'' saw the model struggle to detect the
-ownership consistently, with the tracking component losing the owner and
-misidentifying another person as the owner, which caused the abandonment event
-to be missed. The two examples demonstrate the limitations of the pipeline's
-logic from a detection and tracking perspective, where logic is unable to
-compensate for the ReID model's lack of domain generalisation in the case of
-``video2'', and the inference model's performance limitations in crowded scenes
-in the case of ``video11''.
+The main sources of error were: ``video2'' (figure~\ref{fig:aboda_video2}),
+which features a steep overhead angle, and ``video11''
+(figure~\ref{fig:aboda_video11}), which features a crowded scene with a
+far-away camera angle. ``video11'' is the main outlier of the dataset with no
+other examples matching its level of complexity, and demonstrated that the
+pipeline's logic is not robust enough to handle crowded scenes with significant
+occlusion and smaller detection sizes. ``video2'' saw the model struggle to
+detect the ownership consistently, with the tracking component losing the owner
+and misidentifying another person as the owner, which caused the abandonment
+event to be missed. This coupled with the abandonment event occuring late in
+the video (figure~\ref{fig:aboda_video2_end}), which led to a much stricter
+temporal requirement for the detection, meant that the event was not detected.
+The two examples demonstrate the limitations of the pipeline's logic from a
+detection and tracking perspective, where logic is unable to compensate for the
+ReID model's lack of domain generalisation in the case of ``video2'', and the
+inference model's performance limitations in crowded scenes in the case of
+``video11''.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{figures/aboda/video11.jpg}
+	\caption{Example of a crowded scene (``video11'') from the ABODA dataset.}
+	\label{fig:aboda_video11}
+\end{figure}
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{figures/aboda/video2/initial.jpg}
+	\caption{Example of a steep overhead angle (``video2'') from the ABODA dataset. This frame shows the initial abandonment event.}
+	\label{fig:aboda_video2}
+\end{figure}
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{figures/aboda/video2/end.jpg}
+	\caption{Example of a steep overhead angle (``video2'') from the ABODA dataset. This frame shows the end of the video stream, $~17$ seconds after the initial abandonment event (figure~\ref{fig:aboda_video2}).}
+	\label{fig:aboda_video2_end}
+\end{figure}
+
+A greater amount of overhead examples and crowded scenes would be required in
+the training data to improve the system's performance in these cases.
+Aggressive data augmentation to simulate these conditions
+(section~\ref{sec:training_process}) was utilised during training, but this was
+not sufficient to close the gap in performance and the latter phase of training
+(where augmentation was reduced) may have caused some performance degradation
+in higher complexity scenarios rather than fine tuning.
 
 Metrics were generally strong across the ABODA examples, with a high precision
 of $0.750$ and recall of $0.800$ at the event level. The mean frame error of
 $197.9$ frames ($\approx 6.6$ seconds) is higher than ideal, but this is
 influenced by the fact that some events were detected significantly later than
 the ground truth anchor, which may be due to the system's hysteresis.
+
+Overall, the ABODA evaluation demonstrates the strongest results for the
+pipeline with an F1-score of $0.774$, but these results are not fully
+representative of the pipeline's performance on unseen data.
 
 \paragraph{AVSS.}
 
@@ -323,11 +361,25 @@ Only a single AVSS video sequence was available for evaluation
 	\label{tab:eval_avss_summary}
 \end{table}
 
+The results from the single AVSS example are encouraging but inconclusive due
+to the limited sample size. The single detection was temporally accurate with
+tight spatial localisation, but the presence of the later false positive
+indicates that the system still generates spurious alerts. Reviewing the test
+run, this could be attributed to heavy occlusion at the end of the video,
+causing luggage context to be transferred to a new ID yet still triggering the
+abandonment logic. This highlights a potential failure mode of the pipeline in
+crowded scenes with occlusion, which is consistent with the ABODA evaluation
+results.
+
+Despite the limited sample size, the AVSS example provides useful insight into
+the pipeline's performance on an unseen domain, where a genuine abandonment
+event was successfully detected.
+
 \subsubsection[IITP20 Examples]{IITP20 Examples \protect\citep{amin2021large}}
 
 \paragraph{Easy cases.}
 
-The easy subset ($17$ videos, $12$ pos.itive and $5$ neg.ative samples) is
+The easy subset ($17$ videos, $12$ positive and $5$ negative samples) is
 summarised in table~\ref{tab:eval_iitp20_easy_summary}; per-video results are
 given in table~\ref{tab:eval_iitp20_easy} (appendix).
 
@@ -359,9 +411,58 @@ given in table~\ref{tab:eval_iitp20_easy} (appendix).
 	\label{tab:eval_iitp20_easy_summary}
 \end{table}
 
+Precision and recall were significantly lower on the IITP20 examples compared
+to ABODA, with the ``easy'' subset achieving an F1-score of only $0.324$. All 5
+negative samples triggered false positives, indicating that the system's logic
+is prone to hallucinations in the presence of background clutter and noise;
+this is consistent with the object detection results in
+section~\ref{sec:object_detection_and_tracking_performance},
+figure~\ref{fig:confusion_matrix} --- which showed a significant number of
+false positives in the background.
+
+A recurring source of false positives in the IITP20 dataset is the presence of
+a shelving unit storing luggage (figure~\ref{fig:iitp20_vid_00045_cluttered}).
+The system was not designed with pre-existing ownerless luggage in mind: when a
+person passes near the shelves, the pipeline assigns them as the owner of the
+stored luggage, and their subsequent departure triggers a false abandonment
+event. This failure mode is distinct from detector noise --- the detections
+themselves are correct, but the ownership assignment logic has no mechanism to
+distinguish luggage that was already stationary before any person entered the
+scene. Despite the ``easy'' label, these environmental factors make the subset
+significantly more challenging than the ABODA examples. For examples such as
+figure~\ref{fig:iitp20_vid_00043_cluttered}, the system's logic is able to
+correctly assign ownership of the stored luggage as null for the beginning of
+the video, which allows the system to correctly identify the abandonment event
+(according to the logic in section~\ref{sec:abandonment_guards}) when a bag is
+left unattended in front of the shelves. However, this is not consistent across
+all examples in the subsets (figure~\ref{fig:iitp20_vid_00056_non-cluttered}),
+and the presence of cluttered luggage shelving units is a significant
+confounding factor for the pipeline's logic.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{figures/iitp20/vid_00045_cluttered.jpg}
+	\caption{Hallway scene (``vid\_00045'') from the IITP20 dataset featuring a luggage shelving unit. Stored luggage is incorrectly assigned ownership when a person passes nearby, leading to false abandonment alerts.}
+	\label{fig:iitp20_vid_00045_cluttered}
+\end{figure}
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{figures/iitp20/vid_00043_cluttered.jpg}
+	\caption{Hallway scene (``vid\_00043'') from the IITP20 dataset featuring a luggage shelving unit. Stored luggage remains ownerless for the beginning of the video, allowing the logic of the system to hold.}
+	\label{fig:iitp20_vid_00043_cluttered}
+\end{figure}
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{figures/iitp20/vid_00056_non-cluttered.jpg}
+	\caption{Hallway scene (``vid\_00056'') from the IITP20 dataset featuring an empty luggage shelving unit.}
+	\label{fig:iitp20_vid_00056_non-cluttered}
+\end{figure}
+
 \paragraph{Medium cases.}
 
-The medium subset ($19$ videos, $14$ pos.itive and $5$ neg.ative samples) is
+The medium subset ($19$ videos, $14$ positive and $5$ negative samples) is
 summarised in table~\ref{tab:eval_iitp20_medium_summary}; per-video results are
 given in table~\ref{tab:eval_iitp20_medium} (appendix).
 
@@ -393,9 +494,30 @@ given in table~\ref{tab:eval_iitp20_medium} (appendix).
 	\label{tab:eval_iitp20_medium_summary}
 \end{table}
 
+The ``medium'' subset of the IITP20 examples demonstrated the worst false alarm
+rate out of any subset, with $40$ false positives across $19$ videos, leading
+to a precision of only $0.184$. The presence of cluttered shelving units is
+again a significant confounding factor, with many false positives triggered by
+the logic misassigning ownership of stored luggage to passing pedestrians most
+predominantly in ``vid\_00002'' which generated 6 false alarms on a negative
+sample.
+
+The recall of $0.474$ is consistent with the ``easy'' subset, indicating that
+the system's ability to detect genuine abandonment events is not significantly
+impacted by the increased complexity, but the precision degradation indicates
+that the system's logic is not robust enough to handle the increased noise and
+clutter in the environment. Buried within the false positives are some genuine
+strong detections such as in ``vid\_00048'' where the TP has an IoU of $0.919$
+but $4$ false alarms alongside it.
+
+A concern is found in ``vid\_00052'' where an event is detected at the correct
+time, but with an IoU of $0.000$, indicating that either the localisation is
+completely wrong, or the event is being triggered by a different bag in the
+scene.
+
 \paragraph{Hard cases.}
 
-The hard subset ($19$ videos, $14$ pos.itive and $5$ neg.ative samples) is
+The hard subset ($19$ videos, $14$ positive and $5$ negative samples) is
 summarised in table~\ref{tab:eval_iitp20_hard_summary}; per-video results are
 given in table~\ref{tab:eval_iitp20_hard} (appendix).
 
@@ -426,6 +548,32 @@ given in table~\ref{tab:eval_iitp20_hard} (appendix).
 	\caption{Pipeline evaluation summary on IITP20 hard cases.}
 	\label{tab:eval_iitp20_hard_summary}
 \end{table}
+
+Counterintuitively, the ``hard'' subset of the IITP20 examples exhibited the
+best results of the three subsets, with an F1-score of $0.346$ compared to
+$0.265$ for the ``medium'' subset and $0.324$ for the ``easy'' subset. The
+precision of $0.273$ is higher than the ``medium'' subset, though still
+significantly lower than the ABODA examples. This is due to the fact that the
+``hard'' subset contain no examples with the shelving unit confounding factor,
+which is the main source of false positives in the IITP20 dataset. The recall
+of $0.474$ is consistent with the other two subsets.
+
+The main confounding factor in the ``hard'' subset is the presence of multiple
+people in the scene where, with moderate to heavy occlusion, the detection and
+tracking modules struggle to maintain consistent ownership assignment by way of
+conjoined bounding boxes and ID switching, which leads to both false positives
+and false negatives. This is consistent with the ABODA evaluation results,
+where the crowded scene of ``video11'' was the main source of error. This
+factor caused $5$ videos to be missed entirely (i.e., all events in the video
+were missed) where luggage was detected as attended when its true owner had
+left the scene.
+
+$4$ detections occurred outside the temporal tolerance of $\pm 360$ frames, implying that
+the system tends to detect later rather than not at all. In the context of the target application,
+a false negative (missed detection) is more critical than a late detection, so
+this is a preferable failure mode. However, the mean frame error of $89.1$ frames
+($\approx 3$ seconds) indicates that there is still room for improvement in the system's 
+temporal accuracy.
 
 \subsection{Hardware Utilisation}
 
@@ -472,3 +620,13 @@ medium, $41$ minutes). The absence of any thermal throttling across nearly $93$
 minutes of cumulative processing confirms that the Jetson Orin Nano can sustain
 the pipeline workload without performance degradation with the default cooling
 solution.
+
+The hardware utilisation results indicate that the pipeline is computationally
+demanding but manageable within the constraints of the Jetson Orin Nano, with
+the GPU being the primary resource under load. The system's thermal performance
+is sufficient to maintain consistent processing without throttling, even during
+extended runs on complex video sequences. However, the high GPU utilisation
+suggests that there is limited headroom for additional computational tasks or
+more complex models without further optimisations. A potential consideration
+could be to explore stronger quantisation (e.g., INT8) or model pruning to
+reduce the computational load and increase headroom for future enhancements.
