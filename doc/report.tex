@@ -23,6 +23,9 @@
 \usepackage[htt]{hyphenat}
 \usepackage{gensymb}
 \usepackage{balance}
+\usepackage{multicol}
+\usepackage{lettrine}
+\usepackage{newtxtext}
 
 \hypersetup{
     colorlinks,
@@ -103,14 +106,43 @@
 			Revision: & \texttt{\commit} \\
 		\end{tabular}
 	}
+
 	\vfill
 
 	\begin{abstract}
-		\textit{TODO: Abstract to be completed at the end of the report.}
-		The repository for this project can be found at \url{https://github.com/maxnaro/luggage-watch}.
+		\begin{multicols}{2}
+			\lettrine{T}{his project} presents an embedded system for detecting suspicious
+			luggage in CCTV surveillance footage, deployed on an NVIDIA Jetson
+			Orin Nano using the DeepStream SDK. The pipeline combines a
+			fine-tuned YOLO26s object detection model with NvDeepSORT tracking
+			and custom spatio-temporal abandonment logic to identify luggage
+			that has been separated from its owner beyond a configurable
+			temporal threshold. A two-phase transfer learning strategy,
+			training on COCO and Open Images before fine-tuning on the
+			domain-specific ABODA dataset, achieved a detection mAP@0.5 of
+			$0.859$.
 
-		\noindent\textbf{Keywords:} suspicious luggage, abandoned luggage, CCTV, embedded system, anomaly detection
+			End-to-end pipeline evaluation using an event-based ground truth methodology
+			yielded an F1-score of $0.774$ on in-domain ABODA sequences, but
+			$0.265$--$0.346$ on the out-of-domain IITP20 dataset, revealing a significant
+			generalisation gap driven by false ownership assignment of pre-existing
+			stationary luggage and tracker ID switching in occluded scenes. The Jetson Orin
+			Nano sustained real-time processing at $86$--$90\%$ GPU utilisation without
+			thermal throttling, confirming the viability of edge deployment for this
+			workload. The results demonstrate a feasible foundation for embedded suspicious
+			luggage detection while highlighting the challenges that remain in achieving
+			robust performance across diverse surveillance environments.
+
+			The repository for this project can be found at
+			\url{https://github.com/maxnaro/luggage-watch}.
+
+			\textbf{Keywords:}
+			suspicious luggage, abandoned luggage, CCTV, embedded system, object detection,
+			edge computing, DeepStream
+		\end{multicols}
 	\end{abstract}
+
+	\vfill
 \end{titlepage}
 
 \clearpage
