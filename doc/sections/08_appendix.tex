@@ -64,3 +64,243 @@ listing~\ref{lst:primary_config}.
 	label={lst:primary_config}
 ]{../inference/config/config_infer_primary.txt}
 
+\subsection{Example Ground Truth Annotation}
+
+An example of the ground truth annotation format is shown in
+listing~\ref{lst:annotation_format}. The script for producing these annotations
+is available in the GitHub repository,
+\url{https://github.com/maxnaro/ABODA/blob/master/source/annotate.py}, a fork
+of the original ABODA repository.
+
+\begin{lstlisting}[
+	language=json,
+	caption={Ground truth annotation format example.},
+	label={lst:annotation_format}
+]
+{
+  "video1.avi": [
+    {
+      "has_abandonment": true,
+      "true_abandon_frame": 2016,
+      "bag_roi": [
+        133,
+        323,
+        54,
+        46
+      ],
+      "radius_px": 200,
+      "threshold_s": 15
+    }
+  ],
+  "video2.avi": [
+    {
+      "has_abandonment": true,
+      "true_abandon_frame": 449,
+      "bag_roi": [
+        329,
+        36,
+        48,
+        40
+      ],
+      "radius_px": 200,
+      "threshold_s": 15
+    },
+	{
+      "has_abandonment": true,
+      "true_abandon_frame": 2012,
+      "bag_roi": [
+        244,
+        23,
+        55,
+        11
+      ],
+      "radius_px": 200,
+      "threshold_s": 15
+    }
+  ]
+}
+\end{lstlisting}
+
+\subsection{Per-Video Evaluation Results}
+\label{sec:per_video_results}
+
+\begin{table*}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{l l r r c >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Video} & \textbf{Outcome} & \textbf{Frame Error} & \textbf{IoU}  & \textbf{Extra FPs} & \textbf{Notes}                                      \\
+		\midrule
+		video1         & TP               & 72                   & 0.570         & 0                  & ---                                                 \\
+		\addlinespace
+		video2         & FN               & ---                  & ---           & 0                  & Missed entirely                                     \\
+		\addlinespace
+		video3         & TP               & 57                   & 0.611         & 0                  & ---                                                 \\
+		\addlinespace
+		video4         & TP               & 73                   & 0.709         & 0                  & ---                                                 \\
+		\addlinespace
+		video5         & TP               & 56                   & 0.381         & 0                  & Low spatial accuracy                                \\
+		\addlinespace
+		video6         & TP               & 44                   & 0.596         & 0                  & ---                                                 \\
+		\addlinespace
+		video7         & 2$\times$TP      & 302 / 5              & 0.576 / 0.659 & 0                  & Both detected; event\_0 delayed by no-owner timeout \\
+		\addlinespace
+		video8         & 2$\times$TP      & 302 / 24             & 0.623 / 0.784 & 0                  & Both detected; event\_0 delayed by no-owner timeout \\
+		\addlinespace
+		video9         & 2$\times$TP      & 136 / 42             & 0.720 / 0.539 & 0                  & Both events detected                                \\
+		\addlinespace
+		video10        & TP + FN          & 56                   & 0.700         & 0                  & 1 of 2 events detected; second outside tolerance    \\
+		\addlinespace
+		video11        & FN               & ---                  & ---           & 2                  & Missed; 2 false alarms on background                \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Per-video pipeline results on the ABODA dataset.}
+	\label{tab:eval_aboda}
+\end{table*}
+
+\begin{table*}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{l l r r c >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Video} & \textbf{Outcome} & \textbf{Frame Error} & \textbf{IoU} & \textbf{Extra FPs} & \textbf{Notes}                            \\
+		\midrule
+		vid\_00011     & TP               & 209                  & 0.664        & 0                  & High temporal lag                         \\
+		\addlinespace
+		vid\_00014     & FN               & ---                  & ---          & 0                  & Detection outside tolerance (383 frames)  \\
+		\addlinespace
+		vid\_00016     & TN               & ---                  & ---          & 2                  & Negative; 2 false alarms                  \\
+		\addlinespace
+		vid\_00017     & TN               & ---                  & ---          & 2                  & Negative; 2 false alarms                  \\
+		\addlinespace
+		vid\_00018     & TN               & ---                  & ---          & 2                  & Negative; 2 false alarms                  \\
+		\addlinespace
+		vid\_00022     & TP               & 34                   & 0.822        & 2                  & Good detection but noisy                  \\
+		\addlinespace
+		vid\_00023     & TN               & ---                  & ---          & 0                  & Negative; correct                         \\
+		\addlinespace
+		vid\_00024     & TN               & ---                  & ---          & 1                  & Negative; 1 false alarm                   \\
+		\addlinespace
+		vid\_00029     & FN               & ---                  & ---          & 0                  & Missed entirely                           \\
+		\addlinespace
+		vid\_00030     & TP               & 151                  & 0.900        & 2                  & High IoU but delayed                      \\
+		\addlinespace
+		vid\_00031     & FN               & ---                  & ---          & 0                  & Missed entirely                           \\
+		\addlinespace
+		vid\_00032     & TP               & 109                  & 0.772        & 0                  & ---                                       \\
+		\addlinespace
+		vid\_00033     & FN               & ---                  & ---          & 0                  & Detection outside tolerance (437 frames)  \\
+		\addlinespace
+		vid\_00034     & FN               & ---                  & ---          & 0                  & Missed entirely                           \\
+		\addlinespace
+		vid\_00043     & TP               & 3                    & 0.138        & 3                  & Near-perfect timing but poor localisation \\
+		\addlinespace
+		vid\_00056     & TP               & 58                   & 0.695        & 0                  & ---                                       \\
+		\addlinespace
+		vid\_00063     & FN               & ---                  & ---          & 2                  & Detection outside tolerance (904 frames)  \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Per-video pipeline results on IITP20 easy cases.}
+	\label{tab:eval_iitp20_easy}
+\end{table*}
+
+\begin{table*}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{l l r r c >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Video} & \textbf{Outcome} & \textbf{Frame Error} & \textbf{IoU} & \textbf{Extra FPs} & \textbf{Notes}                                 \\
+		\midrule
+		vid\_00002     & TN               & ---                  & ---          & 6                  & Negative; highly noisy (6 false alarms)        \\
+		\addlinespace
+		vid\_00003     & TN               & ---                  & ---          & 3                  & Negative; 3 false alarms                       \\
+		\addlinespace
+		vid\_00004     & TP + 2$\times$FN & 48                   & 0.717        & 1                  & 1 of 3 events detected                         \\
+		\addlinespace
+		vid\_00027     & FN               & ---                  & ---          & 0                  & Missed entirely                                \\
+		\addlinespace
+		vid\_00028     & TN               & ---                  & ---          & 0                  & Negative; correct                              \\
+		\addlinespace
+		vid\_00041     & FN               & ---                  & ---          & 3                  & Detection outside tolerance (624 frames)       \\
+		\addlinespace
+		vid\_00042     & TP               & 235                  & 0.747        & 2                  & High temporal lag                              \\
+		\addlinespace
+		vid\_00045     & TP               & 115                  & 0.856        & 3                  & Good IoU; 3 false alarms                       \\
+		\addlinespace
+		vid\_00046     & TP + FN          & 267                  & 0.711        & 3                  & 1 of 2 events detected                         \\
+		\addlinespace
+		vid\_00048     & TP               & 51                   & 0.919        & 4                  & Excellent IoU; very noisy                      \\
+		\addlinespace
+		vid\_00050     & TP               & 48                   & 0.896        & 1                  & ---                                            \\
+		\addlinespace
+		vid\_00051     & TP + FN          & 44                   & 0.429        & 1                  & 1 of 2 events detected                         \\
+		\addlinespace
+		vid\_00052     & TP               & 335                  & 0.000        & 3                  & Correct event but zero spatial overlap         \\
+		\addlinespace
+		vid\_00061     & TN               & ---                  & ---          & 1                  & Negative; 1 false alarm                        \\
+		\addlinespace
+		vid\_00062     & TN               & ---                  & ---          & 0                  & Negative; correct                              \\
+		\addlinespace
+		vid\_00064     & FN               & ---                  & ---          & 0                  & Detection outside tolerance (1281 frames)      \\
+		\addlinespace
+		vid\_00065     & FN               & ---                  & ---          & 0                  & Missed entirely                                \\
+		\addlinespace
+		vid\_00066     & 2$\times$FN      & ---                  & ---          & 1                  & Both events outside tolerance (657/710 frames) \\
+		\addlinespace
+		vid\_00070     & TP               & 87                   & 0.040        & 0                  & Near-zero spatial overlap                      \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Per-video pipeline results on IITP20 medium cases.}
+	\label{tab:eval_iitp20_medium}
+\end{table*}
+
+\begin{table*}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{l l r r c >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Video} & \textbf{Outcome} & \textbf{Frame Error} & \textbf{IoU}  & \textbf{Extra FPs} & \textbf{Notes}                                       \\
+		\midrule
+		vid\_00001     & TN               & ---                  & ---           & 5                  & Negative; highly noisy                               \\
+		\addlinespace
+		vid\_00012     & TP               & 87                   & 0.721         & 0                  & ---                                                  \\
+		\addlinespace
+		vid\_00019     & TN               & ---                  & ---           & 1                  & Negative; 1 false alarm                              \\
+		\addlinespace
+		vid\_00020     & 2$\times$TP + FN & 312 / 29             & 0.900 / 0.923 & 4                  & 2 of 3 events detected; very noisy                   \\
+		\addlinespace
+		vid\_00025     & 2$\times$TP      & 37 / 104             & 0.001 / 0.000 & 2                  & Both detected but zero spatial overlap               \\
+		\addlinespace
+		vid\_00026     & FN               & ---                  & ---           & 0                  & Detection outside tolerance (449 frames)             \\
+		\addlinespace
+		vid\_00035     & TP               & 60                   & 0.654         & 0                  & ---                                                  \\
+		\addlinespace
+		vid\_00036     & 2$\times$FN      & ---                  & ---           & 0                  & 1 outside tolerance (1432 frames); 1 missed          \\
+		\addlinespace
+		vid\_00049     & FN               & ---                  & ---           & 4                  & Detection outside tolerance (640 frames); very noisy \\
+		\addlinespace
+		vid\_00053     & TN               & ---                  & ---           & 0                  & Negative; correct                                    \\
+		\addlinespace
+		vid\_00054     & FN               & ---                  & ---           & 0                  & Missed entirely                                      \\
+		\addlinespace
+		vid\_00055     & TN               & ---                  & ---           & 2                  & Negative; 2 false alarms                             \\
+		\addlinespace
+		vid\_00057     & TN               & ---                  & ---           & 1                  & Negative; 1 false alarm                              \\
+		\addlinespace
+		vid\_00058     & FN               & ---                  & ---           & 0                  & Missed entirely                                      \\
+		\addlinespace
+		vid\_00059     & FN               & ---                  & ---           & 0                  & Detection outside tolerance (580 frames)             \\
+		\addlinespace
+		vid\_00060     & FN               & ---                  & ---           & 0                  & Missed entirely                                      \\
+		\addlinespace
+		vid\_00067     & 2$\times$TP      & 62 / 23              & 0.533 / 0.000 & 0                  & Both detected; second has no spatial overlap         \\
+		\addlinespace
+		vid\_00068     & FN               & ---                  & ---           & 0                  & Missed entirely                                      \\
+		\addlinespace
+		vid\_00069     & TP               & 88                   & 0.000         & 0                  & Correct timing but zero spatial overlap              \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Per-video pipeline results on IITP20 hard cases.}
+	\label{tab:eval_iitp20_hard}
+\end{table*}
+

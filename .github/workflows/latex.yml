@@ -43,6 +43,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y graphviz plantuml
 
+      - name: LFS pull
+        run: git lfs pull
+
       - name: Generate PlantUML Diagrams
         run: |
           set -euo pipefail

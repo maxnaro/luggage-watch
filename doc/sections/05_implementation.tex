@@ -13,11 +13,15 @@ three luggage types aggregated into a single \texttt{luggage} class.
 Oversampling of underrepresented luggage sub-classes (e.g., duplicating
 \texttt{handbag} images) was applied to balance class representation.
 Domain-specific datasets such as ABODA were considered but proved too small and
-repetitive, leading to overfitting and poor generalisation. COCO, while lacking
-CCTV-native footage, offered a much larger variety of environments, lighting
-conditions, and object appearances. However, COCO alone provided a narrow
-luggage vocabulary (only three sub-types) and limited viewpoint diversity,
-motivating the introduction of a second source.
+repetitive to serve as the sole training source, leading to overfitting and
+poor generalisation. However, ABODA was later incorporated as a supplementary
+source during the fine-tuning phase (Phase~2) to improve domain adaptation for
+CCTV-style surveillance footage; with ABODA annotations sourced from Roboflow
+\citep{aradhya2024aboda}. COCO, while lacking CCTV-native footage, offered a
+much larger variety of environments, lighting conditions, and object
+appearances. However, COCO alone provided a narrow luggage vocabulary (only
+three sub-types) and limited viewpoint diversity, motivating the introduction
+of a second source.
 
 \paragraph{Mixed-source pipeline.}
 
@@ -124,11 +128,11 @@ including stationary luggage with the owner nearby, brief separations, and
 occlusions.
 
 Example datasets for suspicious luggage scenarios were sourced from the ABODA
-dataset (\url{https://github.com/kevinlin311tw/ABODA}), containing $11$ video
-sequences of various environments and scenarios. These videos were used for the
-testing and evaluation of the suspicious luggage detection pipeline, with
-examples featuring marked changes in lighting condition, nighttime scenarios,
-indoor and outdoor environments.
+dataset \citep{lin2015aboda}, containing $11$ video sequences of various
+environments and scenarios. These videos were used for the testing and
+evaluation of the suspicious luggage detection pipeline, with examples
+featuring marked changes in lighting condition, nighttime scenarios, indoor and
+outdoor environments.
 
 In addition, authors \citet{amin2021large} provide a dataset of scenarios split
 into abandoned and non-abandoned scenarios, with graded levels of difficulty;
@@ -141,6 +145,15 @@ prevalence in the literature and my efforts to contact the authors. The
 utilisation of AVSS-2007 was restricted to a single example video sequence,
 which was used in conjunction with the aforementioned procured datasets.
 
+This left the evaluation of the end-to-end pipeline to be based on a
+combination of two datasets: (i) the ABODA dataset, which provides a variety of
+scenarios that mainly vary in environmental factors such as lighting, camera
+angles, and crowd density; and (ii) the IITP20 dataset, which covers the gaps
+in the ABODA dataset by providing challenging scenarios in terms of occlusion
+and edge cases of abandonment. Since neither dataset contains frame-level
+annotations of ground-truth labels, manual review of the videos was used to
+determine the expected behaviour of the system for each scenario
+(section~\ref{sec:ground_truth_annotation_methodology}).
 \subsection{Model Training and Optimisation}
 \label{sec:model_training_optimisation}
 
@@ -229,7 +242,9 @@ training data.
 
 \textbf{Phase~2 --- fine-tuning} loads the best weights from phase~1 and
 freezes the first $12$ backbone layers (\texttt{freeze=12}), training only the
-detection head for up to $100$ epochs. The learning rate is reduced by
+detection head for up to $100$ epochs. The training data for this phase was
+augmented with frames from the ABODA dataset to improve the model's performance
+on CCTV-style surveillance footage. The learning rate is reduced by
 $100\times$ to $0.00008$, and augmentation is made conservative: copy-paste and
 vertical flipping are disabled, rotation is reduced to $5\degree$, scaling to
 $0.08$, mosaic probability to $0.5$, and dropout of $0.1$ is applied for
@@ -1034,6 +1049,7 @@ properties (\texttt{unattended\_entry\_confirmed},
 \texttt{LuggageContext.update}, keeping it state-independent and consistent.
 
 \paragraph{Abandonment guards.}
+\label{sec:abandonment_guards}
 
 The \texttt{Unattended}~$\to$~\texttt{Abandoned} transition is additionally
 gated by two guards that extend beyond the base timeout:
