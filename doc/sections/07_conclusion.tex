@@ -1,1 +1,108 @@
 \section{Conclusion}
+
+\paragraph{Summarisation of the project.}
+
+As per the introduction (section~\ref{sec:introduction}), the aim of this
+project was to implement a suspicious luggage detection system in an embedded
+environment to bridge the gap between academic research and a real world edge
+application. The implementation proves the viability of devices such as the
+NVIDIA Jetson Orin Nano for this task, demonstrating that a deployable solution
+that can integrate with surveillance infrastructure is achievable within the
+constraints of an embedded system.
+
+Implementation of the system took the form of an end-to-end pipeline, utilising
+a fine-tuned YOLO26s model for object detection, NvDeepSORT tracking with a
+ResNet50-based re-identification model, custom spatio-temporal abandonment
+logic deployed on a Jetson Orin Nano via NVIDIA's DeepStream SDK. Multiple
+iterations found that a two-phase training strategy was optimal, with a COCO
+\citep{lin2014microsoft} and OID \citep{krasin2017openimages} base, followed by
+fine-tuning on the domain-specific ABODA dataset \citep{lin2015aboda}.
+
+Evaluation of the model was completed on multiple datasets, utilising a custom
+evaluation framework featuring event-based ground truth labelling.
+
+\subsection{Results and Limitations}
+
+The object detection model achieved a mAP@0.5 of $0.859$ on the ABODA test set,
+balanced across the two classes of ``luggage'' and ``person''. The pipeline
+performed well on in-domain data, achieving an F1-score of $0.774$ on the ABODA
+examples with a precision of $0.750$ and recall of $0.800$.
+
+However, out-of-domain performance on the IITP20 dataset revealed a significant
+generalisation gap, with F1-scores ranging from $0.265$ to $0.346$ across the
+three difficulty tiers. Precision was consistently the weakest metric across
+all datasets, indicating that the system over-triggers rather than
+under-detects. Three recurring failure modes were identified: false ownership
+assignment of pre-existing stationary luggage, tracker ID switching in crowded
+or occluded scenes, and difficulty re-triggering after an initial abandonment
+detection in multi-event sequences.
+
+From a hardware perspective, the Jetson Orin Nano sustained real-time
+processing across all evaluation runs without thermal throttling, with the GPU
+operating at $86$--$90\%$ average utilisation. This confirms the viability of
+the platform for the target workload, though the high GPU utilisation leaves
+limited headroom for additional processing or more complex models.
+
+\subsection{Reflection}
+
+The gap between in-domain and out-of-domain performance highlights the
+difficulty of generalising a surveillance pipeline trained on a limited set of
+environments. The ABODA results, while strong, were shown to be inflated by the
+training domain overlap --- a limitation that was identified and documented
+during the evaluation process. Relying on the IITP20 and AVSS results as the
+more honest measure of performance, the system in its current form would not be
+suitable for deployment without further refinement to address the false
+positive rate.
+
+The decision to include ABODA in the fine-tuning data improved detection
+accuracy in the target domain but came at the cost of evaluation independence.
+In hindsight, reserving ABODA exclusively for evaluation and sourcing
+additional CCTV-style training data from other datasets would have provided a
+cleaner separation between training and evaluation, and a more confident
+measure of the system's true performance.
+
+The evaluation framework itself --- event-based ground truth with temporal
+tolerance --- proved to be a practical approach for assessing abandonment
+detection without requiring frame-level annotations. This methodology could be
+applied to future work in the domain.
+
+\subsection{Future Work}
+
+Several areas for improvement were identified through the evaluation:
+
+\begin{itemize}
+	\item \textbf{Scene initialisation.} A warm-up period during which stationary
+	      objects are catalogued and excluded from ownership assignment would
+	      address the dominant source of false positives observed in the IITP20
+	      dataset.
+	\item \textbf{Tracker robustness.} The zero-IoU true positive pattern
+	      observed across multiple IITP20 videos points to tracker ID switching as
+	      a systematic issue. A more robust re-identification model, or a tracker
+	      architecture better suited to occluded environments, would improve both
+	      precision and spatial accuracy.
+	\item \textbf{Custom tracking implementation.} The current reliance on NVIDIA's
+	      ReID model and DeepSORT architecture, while convenient, may not be optimal for the
+	      specific challenges of the domain. A custom tracking solution, designed with the
+	      unique requirements of suspicious luggage detection in mind, could yield better
+	      performance and efficiency.
+	\item \textbf{Multi-event handling.} Investigating why the pipeline fails to
+	      reset after an initial detection would improve recall on sequences
+	      containing multiple abandonment events.
+	\item \textbf{Training data diversity.} Expanding the training dataset with
+	      more CCTV-native footage from varied environments --- particularly
+	      crowded scenes, overhead angles, and cluttered backgrounds --- would
+	      help close the generalisation gap observed between ABODA and IITP20.
+	\item \textbf{Model optimisation.} Exploring INT8 quantisation would reduce
+	      the GPU utilisation overhead, freeing headroom for additional processing
+	      tasks or enabling deployment on lower-powered hardware.
+\end{itemize}
+
+\paragraph{Final thoughts.}
+
+This project demonstrates the feasibility of an embedded suspicious luggage
+detection system, while also highlighting the significant challenges that
+remain in achieving robust, generalisable performance in real-world
+surveillance environments. The results provide a strong foundation for future
+work, with clear avenues for improvement identified through the evaluation
+process. With further refinement and additional training data, a deployable
+solution that effectively balances precision and recall could be within reach.
