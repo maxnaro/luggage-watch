@@ -224,7 +224,7 @@ the pipeline active. This significantly reduces the time taken to run the
 pipeline (as videos can be processed at a much faster rate than real-time) but
 means that the evaluation results do not account for any performance impact of
 the display sink, which is a component of the deployed system. Anecdotally, the
-display sink was observed to have a neg.ligible impact on the pipeline's
+display sink was observed to have a negligible impact on the pipeline's
 performance, not compromising real-time performance, but this was not formally
 evaluated.
 
@@ -306,7 +306,7 @@ inference model's performance limitations in crowded scenes in the case of
 \begin{figure}[!htb]
 	\centering
 	\includegraphics[width=\columnwidth]{figures/aboda/video2/end.jpg}
-	\caption{Example of a steep overhead angle (``video2'') from the ABODA dataset. This frame shows the end of the video stream, $~17$ seconds after the initial abandonment event (figure~\ref{fig:aboda_video2}).}
+	\caption{Example of a steep overhead angle (``video2'') from the ABODA dataset. This frame shows the end of the video stream, ${\sim}17$ seconds after the initial abandonment event (figure~\ref{fig:aboda_video2}).}
 	\label{fig:aboda_video2_end}
 \end{figure}
 
@@ -417,7 +417,7 @@ table~\ref{tab:eval_iitp20_easy} (appendix).
 Precision and recall were significantly lower on the IITP20 examples compared
 to ABODA, with the ``easy'' subset achieving an F1-score of only $0.324$. All 5
 negative samples triggered false positives, indicating that the system's logic
-is prone to hallucinations in the presence of background clutter and noise;
+is prone to false triggers in the presence of background clutter and noise;
 this is consistent with the object detection results in
 section~\ref{sec:object_detection_and_tracking_performance},
 figure~\ref{fig:confusion_matrix} --- which showed a significant number of
@@ -504,8 +504,8 @@ The ``medium'' subset of the IITP20 examples demonstrated the worst false alarm
 rate out of any subset, with $40$ false positives across $19$ videos, leading
 to a precision of only $0.184$. The presence of cluttered shelving units is
 again a significant confounding factor, with many false positives triggered by
-the logic misassigning ownership of stored luggage to passing pedestrians most
-predominantly in ``vid\_00002'' which generated 6 false alarms on a negative
+the logic misassigning ownership of stored luggage to passing pedestrians, most
+predominantly in ``vid\_00002'', which generated 6 false alarms on a negative
 sample.
 
 The recall of $0.474$ is consistent with the ``easy'' subset, indicating that
@@ -572,7 +572,7 @@ best results of the three subsets, with an F1-score of $0.346$ compared to
 $0.265$ for the ``medium'' subset and $0.324$ for the ``easy'' subset. The
 precision of $0.273$ is higher than the ``medium'' subset, though still
 significantly lower than the ABODA examples. This is due to the fact that the
-``hard'' subset contain no examples with the shelving unit confounding factor,
+``hard'' subset contains no examples with the shelving unit confounding factor,
 which is the main source of false positives in the IITP20 dataset. The recall
 of $0.474$ is consistent with the other two subsets.
 
