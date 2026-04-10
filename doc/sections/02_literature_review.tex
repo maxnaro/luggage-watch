@@ -329,11 +329,11 @@ per cell: $$\textrm{Pr}(\textrm{Class}_i | \textrm{Object}),$$ is a $S \times S
 The relatively simple approach of YOLOv1 was revolutionary at the time,
 outperforming other models in both speed and accuracy.
 
-The latest versions, YOLOv8 and YOLO11, have built upon this foundation. The
-fundamental principles of unified detection and grid-based prediction remain,
-but with significant improvements. The survey by
+The latest versions, YOLOv8, YOLO11, and YOLO26, have built upon this
+foundation. The fundamental principles of unified detection and grid-based
+prediction remain, but with significant improvements. The survey by
 \citet{kotthapalli2025yolov1yolov11comprehensivesurvey} describes the taxonomy
-of YOLO models' improvements, highlighting five key areas:
+of YOLO models' improvements up to YOLO11, highlighting five key areas:
 
 \begin{itemize}
 	\item \textbf{Backbone networks:} the evolution of backbone architectures
@@ -356,6 +356,16 @@ of YOLO models' improvements, highlighting five key areas:
 	      MixUp, alongside modern optimisation techniques including cosine
 	      learning rate schedulers and warmup phases to stabilise convergence.
 \end{itemize}
+
+YOLO26, released after the initial literature review for this project, extends
+these trends with an architecture redesigned for edge deployment. Ultralytics
+claim significant improvements to the speed-accuracy Pareto front across all
+model sizes compared to YOLO11 \citep{jocher2025yolo26, vina2026yolo26}.
+However, at the time of writing, no independent peer-reviewed evaluations of
+YOLO26 exist in the literature, meaning these claims rely solely on the
+developer's own benchmarks. YOLO26 is included in this project's model
+evaluation (section~\ref{sec:training_process}) to provide an independent
+assessment of its performance in the target domain.
 
 \begin{table*}[!htb]
 	\centering
@@ -400,6 +410,10 @@ of YOLO models' improvements, highlighting five key areas:
 		\textbf{YOLO11}  & C3k2 block; C2PSA (Cross Stage Partial with Spatial
 		Attention); enhanced feature extraction; improved speed-accuracy trade-off
 		across tasks.                                                                \\
+		\addlinespace
+		\textbf{YOLO26}  & Redesigned architecture built for edge and low-power
+		devices; improved speed-accuracy Pareto front over YOLO11 across all model
+		sizes \citep{jocher2025yolo26}.                                              \\
 		\bottomrule
 	\end{tabularx}
 	\captionof{table}{Evolution of YOLO models: key features and improvements.}

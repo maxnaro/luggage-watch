@@ -1,6 +1,7 @@
 \section{System Design}
 
 \subsection{Model Choice}
+\label{sec:model_choice}
 
 Based on the requirements analysis and literature review, the system will be
 designed around a YOLO11 object detection model, fine-tuned for the task of
@@ -17,9 +18,9 @@ YOLO26 is a much more recent model, potential for improved accuracy and
 efficiency is expected, but the lack of evaluations in literature may make it a
 less certain choice for the final system. Evaluating both models will provide
 valuable insight into their performance when compared on the test datasets, and
-their suitability for edge deployment. Ultralytics themselves claim that
-YOLO26 is a leap forward compared to older models as seen in their own
-benchmarks (figure~\ref{fig:ultralytics_benchmarks}), but these claims will be
+their suitability for edge deployment. Ultralytics themselves claim that YOLO26
+is a leap forward compared to older models as seen in their own benchmarks
+(figure~\ref{fig:ultralytics_benchmarks}), but these claims will be
 independently verified in the context of this project.
 
 \begin{figure*}[!htb]
@@ -36,9 +37,7 @@ the best balance of accuracy and inference speed on the target hardware.
 
 \subsection{Tracking Algorithm}
 
-% TODO: this is very subject to change, depending on how successful a DeepStream implementation is
-
-YOLO11 and YOLO26 will be integrated using the BoT-SORT tracking algorithm
+The initial design proposed the BoT-SORT tracking algorithm
 \citep{aharon2022bot}, which builds upon the ByteTrack framework and is
 supported by Ultralytics' official documentation and community resources.
 
@@ -66,15 +65,25 @@ significant advantage.
 However, using BoT-SORT does introduce the potential for compatibility issues
 when implementing a pipeline with NVIDIA's DeepStream SDK, which is a common
 choice for deploying computer vision applications on NVIDIA hardware.
-DeepStream has native support for DeepSORT through NvDCF, but BoT-SORT's
+DeepStream has native support for DeepSORT through NvDeepSORT, but BoT-SORT's
 additional complexity may require custom integration.
+
+In practice, this compatibility concern proved decisive. During implementation
+(section~\ref{sec:tracker_selection}), BoT-SORT's lack of native DeepStream
+support made integration impractical within the project's scope. The system was
+instead implemented using NvDeepSORT, which provides the same core
+appearance-based ReID mechanism that motivated the BoT-SORT proposal, while
+offering seamless integration with the DeepStream pipeline. The trade-off is
+the loss of BoT-SORT's camera motion compensation, which was accepted given
+that the target deployment uses fixed-position CCTV cameras where CMC is less
+critical.
 
 \subsection{Determining Suspicious Luggage: Spatial and Temporal Logic}
 
-Suspicious luggage detection is a spatio-temporal issue, requiring the system to
-recognise the spatial relationship between luggage and its owner, and to track
-how this relationship changes over time. The design of the abandonment logic is
-therefore critical to the system's effectiveness. The following design
+Suspicious luggage detection is a spatio-temporal issue, requiring the system
+to recognise the spatial relationship between luggage and its owner, and to
+track how this relationship changes over time. The design of the abandonment
+logic is therefore critical to the system's effectiveness. The following design
 considerations are proposed:
 
 \begin{itemize}
@@ -234,7 +243,7 @@ the state transitions, and alert generation respectively.
 	      TensorRT-optimised model to perform object detection on each frame; populating
 	      the metadata with bounding boxes and class labels for detected objects (luggage, people).
 	\item \textbf{Tracker (\texttt{nvtracker}):} Maintains object identities across
-	      frames using the BoT-SORT algorithm with a ReID model for appearance-based association.
+	      frames using the DeepSORT algorithm with a ReID model for appearance-based association.
 	      Handling occlusions and disappearances to ensure consistent tracking of luggage
 	      and associated persons.
 	\item \textbf{Metadata Probe (Abandonment Logic):} A custom probe function that implements

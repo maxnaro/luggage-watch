@@ -121,8 +121,25 @@ of the original ABODA repository.
 }
 \end{lstlisting}
 
+\subsection{Project Repositories}
+
+The repositories for the project can be found at the following links:
+\begin{itemize}
+	\item \textbf{Primary repository:} \url{https://github.com/maxnaro/luggage-watch}
+	\item \textbf{Inference repository:} \url{https://github.com/maxnaro/luggage-watch-inference}
+	\item \textbf{Training repository:} \url{https://github.com/maxnaro/luggage-watch-training}
+	\item \textbf{ABODA fork:} \url{https://github.com/maxnaro/ABODA}
+\end{itemize}
+
 \subsection{Per-Video Evaluation Results}
 \label{sec:per_video_results}
+
+Summaries for each dataset are provided in the main body of the report. Below
+are the detailed per-video results for each dataset, including frame error,
+IoU, extra false positives, and notes on the detection outcome. These are
+presented in tables~\ref{tab:eval_aboda}, \ref{tab:eval_iitp20_easy},
+\ref{tab:eval_iitp20_medium}, and \ref{tab:eval_iitp20_hard} for the ABODA and
+IITP20 datasets respectively.
 
 \begin{table*}[!htb]
 	\centering
@@ -302,5 +319,71 @@ of the original ABODA repository.
 	\end{tabularx}
 	\caption{Per-video pipeline results on IITP20 hard cases.}
 	\label{tab:eval_iitp20_hard}
+\end{table*}
+
+\subsection{Requirements Traceability Matrix}
+
+A matrix mapping the project requirements to their corresponding sections in the
+report, along with a status of whether each requirement was met, is shown in
+Table~\ref{tab:traceability}.
+
+\begin{table*}[!htb]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Requirement}         & \textbf{Addressed In}                                                                            & \textbf{Status}                                            \\
+		\midrule
+		Source Selection             & \ref{sec:dataset_procurement}: Dataset Procurement                                               & Met (COCO, OID, ABODA, IITP20, AVSS)                       \\
+		\addlinespace
+		Annotation Requirements      & \ref{sec:dataset_procurement}: Dataset Procurement                                               & Met (bounding box annotations from all sources)            \\
+		\addlinespace
+		Data Diversity               & \ref{sec:dataset_procurement}: Dataset Procurement                                               & Partially met (CCTV-native gap remains)                    \\
+		\addlinespace
+		Dataset Splitting            & \ref{sec:model_training_optimisation}: Model Training                                            & Met (train/val/test splits)                                \\
+		\addlinespace
+		Scenario Coverage            & \ref{sec:suspicious_luggage_dataset}: Suspicious Luggage Dataset                                 & Met (ABODA + IITP20 + AVSS)                                \\
+		\addlinespace
+		Environmental Diversity      & \ref{sec:suspicious_luggage_dataset}: Suspicious Luggage Dataset                                 & Met (indoor/outdoor, lighting, crowd density)              \\
+		\addlinespace
+		Number of Examples           & \ref{sec:suspicious_luggage_dataset}: Suspicious Luggage Dataset                                 & Met (67 videos across 3 datasets)                          \\
+		\addlinespace
+		Architecture Choice          & \ref{sec:training_process}: Training Process                                                     & Met (YOLO11 baseline, YOLO26s selected)                    \\
+		\addlinespace
+		Model Size                   & \ref{sec:training_process}: Training Process                                                     & Met (small variant selected)                               \\
+		\addlinespace
+		Transfer Learning Strategy   & \ref{sec:training_process}: Training Process                                                     & Met (two-phase: COCO/OID base, ABODA fine-tune)            \\
+		\addlinespace
+		Performance Metrics          & \ref{sec:object_detection_and_tracking_performance}: Object Detection Perf.                      & Partially met (mAP reported; FPS not measured)             \\
+		\addlinespace
+		Tracker Selection            & \ref{sec:tracker_selection}: Determining Optimal Tracking Algorithm                              & Met (NvDeepSORT with ResNet50 ReID)                        \\
+		\addlinespace
+		Integration with Detection   & \ref{sec:deepstream_pipeline_configuration}: DeepStream Pipeline Configuration                   & Met (nvtracker element in GStreamer pipeline)              \\
+		\addlinespace
+		Robustness Requirements      & \ref{sec:failure_modes_and_mitigation_strategies}: Failure Modes                                 & Partially met (mitigations in place; ID switching remains) \\
+		\addlinespace
+		Performance on Edge          & \ref{sec:hardware_utilisation}: Hardware Utilisation                                             & Met (real-time sustained, no thermal throttling)           \\
+		\addlinespace
+		Ownership Association        & \ref{sec:ownership_assignment}: Ownership Assignment                                             & Met (multi-tier proximity with confirmation)               \\
+		\addlinespace
+		Thresholds                   & \ref{sec:state_transition_invariants}: State Transition Invariants                               & Met (configurable via environment variables)               \\
+		\addlinespace
+		State Machine Design         & \ref{sec:state_machine_logic}: State Machine / \ref{sec:state_transition_invariants}: Invariants & Met (three-state with hysteresis)                          \\
+		\addlinespace
+		Alert Generation             & \ref{sec:alert_generation}: Alert Generation                                                     & Partially met (OSD alerts; no external webhooks)           \\
+		\addlinespace
+		Hardware Characterisation    & \ref{sec:hardware_utilisation}: Hardware Utilisation                                             & Met (GPU/CPU/RAM/thermal profiled)                         \\
+		\addlinespace
+		Model Optimisation           & \ref{sec:model_export}: Model Export                                                             & Met (FP16 TensorRT via ONNX)                               \\
+		\addlinespace
+		Memory Management            & \ref{sec:hardware_utilisation}: Hardware Utilisation                                             & Met (70--73\% RAM average)                                 \\
+		\addlinespace
+		Power Efficiency             & \ref{sec:hardware_utilisation}: Hardware Utilisation                                             & Met (no throttling over 93 min cumulative)                 \\
+		\addlinespace
+		Software Framework Selection & \ref{sec:deployment_setup_and_configuration}: Deployment Setup                                   & Met (DeepStream SDK + PyTorch/ONNX/TensorRT)               \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Requirements traceability matrix mapping each requirement to its implementation and evaluation.}
+	\label{tab:traceability}
 \end{table*}
 

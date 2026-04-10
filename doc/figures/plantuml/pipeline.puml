@@ -10,7 +10,7 @@ package "Input Stage" {
 
 package "Deep Learning Stage" {
     [Primary Inference\n(nvinfer)\nYOLO11/26 TensorRT] as PGIE
-    [Object Tracker\n(nvtracker)\n NvDCF] as Tracker
+    [Object Tracker\n(nvtracker)\n NvDeepSORT] as Tracker
 }
 
 package "Abandonment Logic" {

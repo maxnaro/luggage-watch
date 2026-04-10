@@ -14,21 +14,21 @@ A robust dataset is fundamental to training and validating an effective object
 detection model. The requirements in this area include:
 
 \begin{itemize}
-	\item \textbf{Source Selection:} Identifying suitable publicly available
+	\item \textbf{Source Selection:}\label{req:source_selection} Identifying suitable publicly available
 	      datasets or sourcing custom surveillance footage that reflects
 	      real-world deployment scenarios. As discussed in
 	      section~\ref{sec:evaluation_metrics_for_object_detection}, existing
 	      abandoned object detection datasets (ABODA, I-LIDS, PETS) are limited
 	      in availability and recency.
-	\item \textbf{Annotation Requirements:} Ensuring that training data includes
+	\item \textbf{Annotation Requirements:}\label{req:annotation} Ensuring that training data includes
 	      precise bounding box annotations for objects of interest (luggage,
 	      people) and contextual information (ownership associations, temporal
 	      sequences).
-	\item \textbf{Data Diversity:} The dataset must encompass various
+	\item \textbf{Data Diversity:}\label{req:data_diversity} The dataset must encompass various
 	      environmental conditions, camera angles, lighting scenarios, and
 	      crowding levels to ensure the model generalises to real deployment
 	      environments.
-	\item \textbf{Dataset Splitting:} Appropriate partitioning into training,
+	\item \textbf{Dataset Splitting:}\label{req:dataset_splitting} Appropriate partitioning into training,
 	      validation, and test sets to enable unbiased model evaluation and
 	      prevent overfitting.
 \end{itemize}
@@ -37,14 +37,14 @@ In addition, a dataset specifically for testing the end-to-end pipeline with
 realistic scenarios of suspicious luggage is required.
 
 \begin{itemize}
-	\item \textbf{Scenario Coverage:} The dataset should include a variety of
+	\item \textbf{Scenario Coverage:}\label{req:scenario_coverage} The dataset should include a variety of
 	      scenarios relevant to the target application, such as luggage being
 	      left unattended, moved by individuals, or in close proximity to
 	      people.
-	\item \textbf{Environmental Diversity:} The dataset should encompass
+	\item \textbf{Environmental Diversity:}\label{req:env_diversity} The dataset should encompass
 	      different environments (indoor, outdoor), lighting conditions (daytime,
 	      nighttime), and crowd densities to ensure the robustness of the system.
-	\item \textbf{Number of Examples:} A sufficient number of examples for each scenario should
+	\item \textbf{Number of Examples:}\label{req:num_examples} A sufficient number of examples for each scenario should
 	      be included to allow for a comprehensive evaluation of the system's
 	      performance.
 \end{itemize}
@@ -56,19 +56,19 @@ the YOLO family, are the most suitable candidates for real-time edge
 deployment. Model selection must consider:
 
 \begin{itemize}
-	\item \textbf{Architecture Choice:} Evaluating YOLO variants (YOLOv8,
-	      YOLO11) to determine which offers the optimal balance between
+	\item \textbf{Architecture Choice:}\label{req:arch_choice} Evaluating YOLO variants (YOLO11,
+	      YOLO26) to determine which offers the optimal balance between
 	      accuracy and inference speed on the target hardware (NVIDIA Jetson
 	      Orin Nano).
-	\item \textbf{Model Size:} Selecting an appropriate model variant (nano,
+	\item \textbf{Model Size:}\label{req:model_size} Selecting an appropriate model variant (nano,
 	      small, medium) that fits within the computational and memory
 	      constraints of the embedded device whilst maintaining sufficient
 	      detection accuracy for small objects in surveillance footage.
-	\item \textbf{Transfer Learning Strategy:} Leveraging pre-trained weights
+	\item \textbf{Transfer Learning Strategy:}\label{req:transfer_learning} Leveraging pre-trained weights
 	      from large-scale datasets (COCO) as a starting point, then fine-tuning
 	      on domain-specific luggage detection data to improve performance in
 	      the target application.
-	\item \textbf{Performance Metrics:} Establishing baseline performance
+	\item \textbf{Performance Metrics:}\label{req:perf_metrics} Establishing baseline performance
 	      expectations in terms of mAP, inference latency, and frames-per-second
 	      (FPS) on the embedded device.
 \end{itemize}
@@ -79,19 +79,20 @@ Maintaining consistent object identities across video frames is essential for
 associating luggage with owners and detecting abandonment. This requires:
 
 \begin{itemize}
-	\item \textbf{Tracker Selection:} Choosing a real-time, lightweight tracking
-	      algorithm such as SORT, DeepSORT, or ByteTrack that can efficiently
-	      associate detections across frames with minimal computational
-	      overhead.
-	\item \textbf{Integration with Detection:} Designing the pipeline to
+	\item \textbf{Tracker Selection:}\label{req:tracker_selection} Choosing a real-time, lightweight tracking
+	      algorithm such as SORT, DeepSORT, ByteTrack, or BoT-SORT that can
+	      efficiently associate detections across frames with minimal
+	      computational overhead.
+	\item \textbf{Integration with Detection:}\label{req:tracker_integration} Designing the pipeline to
 	      seamlessly integrate the detector and tracker, ensuring that
 	      detection outputs are passed to the tracker for identity maintenance.
-	\item \textbf{Robustness Requirements:} The tracker must handle common
+	\item \textbf{Robustness Requirements:}\label{req:tracker_robustness} The tracker must handle common
 	      surveillance challenges including temporary occlusions, identity
 	      switches, and brief object disappearances.
-	\item \textbf{Performance on Edge:} Ensuring the combined detection and
-	      tracking pipeline meets real-time requirements (target: $\geq$ 15 FPS)
-	      on the embedded hardware.
+	\item \textbf{Performance on Edge:}\label{req:edge_performance} Ensuring the combined detection and
+	      tracking pipeline meets real-time processing requirements on the
+	      embedded hardware without thermal throttling during sustained
+	      operation.
 \end{itemize}
 
 \subsubsection{Defining and Detecting Suspicious Luggage}
@@ -100,17 +101,17 @@ As discussed in the introduction, luggage becomes \enquote{suspicious} only in
 a temporal context. Operationalising this definition requires:
 
 \begin{itemize}
-	\item \textbf{Ownership Association:} Developing logic to associate detected
+	\item \textbf{Ownership Association:}\label{req:ownership} Developing logic to associate detected
 	      luggage with nearby persons, establishing ownership relationships that
 	      persist across frames.
-	\item \textbf{Thresholds:} Defining configurable parameters such as
+	\item \textbf{Thresholds:}\label{req:thresholds} Defining configurable parameters such as
 	      the maximum distance (radius) between an owner and their luggage, and
 	      the minimum duration of separation before luggage is flagged as
 	      abandoned.
-	\item \textbf{State Machine Design:} Implementing a state machine that
-	      tracks luggage states (owned, unattended, abandoned) and transitions
+	\item \textbf{State Machine Design:}\label{req:state_machine} Implementing a state machine that
+	      tracks luggage states (attended, unattended, abandoned) and transitions
 	      based on spatial and temporal conditions.
-	\item \textbf{Alert Generation:} Specifying the criteria and format of
+	\item \textbf{Alert Generation:}\label{req:alert_gen} Specifying the criteria and format of
 	      alerts when suspicious luggage is detected, ensuring operators receive
 	      actionable information.
 \end{itemize}
@@ -121,21 +122,28 @@ Deploying the complete system on the NVIDIA Jetson Orin Nano requires
 addressing hardware-specific constraints:
 
 \begin{itemize}
-	\item \textbf{Hardware Characterisation:} Profiling the Jetson Orin Nano to
+	\item \textbf{Hardware Characterisation:}\label{req:hw_char} Profiling the Jetson Orin Nano to
 	      understand its computational capabilities, memory constraints, and
 	      thermal characteristics.
-	\item \textbf{Model Optimisation:} Applying techniques such as TensorRT
-	      quantisation (FP16 and INT8), layer fusion, and kernel auto-tuning to
-	      maximise inference speed whilst preserving accuracy.
-	\item \textbf{Memory Management:} Ensuring the complete system (detector,
+	\item \textbf{Model Optimisation:}\label{req:model_opt} Applying techniques such as TensorRT
+	      quantisation (FP16) and kernel auto-tuning to maximise inference speed
+	      whilst preserving accuracy.
+	\item \textbf{Memory Management:}\label{req:memory} Ensuring the complete system (detector,
 	      tracker, abandonment logic) operates within the device's LPDDR5 memory
-	      constraints (\textasciitilde 8 GB).
-	\item \textbf{Power Efficiency:} Optimising for sustained operation under
+	      constraints (8 GB).
+	\item \textbf{Power Efficiency:}\label{req:power} Optimising for sustained operation under
 	      typical power budgets, avoiding thermal throttling and performance
 	      degradation during extended operation.
-	\item \textbf{Software Framework Selection:} Selecting appropriate deep
-	      learning frameworks and deployment tools (TensorFlow, PyTorch with
-	      ONNX export, or TensorRT native APIs) that balance ease of development
+	\item \textbf{Software Framework Selection:}\label{req:framework} Selecting appropriate deep
+	      learning frameworks and deployment tools (PyTorch with ONNX export,
+	      TensorRT, and NVIDIA DeepStream SDK) that balance ease of development
 	      with runtime efficiency.
 \end{itemize}
+
+\subsection{Requirements Traceability}
+\label{sec:requirements_traceability}
+
+Table~\ref{tab:traceability} (appendix) maps each requirement to the section where it is
+addressed in the implementation and evaluation, providing traceability between
+the project's goals and their realisation.
 
