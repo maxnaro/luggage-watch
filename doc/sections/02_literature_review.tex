@@ -28,7 +28,7 @@ methods, deep learning-based methods, and state-of-the-art modern methods.
 	      traditional methods to rely on three parts, viewing the entire image at varying
 	      positions and scales to generate candidate regions, feature extraction from
 	      these regions, and finally classification. The review~\citep{pathak2023object}
-	      highlights the main issue of these method being their high requirements for
+	      highlights the main issue of these methods being their high requirements for
 	      computational power.
 
 	      In addition, decision tree classifiers (DTs), K-nearest neighbours (KNNs) and
@@ -60,7 +60,7 @@ methods, deep learning-based methods, and state-of-the-art modern methods.
 	      The latest advancements in object detection are represented by transformer-based
 	      approaches. The application of transformers, initially for natural language
 	      processing, then developing into vision transformers (ViTs), finally to detection
-	      transformers (DETRs), has introduced a new pardigm in object detection.
+	      transformers (DETRs), has introduced a new paradigm in object detection.
 
 	      Utilising self-attention mechanisms, mechanisms that take into account the
 	      \enquote{importance} of features relative to one another in an
@@ -187,13 +187,13 @@ datasets for abandoned object detection.
 		\addlinespace
 		Average Precision ($\mathrm{AP}$)                                                                                               & Area under the precision recall curve (plotted by evaluating the model at different confidence thresholds).   & Higher AP indicates better overall performance across all thresholds for a given class.                                                                                                \\
 		\addlinespace
-		Mean Average Precision ($\mathrm{mAP}$)                                                                                         & The mean of AP accross all classes.                                                                           & Higher mAP indicates better overall performance across all classes.                                                                                                                    \\
+		Mean Average Precision ($\mathrm{mAP}$)                                                                                         & The mean of AP across all classes.                                                                           & Higher mAP indicates better overall performance across all classes.                                                                                                                    \\
 		\addlinespace
 		$\mathrm{F1}$-Score                                                                                                             & The harmonic mean of precision and recall.                                                                    & Higher F1-score indicates a better balance between precision and recall. It is more useful when there is an uneven class distribution.                                                 \\
 		\addlinespace
 		Matthews Correlation Coefficient ($\mathrm{MCC}$)                                                                               & A measure of classification quality, a numerical representation of a confusion matrix.                        & 1 indicating perfect prediction, 0 indicating random prediction, and -1 indicating total disagreement between prediction and observation. Particularly useful for imbalanced datasets. \\
 		\addlinespace
-		Cohen's Kappa ($\kappa$)                                                                                                        & A measure of accuracy that takes into account the probability of a random agreement.                          & 1 indication perfect agreement, 0 equivalent to chance, and -1 indicating complete disagreement. It has the same use-cases as $\mathrm{MCC}$.                                          \\
+		Cohen's Kappa ($\kappa$)                                                                                                        & A measure of accuracy that takes into account the probability of a random agreement.                          & 1 indicating perfect agreement, 0 equivalent to chance, and -1 indicating complete disagreement. It has the same use-cases as $\mathrm{MCC}$.                                          \\
 		\addlinespace
 		Expected Agreement by Chance ($P_e$)                                                                                            & The probability of random agreement between predicted and actual classes.                                     & Used in calculating Cohen's Kappa ($\kappa$).                                                                                                                                          \\
 		\addlinespace
@@ -322,7 +322,7 @@ grid cell, whilst $w$ and $h$ represent the width and height relative to the
 entire image \citep{redmon2016lookonceunifiedrealtime}. Typically, bounding
 boxes are represented by the top-left and bottom-right corners. The resulting
 product of bounding boxes, confidences, and the class probability map,
-generated as a aggregate of $C$ predictions of conditional class probabilities
+generated as an aggregate of $C$ predictions of conditional class probabilities
 per cell: $$\textrm{Pr}(\textrm{Class}_i | \textrm{Object}),$$ is a $S \times S
 	\times (B \cdot 5 + C)$ tensor.
 
@@ -487,7 +487,7 @@ made this increasingly feasible.
 
 The study by \citet{zhu2022performance} provides an analysis of the NVIDIA
 Jetson Nano for object inference tasks, in which it proved to be a capable
-device for real time object detection using YOLOv3 and PPYOLO models. Both
+device for real-time object detection using YOLOv3 and PPYOLO models. Both
 \citet{zhu2022performance} and \citet{adewumi2025assessing} cite the relevance
 of TensorRT optimisations in achieving faster and more accurate inference on
 these devices, with \citeauthor{adewumi2025assessing} noting that FP16

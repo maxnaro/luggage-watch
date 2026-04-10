@@ -165,8 +165,8 @@ into its own submodule for version control which can be found at
 
 Once the training dataset was procured and prepared, the next step was to train
 the model and optimise its performance. The training environment involved a
-containerised setup using Docker, with leveraging NVIDIA's GPU support for
-accelerated training. Training, being separate to deployment, allowed for a
+containerised setup using Docker, leveraging NVIDIA's GPU support for
+accelerated training. Training, being separate from deployment, allowed for a
 more flexible and powerful environment, enabling the use of the greater
 computational resources of a desktop GPU and system as a whole. The hardware of
 the training system can be found in the appendix (\ref{sec:training_hardware}).
@@ -377,7 +377,7 @@ series of GStreamer elements, responsible for the different stages of video
 processing, object detection, tracking and abandonment logic. These elements
 were configured and linked together to form a cohesive pipeline that processes
 video input, performs inference using the trained model, and outputs the
-results in realtime. The configuration was defined programmatically in the
+results in real time. The configuration was defined programmatically in the
 Python application in listing~\ref{lst:pipeline} and is represented in
 figure~\ref{fig:pipeline}.
 
@@ -392,8 +392,7 @@ determined by a custom configuration file, which specifies parameters such as
 the model path, input resolution, confidence threshold, and class count. These
 parameters can have a significant impact on the performance of the model and
 the overall system, and were tuned based on the results of the developing and
-testing process. The configuration file can be found in the appendix
-~\ref{lst:primary_config}, with the reasonings for the key parameters being:
+testing process. The configuration file can be found in the appendix~\ref{lst:primary_config}, with the reasons for the key parameters being:
 
 \begin{itemize}
 	\item \textbf{Inference Interval and Real-time Tradeoff:} The
@@ -465,7 +464,7 @@ of the system required a robust tracking solution. Environmental factors such
 as occlusion and crowd density whilst using a less rigorous tracking algorithm
 led to frequent ID flips and ownership misattribution, which in turn led to
 incorrect abandonment detections. The requirements for ownership and ID
-consistency across frames, made \texttt{NvDeepSORT} the most suitable choice,
+consistency across frames made \texttt{NvDeepSORT} the most suitable choice,
 as its use of a deep association metric and Re-ID model provided improved
 robustness to occlusion and appearance changes, which are common in
 surveillance scenarios.

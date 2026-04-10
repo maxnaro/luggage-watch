@@ -7,7 +7,7 @@ designed around a YOLO11 object detection model, fine-tuned for the task of
 luggage and people detection in surveillance footage. This model has
 demonstrated strong performance on small object detection in the work by
 \citet{abandoned2025vrsalovic}, making it a suitable choice for the target
-application. Ease of optimisation for edge deployment on NVIDIA hardware, is
+application. Ease of optimisation for edge deployment on NVIDIA hardware is
 also a critical factor in this choice with YOLO models being widely supported
 by TensorRT optimisations (See~\ref{sec:tensorrt_optimisations}).
 
@@ -17,7 +17,7 @@ YOLO26 is a much more recent model, potential for improved accuracy and
 efficiency is expected, but the lack of evaluations in literature may make it a
 less certain choice for the final system. Evaluating both models will provide
 valuable insight into their performance when compared on the test datasets, and
-their suitability for edge deployment. Ultralytics' themselves claim that
+their suitability for edge deployment. Ultralytics themselves claim that
 YOLO26 is a leap forward compared to older models as seen in their own
 benchmarks (figure~\ref{fig:ultralytics_benchmarks}), but these claims will be
 independently verified in the context of this project.
@@ -71,7 +71,7 @@ additional complexity may require custom integration.
 
 \subsection{Determining Suspicious Luggage: Spatial and Temporal Logic}
 
-Suspicious luggage detection is spatio-temporal issue, requiring the system to
+Suspicious luggage detection is a spatio-temporal issue, requiring the system to
 recognise the spatial relationship between luggage and its owner, and to track
 how this relationship changes over time. The design of the abandonment logic is
 therefore critical to the system's effectiveness. The following design
@@ -134,7 +134,7 @@ which defines the outcome of entering and leaving each state.
 \subsubsection{Logic and Pseudo-code}
 \label{sec:logic_and_pseudocode}
 
-Ownership association is determined by euclidean distance of the luggage to
+Ownership association is determined by Euclidean distance of the luggage to
 nearby persons. The following pseudo-code
 algorithms~\ref{alg:association},~\ref{alg:state_transitions},
 and~\ref{alg:alert_generation} illustrate the logic for determining ownership,
