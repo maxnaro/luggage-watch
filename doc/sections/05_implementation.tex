@@ -187,6 +187,45 @@ training script was used in conjunction with a custom configuration file
 specifying the parameters of the training process as seen in
 listing~\ref{lst:config}.
 
+\subsubsection{Model Architecture Selection}
+\label{sec:model_architecture_selection}
+
+As outlined in the system design (section~\ref{sec:model_choice}),
+both YOLO11 and YOLO26 were candidates for the final detector. During
+development, both architectures were trained and informally evaluated across
+multiple iterations using the same dataset and training pipeline.
+
+Early iterations used YOLO11 variants (\texttt{yolo11l.pt} and
+\texttt{yolo11s.pt}) as the base model for transfer learning. These runs
+established the initial baseline and training methodology. When YOLO26 became
+available, equivalent runs were conducted using \texttt{yolo26s.pt} under the
+same training configuration to allow a like-for-like comparison.
+
+No formal comparative benchmark was conducted between the two architectures ---
+the evaluation focus was directed towards the end-to-end pipeline rather than
+isolated model comparisons. However, anecdotal observations during development
+informed the final selection:
+
+\begin{itemize}
+	\item YOLO26s produced marginally higher validation metrics (mAP, precision,
+	      recall) than YOLO11s under equivalent training configurations, consistent
+	      with Ultralytics' own benchmarks (figure~\ref{fig:ultralytics_benchmarks}).
+	\item Inference latency on the Jetson Orin Nano was comparable between the two
+	      architectures at the small model size, with neither presenting a
+	      bottleneck for real-time processing.
+	\item YOLO26's export pipeline required no additional effort over YOLO11, as
+	      the DeepStream-Yolo integration \citep{luciano2026deepstreamyolo}
+	      supported both architectures.
+\end{itemize}
+
+Given the marginal accuracy improvements at no observed cost to latency or
+compatibility, \texttt{yolo26s} was selected as the final architecture. The
+small variant was chosen over nano and medium based on its balance of detection
+accuracy and inference speed on the target hardware --- the nano variant
+exhibited noticeably lower recall on small luggage items, while the medium
+variant offered diminishing returns in accuracy relative to its increased
+computational cost.
+
 \subsubsection{Training Process and Iterative Optimisation}
 \label{sec:training_process}
 
