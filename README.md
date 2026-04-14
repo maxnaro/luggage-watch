@@ -40,6 +40,14 @@ any row header to watch the full clip.
 | [**AVSS 2007**](https://github.com/user-attachments/assets/a5be3db0-9406-424f-9150-44c7253e067d) | ![](./doc/figures/avss/attended.jpg)   | ![](./doc/figures/avss/unattended.jpg)   | ![](./doc/figures/avss/abandoned.jpg)   |
 | [**IITP20**](./doc/videos/IITP20_example.mp4)                                                    | ![](./doc/figures/iitp20/attended.jpg) | ![](./doc/figures/iitp20/unattended.jpg) | ![](./doc/figures/iitp20/abandoned.jpg) |
 
+### GitHub Video Embeddings
+
+[![ABODA Example](./doc/figures/aboda/attended.jpg)](https://github.com/user-attachments/assets/7787a3e2-3f0c-40a3-b475-4085c115394c)
+
+[![AVSS 2007 Example](./doc/figures/avss/attended.jpg)](https://github.com/user-attachments/assets/a5be3db0-9406-424f-9150-44c7253e067d)
+
+*The IITP20 example is too long to embed in the README as an attachment, but is still available as a [downloadable `.mp4`](./doc/videos/IITP20_example.mp4).*
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
