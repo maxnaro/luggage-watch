@@ -28,11 +28,25 @@ This repository is organised into two submodules and a documentation directory:
 
 ## Examples
 
+The pipeline tracks each piece of luggage through three states — **attended**,
+**unattended**, and **abandoned** — based on its spatial and temporal
+relationship with a confirmed owner. The grid below shows the same sequence
+transitioning through each state across all three evaluation datasets. Click
+any row header to watch the full clip.
+
+|                                                                                                  | Attended                               | Unattended                               | Abandoned                               |
+| ------------------------------------------------------------------------------------------------ | -------------------------------------- | ---------------------------------------- | --------------------------------------- |
+| [**ABODA**](https://github.com/user-attachments/assets/7787a3e2-3f0c-40a3-b475-4085c115394c)     | ![](./doc/figures/aboda/attended.jpg)  | ![](./doc/figures/aboda/unattended.jpg)  | ![](./doc/figures/aboda/abandoned.jpg)  |
+| [**AVSS 2007**](https://github.com/user-attachments/assets/a5be3db0-9406-424f-9150-44c7253e067d) | ![](./doc/figures/avss/attended.jpg)   | ![](./doc/figures/avss/unattended.jpg)   | ![](./doc/figures/avss/abandoned.jpg)   |
+| [**IITP20**](./doc/videos/IITP20_example.mp4)                                                    | ![](./doc/figures/iitp20/attended.jpg) | ![](./doc/figures/iitp20/unattended.jpg) | ![](./doc/figures/iitp20/abandoned.jpg) |
+
+### GitHub Video Embeddings
+
 [![ABODA Example](./doc/figures/aboda/attended.jpg)](https://github.com/user-attachments/assets/7787a3e2-3f0c-40a3-b475-4085c115394c)
 
 [![AVSS 2007 Example](./doc/figures/avss/attended.jpg)](https://github.com/user-attachments/assets/a5be3db0-9406-424f-9150-44c7253e067d)
 
-[![IITP20 Example](./doc/figures/iitp20/attended.jpg)](./doc/videos/IITP20_example.mp4)
+*The IITP20 example is too long to embed in the README as an attachment, but is still available as a [downloadable `.mp4`](./doc/videos/IITP20_example.mp4).*
 
 ## License
 

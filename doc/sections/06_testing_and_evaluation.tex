@@ -1,6 +1,29 @@
 \section{Testing and Evaluation}
 \label{sec:testing_and_evaluation}
 
+Before examining the quantitative results, figure~\ref{fig:state_examples}
+shows qualitative examples of the pipeline output across the three evaluation
+datasets. Each row captures the same luggage item transitioning through the
+\texttt{Attended}, \texttt{Unattended}, and \texttt{Abandoned} states as its
+owner moves away and the abandonment timer elapses, illustrating the behaviour
+that the metrics in the following sections are measuring.
+
+\begin{figure*}[!htb]
+	\centering
+	\renewcommand{\arraystretch}{1.2}
+	\begin{tabularx}{\textwidth}{@{}l@{\hspace{4pt}}*{3}{>{\centering\arraybackslash}X}@{}}
+		                   & \textbf{Attended}                                               & \textbf{Unattended}                                               & \textbf{Abandoned}                                               \\
+		\textbf{ABODA}     & \includegraphics[width=\linewidth]{figures/aboda/attended.jpg}  & \includegraphics[width=\linewidth]{figures/aboda/unattended.jpg}  & \includegraphics[width=\linewidth]{figures/aboda/abandoned.jpg}  \\
+		\textbf{AVSS 2007} & \includegraphics[width=\linewidth]{figures/avss/attended.jpg}   & \includegraphics[width=\linewidth]{figures/avss/unattended.jpg}   & \includegraphics[width=\linewidth]{figures/avss/abandoned.jpg}   \\
+		\textbf{IITP20}    & \includegraphics[width=\linewidth]{figures/iitp20/attended.jpg} & \includegraphics[width=\linewidth]{figures/iitp20/unattended.jpg} & \includegraphics[width=\linewidth]{figures/iitp20/abandoned.jpg} \\
+	\end{tabularx}
+	\caption{Examples of the pipeline output across the three
+		evaluation datasets. Each row shows the same luggage item transitioning
+		through the \texttt{Attended}, \texttt{Unattended}, and \texttt{Abandoned}
+		states as its owner moves away and the abandonment timer elapses.}
+	\label{fig:state_examples}
+\end{figure*}
+
 \subsection{Object Detection and Tracking Performance}
 \label{sec:object_detection_and_tracking_performance}
 
