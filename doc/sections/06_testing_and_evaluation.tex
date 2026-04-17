@@ -287,13 +287,13 @@ training domain overlap (section~\ref{sec:training_process}). The majority of
 video examples exhibited no false alarms on the background, with the logic
 filtering noise well in the absence of any confounding factors.
 
-The main sources of error were: ``video2'' (figure~\ref{fig:aboda_video2}),
-which features a steep overhead angle, and ``video11''
+The main sources of error were: \texttt{video2} (figure~\ref{fig:aboda_video2}),
+which features a steep overhead angle, and \texttt{video11}
 (figure~\ref{fig:aboda_video11}), which features a crowded scene with a
-far-away camera angle. ``video11'' is the main outlier of the dataset with no
+far-away camera angle. \texttt{video11} is the main outlier of the dataset with no
 other examples matching its level of complexity, and demonstrated that the
 pipeline's logic is not robust enough to handle crowded scenes with significant
-occlusion and smaller detection sizes. ``video2'' saw the model struggle to
+occlusion and smaller detection sizes. \texttt{video2} saw the model struggle to
 detect the ownership consistently, with the tracking component losing the owner
 and misidentifying another person as the owner, which caused the abandonment
 event to be missed. This coupled with the abandonment event occurring late in
@@ -301,28 +301,28 @@ the video (figure~\ref{fig:aboda_video2_end}), which led to a much stricter
 temporal requirement for the detection, meant that the event was not detected.
 The two examples demonstrate the limitations of the pipeline's logic from a
 detection and tracking perspective, where logic is unable to compensate for the
-ReID model's lack of domain generalisation in the case of ``video2'', and the
+ReID model's lack of domain generalisation in the case of \texttt{video2}, and the
 inference model's performance limitations in crowded scenes in the case of
-``video11''.
+\texttt{video11}.
 
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/aboda/video11.jpg}
-	\caption{Example of a crowded scene (``video11'') from the ABODA dataset.}
+	\caption{Example of a crowded scene (\texttt{video11}) from the ABODA dataset.}
 	\label{fig:aboda_video11}
 \end{figure}
 
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/aboda/video2/initial.jpg}
-	\caption{Example of a steep overhead angle (``video2'') from the ABODA dataset. This frame shows the initial abandonment event.}
+	\caption{Example of a steep overhead angle (\texttt{video2}) from the ABODA dataset. This frame shows the initial abandonment event.}
 	\label{fig:aboda_video2}
 \end{figure}
 
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/aboda/video2/end.jpg}
-	\caption{Example of a steep overhead angle (``video2'') from the ABODA dataset. This frame shows the end of the video stream, ${\sim}17$ seconds after the initial abandonment event (figure~\ref{fig:aboda_video2}).}
+	\caption{Example of a steep overhead angle (\texttt{video2}) from the ABODA dataset. This frame shows the end of the video stream, ${\sim}17$ seconds after the initial abandonment event (figure~\ref{fig:aboda_video2}).}
 	\label{fig:aboda_video2_end}
 \end{figure}
 
@@ -340,7 +340,7 @@ $197.9$ frames ($\approx 6.6$ seconds) is higher than ideal, but this is
 influenced by the fact that some events were detected significantly later than
 the ground truth anchor, which may be due to the system's hysteresis.
 
-\paragraph{Event classification note (video7 and video8).}
+\paragraph{Event classification note (\texttt{video7} and \texttt{video8}).}
 The raw evaluator output classifies \texttt{event\_0} in \texttt{video7} and
 \texttt{video8} as outside the $\pm 360$-frame tolerance (observed frame
 errors of $905$ for both), which under the strict matching rule would yield
@@ -465,21 +465,21 @@ confounding factor for the pipeline's logic.
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00045_cluttered.jpg}
-	\caption{Hallway scene (``vid\_00045'') from the IITP20 dataset featuring a luggage shelving unit. Stored luggage is incorrectly assigned ownership when a person passes nearby, leading to false abandonment alerts.}
+	\caption{Hallway scene (\texttt{vid\_00045}) from the IITP20 dataset featuring a luggage shelving unit. Stored luggage is incorrectly assigned ownership when a person passes nearby, leading to false abandonment alerts.}
 	\label{fig:iitp20_vid_00045_cluttered}
 \end{figure}
 
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00043_cluttered.jpg}
-	\caption{Hallway scene (``vid\_00043'') from the IITP20 dataset featuring a luggage shelving unit. Stored luggage remains ownerless for the beginning of the video, allowing the logic of the system to hold.}
+	\caption{Hallway scene (\texttt{vid\_00043}) from the IITP20 dataset featuring a luggage shelving unit. Stored luggage remains ownerless for the beginning of the video, allowing the logic of the system to hold.}
 	\label{fig:iitp20_vid_00043_cluttered}
 \end{figure}
 
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00056_non-cluttered.jpg}
-	\caption{Hallway scene (``vid\_00056'') from the IITP20 dataset featuring an empty luggage shelving unit.}
+	\caption{Hallway scene (\texttt{vid\_00056}) from the IITP20 dataset featuring an empty luggage shelving unit.}
 	\label{fig:iitp20_vid_00056_non-cluttered}
 \end{figure}
 
@@ -518,7 +518,7 @@ rate out of any subset, with $40$ false positives across $19$ videos, leading
 to a precision of only $0.184$. The presence of cluttered shelving units is
 again a significant confounding factor, with many false positives triggered by
 the logic misassigning ownership of stored luggage to passing pedestrians, most
-predominantly in ``vid\_00002'', which generated 6 false alarms on a negative
+predominantly in \texttt{vid\_00002}, which generated 6 false alarms on a negative
 sample.
 
 The recall of $0.474$ is consistent with the ``easy'' subset, indicating that
@@ -526,10 +526,10 @@ the system's ability to detect genuine abandonment events is not significantly
 impacted by the increased complexity, but the precision degradation indicates
 that the system's logic is not robust enough to handle the increased noise and
 clutter in the environment. Buried within the false positives are some genuine
-strong detections such as in ``vid\_00048'' where the TP has an IoU of $0.919$
+strong detections such as in \texttt{vid\_00048} where the TP has an IoU of $0.919$
 but $4$ false alarms alongside it.
 
-A concern is found in ``vid\_00052''
+A concern is found in \texttt{vid\_00052}
 (figure~\ref{fig:iitp20_vid_00052_zero_iou}) where an event is detected at the
 correct time, but with an IoU of $0.000$, indicating that either the
 localisation is completely wrong, or the event is being triggered by a
@@ -538,7 +538,7 @@ different bag in the scene.
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00052_zero_iou.jpg}
-	\caption{Hallway scene (``vid\_00052'') from the IITP20 dataset featuring multiple luggage items where abandonment could be conflated.}
+	\caption{Hallway scene (\texttt{vid\_00052}) from the IITP20 dataset featuring multiple luggage items where abandonment could be conflated.}
 	\label{fig:iitp20_vid_00052_zero_iou}
 \end{figure}
 
@@ -587,7 +587,7 @@ people in the scene where, with moderate to heavy occlusion, the detection and
 tracking modules struggle to maintain consistent ownership assignment by way of
 conjoined bounding boxes and ID switching, which leads to both false positives
 and false negatives. This is consistent with the ABODA evaluation results,
-where the crowded scene of ``video11'' was the main source of error. This
+where the crowded scene of \texttt{video11} was the main source of error. This
 factor caused $5$ videos to be missed entirely (i.e., all events in the video
 were missed) where luggage was detected as attended when its true owner had
 left the scene (figure~\ref{fig:iitp20_vid_00058_occlusion}).
@@ -595,23 +595,23 @@ left the scene (figure~\ref{fig:iitp20_vid_00058_occlusion}).
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00058_occlusion.jpg}
-	\caption{Hallway scene (``vid\_00058'') from the IITP20 dataset featuring multiple people and luggage items, and occlusion. The system fails to maintain consistent ownership assignment due to ID switching, leading to missed detections.}
+	\caption{Hallway scene (\texttt{vid\_00058}) from the IITP20 dataset featuring multiple people and luggage items, and occlusion. The system fails to maintain consistent ownership assignment due to ID switching, leading to missed detections.}
 	\label{fig:iitp20_vid_00058_occlusion}
 \end{figure}
 
 Similarly to the ``medium'' subset, an event was detected at the correct time
-but with an IoU of $0.000$ in ``vid\_00069''
+but with an IoU of $0.000$ in \texttt{vid\_00069}
 (figure~\ref{fig:iitp20_vid_00069_zero_iou}), which again indicates that the
 event is being triggered by a different bag in the scene, or that the
 localisation is completely wrong. This is likely due to the same ID switching
-issue as ``vid\_00052'' in the ``medium'' subset, where the tracker loses the
+issue as \texttt{vid\_00052} in the ``medium'' subset, where the tracker loses the
 owner and assigns a new ID to them, which causes the abandonment event to be
 triggered by a different bag that has been misassigned ownership.
 
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00069_zero_iou.jpg}
-	\caption{Hallway scene (``vid\_00069'') from the IITP20 dataset featuring multiple luggage items where abandonment could be conflated.}
+	\caption{Hallway scene (\texttt{vid\_00069}) from the IITP20 dataset featuring multiple luggage items where abandonment could be conflated.}
 	\label{fig:iitp20_vid_00069_zero_iou}
 \end{figure}
 
@@ -666,9 +666,9 @@ $10$ ($42\%$) are complete misses --- the remaining $14$ fall into late
 detections ($9$) or second-event misses in multi-event sequences ($5$). The
 complete-miss subset is dominated by two causes: ownership never confirmed (the
 owner was not within \texttt{radius\_px} of the luggage at placement, e.g.,
-IITP20 vid\_00029, vid\_00054) and tracker loss of the owner ID before the
-abandonment timer elapsed (e.g., ABODA video2, where a second pedestrian was
-spuriously assigned ownership). Late detections cluster in IITP20 hard cases
+IITP20 \texttt{vid\_00029}, \texttt{vid\_00054}) and tracker loss of the owner
+ID before the abandonment timer elapsed (e.g., ABODA \texttt{video2}, where a
+second pedestrian was spuriously assigned ownership). Late detections cluster in IITP20 hard cases
 where occlusion repeatedly resets the abandonment hysteresis; the system
 eventually recovers but past the tolerance window. The multi-event miss cluster
 indicates that the current state machine does not reliably return to the
@@ -694,13 +694,13 @@ Three recurring higher-level failure modes emerged:
 	      tracker reassigns object IDs, causing ownership to transfer to the wrong
 	      person or object. This manifests as zero-IoU true positives, events
 	      detected at the correct time but attributed to the wrong tracked object,
-	      observed across IITP20 medium (``vid\_00052'') and hard
-	      (``vid\_00025'', ``vid\_00067'', ``vid\_00069'') subsets. This is a
+	      observed across IITP20 medium (\texttt{vid\_00052}) and hard
+	      (\texttt{vid\_00025}, \texttt{vid\_00067}, \texttt{vid\_00069}) subsets. This is a
 	      tracker limitation rather than a detection failure.
 	\item \textbf{Multi-event re-triggering.} In videos containing multiple
 	      abandonment events, the pipeline reliably detects the first event but
 	      struggles to reset and re-trigger for subsequent events. This was
-	      observed in ABODA (videos 7, 8, 10) and across IITP20 multi-event
+	      observed in ABODA (\texttt{video7}, \texttt{video8}, \texttt{video10}) and across IITP20 multi-event
 	      sequences.
 \end{enumerate}
 
