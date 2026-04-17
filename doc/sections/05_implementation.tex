@@ -79,19 +79,19 @@ The resulting dataset used for the final training runs contained $36{,}130$
 person instances and $27{,}258$ luggage instances, yielding an effective ratio
 of approximately $1.33{:}1$.
 
-\begin{figure*}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/dataset_class_distribution_before.jpg}
+	\includegraphics[width=0.6\textwidth]{figures/dataset_class_distribution_before.jpg}
 	\caption{Class distribution of the dataset before aggregation, balancing and oversampling techniques were applied.}
 	\label{fig:dataset_class_distribution_before}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/dataset_class_distribution_after.jpg}
+	\includegraphics[width=0.6\textwidth]{figures/dataset_class_distribution_after.jpg}
 	\caption{Class distribution of the dataset after aggregation, balancing and filtering techniques were applied.}
 	\label{fig:dataset_class_distribution_after}
-\end{figure*}
+\end{figure}
 
 \paragraph{Limitations.}
 
@@ -296,7 +296,7 @@ precision~$=0.8770$, and recall~$=0.8523$.
 Table~\ref{tab:training_run_comparison} summarises the principal differences
 between the early baseline, Phase~1, and Phase~2 configurations.
 
-\begin{table*}[!p]
+\begin{table}[!htbp]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -322,7 +322,7 @@ between the early baseline, Phase~1, and Phase~2 configurations.
 	\end{tabularx}
 	\caption{Comparison of the early baseline, Phase~1 (base), and Phase~2 (fine-tune) training configurations.}
 	\label{tab:training_run_comparison}
-\end{table*}
+\end{table}
 
 \paragraph{Training results.}
 
@@ -602,7 +602,7 @@ ownership with confirmation and reassignment
 with abandonment guards (section~\ref{sec:state_transition_invariants}), and a
 richer attendance signal incorporating grace periods and consistency checking.
 
-\begin{figure*}[!htb]
+\begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.8\textwidth]{figures/plantuml/state_machine_impl.png}
 	\caption{Updated state machine reflecting the implemented transition logic.
@@ -612,7 +612,7 @@ richer attendance signal incorporating grace periods and consistency checking.
 		and the \texttt{Abandoned} transition is gated by owner-history and
 		context-age guards.}
 	\label{fig:state_machine_impl}
-\end{figure*}
+\end{figure}
 
 \subsubsection{Processing Tracking Outputs}
 
@@ -636,12 +636,12 @@ which, given a \texttt{LuggageContext} object, determines whether the luggage
 item meets the criteria for transitioning states. This object-oriented approach
 can be seen in the class diagram in figure~\ref{fig:states_class_diagram}.
 
-\begin{figure*}[!p]
+\begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{figures/plantuml/states_class_diagram.png}
 	\caption{Class diagram representing the object-oriented implementation of the luggage state machine.}
 	\label{fig:states_class_diagram}
-\end{figure*}
+\end{figure}
 
 The \texttt{LuggageContext} dataclass functions as a per-object memory that
 bridges frame-wise tracker outputs and state-based abandonment logic. For each
@@ -837,7 +837,7 @@ The full per-frame ownership evaluation, incorporating the refinements
 described above, is summarised in
 algorithm~\ref{alg:ownership_evaluation_impl}.
 
-\begin{algorithm*}[!htb]
+\begin{algorithm}[!htbp]
 	\caption{Per-frame ownership evaluation (implementation, replacing~\ref{alg:association}).}
 	\label{alg:ownership_evaluation_impl}
 	\begin{algorithmic}[1]
@@ -879,7 +879,7 @@ algorithm~\ref{alg:ownership_evaluation_impl}.
 		\EndIf
 		\State \Return $t - l.missing\_since \leq G_{\text{grace}}$ \Comment{Grace period}
 	\end{algorithmic}
-\end{algorithm*}
+\end{algorithm}
 
 \paragraph{Limitations.}
 
