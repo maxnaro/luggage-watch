@@ -3,14 +3,16 @@
 \subsection{Model Choice}
 \label{sec:model_choice}
 
-Based on the requirements analysis and literature review, the system will be
-designed around a YOLO11 object detection model, fine-tuned for the task of
-luggage and people detection in surveillance footage. This model has
-demonstrated strong performance on small object detection in the work by
-\citet{abandoned2025vrsalovic}, making it a suitable choice for the target
-application. Ease of optimisation for edge deployment on NVIDIA hardware is
-also a critical factor in this choice with YOLO models being widely supported
-by TensorRT optimisations (See~\ref{sec:tensorrt_optimisations}).
+Based on the requirements analysis and literature review, YOLO11 was taken as
+the initial design candidate for the object detector, to be fine-tuned for
+luggage and people detection in surveillance footage. YOLO11 has demonstrated
+strong performance on small object detection in the work by
+\citet{abandoned2025vrsalovic}, making it a suitable starting point for the
+target application. Ease of optimisation for edge deployment on NVIDIA hardware
+is also a critical factor in this choice, with YOLO models being widely
+supported by TensorRT optimisations (see~\ref{sec:tensorrt_optimisations}). The
+final selected architecture was determined during implementation
+(section~\ref{sec:model_architecture_selection}).
 
 However, another state-of-the-art implementation of the YOLO architecture,
 YOLO26, will also be evaluated as part of the model selection process. As
@@ -243,7 +245,8 @@ the state transitions, and alert generation respectively.
 	      TensorRT-optimised model to perform object detection on each frame; populating
 	      the metadata with bounding boxes and class labels for detected objects (luggage, people).
 	\item \textbf{Tracker (\texttt{nvtracker}):} Maintains object identities across
-	      frames using the DeepSORT algorithm with a ReID model for appearance-based association.
+	      frames using NvDeepSORT (DeepStream's DeepSORT implementation) with a
+	      ResNet-50 ReID model for appearance-based association.
 	      Handling occlusions and disappearances to ensure consistent tracking of luggage
 	      and associated persons.
 	\item \textbf{Metadata Probe (Abandonment Logic):} A custom probe function that implements
