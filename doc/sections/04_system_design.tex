@@ -3,14 +3,16 @@
 \subsection{Model Choice}
 \label{sec:model_choice}
 
-Based on the requirements analysis and literature review, the system will be
-designed around a YOLO11 object detection model, fine-tuned for the task of
-luggage and people detection in surveillance footage. This model has
-demonstrated strong performance on small object detection in the work by
-\citet{abandoned2025vrsalovic}, making it a suitable choice for the target
-application. Ease of optimisation for edge deployment on NVIDIA hardware is
-also a critical factor in this choice with YOLO models being widely supported
-by TensorRT optimisations (See~\ref{sec:tensorrt_optimisations}).
+Based on the requirements analysis and literature review, YOLO11 was taken as
+the initial design candidate for the object detector, to be fine-tuned for
+luggage and people detection in surveillance footage. YOLO11 has demonstrated
+strong performance on small object detection in the work by
+\citet{abandoned2025vrsalovic}, making it a suitable starting point for the
+target application. Ease of optimisation for edge deployment on NVIDIA hardware
+is also a critical factor in this choice, with YOLO models being widely
+supported by TensorRT optimisations (see~\ref{sec:tensorrt_optimisations}). The
+final selected architecture was determined during implementation
+(section~\ref{sec:model_architecture_selection}).
 
 However, another state-of-the-art implementation of the YOLO architecture,
 YOLO26, will also be evaluated as part of the model selection process. As
@@ -23,12 +25,12 @@ is a leap forward compared to older models as seen in their own benchmarks
 (figure~\ref{fig:ultralytics_benchmarks}), but these claims will be
 independently verified in the context of this project.
 
-\begin{figure*}[!htb]
+\begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.8\textwidth]{figures/ultralytics_benchmarks.png}
 	\caption{Ultralytics' benchmarks comparing pre-trained YOLO26, YOLO11, and older models from an article by \citet{vina2026yolo26}.}
 	\label{fig:ultralytics_benchmarks}
-\end{figure*}
+\end{figure}
 
 The size of the model will be determined based on the constraints of the
 hardware and the result of comparative evaluations. The nano, small and medium
@@ -112,17 +114,17 @@ Figure~\ref{fig:state_machine} illustrates the proposed state machine for
 luggage status tracking. The design is simple but hides the complexities of the
 underlying logic for ownership association.
 
-\begin{figure*}[!htb]
+\begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.8\textwidth]{figures/plantuml/state_machine.png}
 	\caption{State machine for luggage status tracking.}
 	\label{fig:state_machine}
-\end{figure*}
+\end{figure}
 
 The operational logic is described in table~\ref{tab:state_machine_logic},
 which defines the outcome of entering and leaving each state.
 
-\begin{table*}[!htb]
+\begin{table}[!htbp]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -138,7 +140,7 @@ which defines the outcome of entering and leaving each state.
 	\end{tabularx}
 	\caption{State machine operational logic.}
 	\label{tab:state_machine_logic}
-\end{table*}
+\end{table}
 
 \subsubsection{Logic and Pseudo-code}
 \label{sec:logic_and_pseudocode}
@@ -149,7 +151,7 @@ algorithms~\ref{alg:association},~\ref{alg:state_transitions},
 and~\ref{alg:alert_generation} illustrate the logic for determining ownership,
 the state transitions, and alert generation respectively.
 
-\begin{algorithm*}[!htb]
+\begin{algorithm}[!htbp]
 	\caption{Luggage ownership association logic.}
 	\label{alg:association}
 	\begin{algorithmic}[1]
@@ -166,9 +168,9 @@ the state transitions, and alert generation respectively.
 		\EndFor\\
 		\Return $best\_person$ \Comment{Associated person or $null$ if no association}
 	\end{algorithmic}
-\end{algorithm*}
+\end{algorithm}
 
-\begin{algorithm*}[!htb]
+\begin{algorithm}[!htbp]
 	\caption{Alert generation logic.}
 	\label{alg:alert_generation}
 	\begin{algorithmic}[1]
@@ -188,9 +190,9 @@ the state transitions, and alert generation respectively.
 		\State \Call{Log}{$A$} \Comment{Persist to event log}\\
 		\Return $A$
 	\end{algorithmic}
-\end{algorithm*}
+\end{algorithm}
 
-\begin{algorithm*}[!htb]
+\begin{algorithm}[!htbp]
 	\caption{Luggage state transition logic.}
 	\label{alg:state_transitions}
 	\begin{algorithmic}[1]
@@ -223,16 +225,16 @@ the state transitions, and alert generation respectively.
 		\EndSwitch
 		\EndFor
 	\end{algorithmic}
-\end{algorithm*}
+\end{algorithm}
 
 \subsection{Pipeline}
 
-\begin{figure*}[!htb]
+\begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/plantuml/pipeline.png}
 	\caption{Proposed DeepStream pipeline for suspicious luggage detection.}
 	\label{fig:pipeline}
-\end{figure*}
+\end{figure}
 
 \begin{itemize}
 	\item \textbf{Source and Muxer (\texttt{nvstreammux}):} Aggregates
@@ -243,7 +245,8 @@ the state transitions, and alert generation respectively.
 	      TensorRT-optimised model to perform object detection on each frame; populating
 	      the metadata with bounding boxes and class labels for detected objects (luggage, people).
 	\item \textbf{Tracker (\texttt{nvtracker}):} Maintains object identities across
-	      frames using the DeepSORT algorithm with a ReID model for appearance-based association.
+	      frames using NvDeepSORT (DeepStream's DeepSORT implementation) with a
+	      ResNet-50 ReID model for appearance-based association.
 	      Handling occlusions and disappearances to ensure consistent tracking of luggage
 	      and associated persons.
 	\item \textbf{Metadata Probe (Abandonment Logic):} A custom probe function that implements

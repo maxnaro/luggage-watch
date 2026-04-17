@@ -172,7 +172,7 @@ results in a niche field. Due to the limited availability, and age, of these
 datasets, there is a clear gap in the field for modern, publicly available
 datasets for abandoned object detection.
 
-\begin{table*}[!p]
+\begin{table}[!htbp]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -187,7 +187,7 @@ datasets for abandoned object detection.
 		\addlinespace
 		Average Precision ($\mathrm{AP}$)                                                                                               & Area under the precision recall curve (plotted by evaluating the model at different confidence thresholds).   & Higher AP indicates better overall performance across all thresholds for a given class.                                                                                                \\
 		\addlinespace
-		Mean Average Precision ($\mathrm{mAP}$)                                                                                         & The mean of AP across all classes.                                                                           & Higher mAP indicates better overall performance across all classes.                                                                                                                    \\
+		Mean Average Precision ($\mathrm{mAP}$)                                                                                         & The mean of AP across all classes.                                                                            & Higher mAP indicates better overall performance across all classes.                                                                                                                    \\
 		\addlinespace
 		$\mathrm{F1}$-Score                                                                                                             & The harmonic mean of precision and recall.                                                                    & Higher F1-score indicates a better balance between precision and recall. It is more useful when there is an uneven class distribution.                                                 \\
 		\addlinespace
@@ -208,9 +208,9 @@ datasets for abandoned object detection.
 	\end{tabularx}
 	\caption{Evaluation metrics for object detection: descriptions and insights.}
 	\label{tab:evaluation_metrics_desc}
-\end{table*}
+\end{table}
 
-\begin{table*}[!htb]
+\begin{table}[!htbp]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -232,9 +232,9 @@ datasets for abandoned object detection.
 	\end{tabularx}
 	\caption{Evaluation metrics for object detection: formulae (Part 1).}
 	\label{tab:evaluation_metrics_formula_1}
-\end{table*}
+\end{table}
 
-\begin{table*}[!htb]
+\begin{table}[!htbp]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -249,14 +249,14 @@ datasets for abandoned object detection.
 		\addlinespace
 		False Positive per Image              & For number of images $N_{\mathrm{images}}$: $$\mathrm{FPPI} = \frac{\mathrm{FP}}{N_{\mathrm{images}}}$$                                                                                                           \\
 		\addlinespace
-		Objectness Score                      & As calculated by \cite{jocher2020yolov5} in YOLOv3, for probability of object presence within a bounding box $P(\mathrm{Obj}) \in [0, 1]$: $$\mathrm{Objectness} = P(\mathrm{Obj}) \cdot \mathrm{IoU} \in [0,1]$$ \\
+		Objectness Score                      & As defined in the original YOLO paper \citep{redmon2016lookonceunifiedrealtime}, for probability of object presence within a bounding box $P(\mathrm{Obj}) \in [0, 1]$: $$\mathrm{Objectness} = P(\mathrm{Obj}) \cdot \mathrm{IoU} \in [0,1]$$ \\
 		\addlinespace
 		Detection Error Rate ($\mathrm{DER}$) & For total number of detections $D$: $$\mathrm{DER} = \frac{\mathrm{FP} + \mathrm{FN}}{D} \times 100$$                                                                                                             \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Evaluation metrics for object detection: formulae (Part 2).}
 	\label{tab:evaluation_metrics_formula_2}
-\end{table*}
+\end{table}
 
 \subsection{Object Detection Models for Real-Time Inference}
 
@@ -337,11 +337,17 @@ of YOLO models' improvements up to YOLO11, highlighting five key areas:
 
 \begin{itemize}
 	\item \textbf{Backbone networks:} the evolution of backbone architectures
-	      from Darknet-19 in YOLOv2 to CSPDarknet53 in YOLOv4, and the more
-	      recent EfficientNet and MobileNet variants in YOLOv8 and YOLO11, has
-	      led to significant improvements in feature extraction capabilities.
-	\item \textbf{Neck:} the introduction of feature pyramid networks (FPNs) in
-	      YOLOv8/11, from the single $S\times S$ grid in YOLOv1.
+	      from Darknet-19 in YOLOv2, to Darknet-53 in YOLOv3, to CSPDarknet53 in
+	      YOLOv4/v5, and the more recent CSP-derived blocks in YOLOv8 (the
+	      \texttt{C2f} module) and YOLO11 (the \texttt{C3k2} module) has led to
+	      significant improvements in feature extraction capabilities at
+	      comparable or reduced parameter counts.
+	\item \textbf{Neck:} progression from the single $S\times S$ grid in
+	      YOLOv1, through the feature pyramid network (FPN) first incorporated
+	      in YOLOv3, to the PAN (Path Aggregation Network) necks adopted in
+	      YOLOv4 and carried forward through YOLOv5, YOLOv8, and YOLO11 ---
+	      with YOLO11 additionally inserting a \texttt{C2PSA} spatial-attention
+	      block after SPPF to refine feature maps before the neck.
 	\item \textbf{Detection head:} the transition to and from anchor-based
 	      methods, with YOLOv2 introducing anchor boxes, and YOLOv8/11 returning
 	      to anchor-free predictions. As well as the decoupling of classification
@@ -367,7 +373,7 @@ developer's own benchmarks. YOLO26 is included in this project's model
 evaluation (section~\ref{sec:training_process}) to provide an independent
 assessment of its performance in the target domain.
 
-\begin{table*}[!htb]
+\begin{table}[!htbp]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}
@@ -418,7 +424,7 @@ assessment of its performance in the target domain.
 	\end{tabularx}
 	\captionof{table}{Evolution of YOLO models: key features and improvements.}
 	\label{tab:yolo_evolution}
-\end{table*}
+\end{table}
 
 \subsection{Video Analysis, Spatio-Temporal Modeling and Object Tracking}
 \label{sec:video_analysis_spatio_temporal_modeling_and_object_tracking}

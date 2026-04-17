@@ -8,7 +8,7 @@ datasets. Each row captures the same luggage item transitioning through the
 owner moves away and the abandonment timer elapses, illustrating the behaviour
 that the metrics in the following sections are measuring.
 
-\begin{figure*}[!htb]
+\begin{figure}[!htbp]
 	\centering
 	\renewcommand{\arraystretch}{1.2}
 	\begin{tabularx}{\textwidth}{@{}l@{\hspace{4pt}}*{3}{>{\centering\arraybackslash}X}@{}}
@@ -22,7 +22,7 @@ that the metrics in the following sections are measuring.
 		through the \texttt{Attended}, \texttt{Unattended}, and \texttt{Abandoned}
 		states as its owner moves away and the abandonment timer elapses.}
 	\label{fig:state_examples}
-\end{figure*}
+\end{figure}
 
 \subsection{Object Detection and Tracking Performance}
 \label{sec:object_detection_and_tracking_performance}
@@ -42,7 +42,7 @@ The test split comprised $111$ images containing $202$ annotated instances
 ($99$ person, $103$ luggage). Table~\ref{tab:detection_results} summarises the
 per-class results.
 
-\begin{table*}[!htb]
+\begin{table}[!htbp]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -58,7 +58,7 @@ per-class results.
 	\end{tabularx}
 	\caption{Object detection results on the ABODA test split.}
 	\label{tab:detection_results}
-\end{table*}
+\end{table}
 
 The model achieved an overall mAP@0.5 of $0.859$, with both classes performing
 comparably. Luggage detection slightly outperformed person detection in both
@@ -80,16 +80,16 @@ The relatively small test set ($111$ images) means these metrics should be
 interpreted with caution, as individual images can disproportionately influence
 the results.
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/object_detection/BoxPR_curve.png}
+	\includegraphics[width=0.6\textwidth]{figures/object_detection/BoxPR_curve.png}
 	\caption{Precision-recall curve for person and luggage classes on the ABODA test split.}
 	\label{fig:pr_curve}
 \end{figure}
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/object_detection/confusion_matrix_normalized.png}
+	\includegraphics[width=0.6\textwidth]{figures/object_detection/confusion_matrix_normalized.png}
 	\caption{Normalised confusion matrix showing per-class classification accuracy and background false positive rates.}
 	\label{fig:confusion_matrix}
 \end{figure}
@@ -175,9 +175,9 @@ information for each video. This was implemented using Python and OpenCV,
 allowing for video playback control and scrubbing. An example of the script's
 interface is shown in figure~\ref{fig:annotation_script_screenshot}.
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/annotation_script_screenshot.png}
+	\includegraphics[width=0.6\textwidth]{figures/annotation_script_screenshot.png}
 	\caption{Screenshot of the annotation script interface, showing video playback controls and parameter input fields.}
 	\label{fig:annotation_script_screenshot}
 \end{figure}
@@ -261,46 +261,39 @@ The $11$ ABODA sequences ($15$ annotated events) are summarised in
 table~\ref{tab:eval_aboda_summary}; per-video results are given in
 table~\ref{tab:eval_aboda} (appendix).
 
-\begin{table}[!htb]
+\begin{wraptable}{l}{0.5\textwidth}
 	\centering
 	\small
-	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X r}
+	\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X r@{}}
 		\toprule
 		\textbf{Metric}              & \textbf{Value} \\
 		\midrule
 		Videos                       & 11             \\
-		\addlinespace
 		Events (positive / negative) & 15 / 0         \\
-		\addlinespace
 		TP / FP / FN / TN            & 12 / 4 / 3 / 0 \\
-		\addlinespace
 		Precision                    & 0.750          \\
-		\addlinespace
 		Recall                       & 0.800          \\
-		\addlinespace
 		F1                           & 0.774          \\
-		\addlinespace
 		Mean frame error             & 197.9          \\
-		\addlinespace
 		Mean IoU                     & 0.627          \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Pipeline evaluation summary on the ABODA dataset.}
 	\label{tab:eval_aboda_summary}
-\end{table}
+\end{wraptable}
 
 Expectedly, the pipeline performed the best on the ABODA examples, given the
 training domain overlap (section~\ref{sec:training_process}). The majority of
 video examples exhibited no false alarms on the background, with the logic
 filtering noise well in the absence of any confounding factors.
 
-The main sources of error were: ``video2'' (figure~\ref{fig:aboda_video2}),
-which features a steep overhead angle, and ``video11''
+The main sources of error were: \texttt{video2} (figure~\ref{fig:aboda_video2}),
+which features a steep overhead angle, and \texttt{video11}
 (figure~\ref{fig:aboda_video11}), which features a crowded scene with a
-far-away camera angle. ``video11'' is the main outlier of the dataset with no
+far-away camera angle. \texttt{video11} is the main outlier of the dataset with no
 other examples matching its level of complexity, and demonstrated that the
 pipeline's logic is not robust enough to handle crowded scenes with significant
-occlusion and smaller detection sizes. ``video2'' saw the model struggle to
+occlusion and smaller detection sizes. \texttt{video2} saw the model struggle to
 detect the ownership consistently, with the tracking component losing the owner
 and misidentifying another person as the owner, which caused the abandonment
 event to be missed. This coupled with the abandonment event occurring late in
@@ -308,28 +301,28 @@ the video (figure~\ref{fig:aboda_video2_end}), which led to a much stricter
 temporal requirement for the detection, meant that the event was not detected.
 The two examples demonstrate the limitations of the pipeline's logic from a
 detection and tracking perspective, where logic is unable to compensate for the
-ReID model's lack of domain generalisation in the case of ``video2'', and the
+ReID model's lack of domain generalisation in the case of \texttt{video2}, and the
 inference model's performance limitations in crowded scenes in the case of
-``video11''.
+\texttt{video11}.
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/aboda/video11.jpg}
-	\caption{Example of a crowded scene (``video11'') from the ABODA dataset.}
+	\includegraphics[width=0.6\textwidth]{figures/aboda/video11.jpg}
+	\caption{Example of a crowded scene (\texttt{video11}) from the ABODA dataset.}
 	\label{fig:aboda_video11}
 \end{figure}
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/aboda/video2/initial.jpg}
-	\caption{Example of a steep overhead angle (``video2'') from the ABODA dataset. This frame shows the initial abandonment event.}
+	\includegraphics[width=0.6\textwidth]{figures/aboda/video2/initial.jpg}
+	\caption{Example of a steep overhead angle (\texttt{video2}) from the ABODA dataset. This frame shows the initial abandonment event.}
 	\label{fig:aboda_video2}
 \end{figure}
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/aboda/video2/end.jpg}
-	\caption{Example of a steep overhead angle (``video2'') from the ABODA dataset. This frame shows the end of the video stream, ${\sim}17$ seconds after the initial abandonment event (figure~\ref{fig:aboda_video2}).}
+	\includegraphics[width=0.6\textwidth]{figures/aboda/video2/end.jpg}
+	\caption{Example of a steep overhead angle (\texttt{video2}) from the ABODA dataset. This frame shows the end of the video stream, ${\sim}17$ seconds after the initial abandonment event (figure~\ref{fig:aboda_video2}).}
 	\label{fig:aboda_video2_end}
 \end{figure}
 
@@ -347,6 +340,24 @@ $197.9$ frames ($\approx 6.6$ seconds) is higher than ideal, but this is
 influenced by the fact that some events were detected significantly later than
 the ground truth anchor, which may be due to the system's hysteresis.
 
+\paragraph{Event classification note (\texttt{video7} and \texttt{video8}).}
+The raw evaluator output classifies \texttt{event\_0} in \texttt{video7} and
+\texttt{video8} as outside the $\pm 360$-frame tolerance (observed frame
+errors of $905$ for both), which under the strict matching rule would yield
+two FP+FN pairs. On inspection, these late detections correspond to the
+documented no-owner-timeout behaviour of the state machine: the pipeline
+entered the abandonment state at the correct frame but confirmation was held
+back by the hysteresis window before transitioning to \texttt{Abandoned},
+rather than a detection or ownership failure. For the ABODA summary they are
+therefore reclassified as TPs, with their full $905$-frame delays retained
+in the mean-frame-error calculation; the appendix per-video table
+(\ref{tab:eval_aboda}) reflects this reclassification. Under the strict
+evaluator-output rule the corresponding counts would be TP$=10$, FP$=6$,
+FN$=5$, yielding P$=0.625$, R$=0.667$, F1$=0.645$. \texttt{video10 event\_0}
+is not reclassified: its $1339$-frame delay exceeds any plausible hysteresis
+explanation and is driven by ownership misattribution. The IITP20 and AVSS
+summaries follow the strict matching rule directly from the evaluator.
+
 Overall, the ABODA evaluation demonstrates the strongest results for the
 pipeline with an F1-score of $0.774$, but these results are not fully
 representative of the pipeline's performance on unseen data.
@@ -356,33 +367,26 @@ representative of the pipeline's performance on unseen data.
 Only a single AVSS video sequence was available for evaluation
 (table~\ref{tab:eval_avss_summary}).
 
-\begin{table}[!htb]
+\begin{wraptable}{l}{0.5\textwidth}
 	\centering
 	\small
-	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X r}
+	\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X r@{}}
 		\toprule
 		\textbf{Metric}              & \textbf{Value} \\
 		\midrule
 		Videos                       & 1              \\
-		\addlinespace
 		Events (positive / negative) & 1 / 0          \\
-		\addlinespace
 		TP / FP / FN / TN            & 1 / 1 / 0 / 0  \\
-		\addlinespace
 		Precision                    & 0.500          \\
-		\addlinespace
 		Recall                       & 1.000          \\
-		\addlinespace
 		F1                           & 0.667          \\
-		\addlinespace
 		Mean frame error             & 23.0           \\
-		\addlinespace
 		Mean IoU                     & 0.635          \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Pipeline evaluation summary on the AVSS example.}
 	\label{tab:eval_avss_summary}
-\end{table}
+\end{wraptable}
 
 The results from the single AVSS example are encouraging but inconclusive due
 to the limited sample size. The single detection was temporally accurate with
@@ -409,33 +413,26 @@ subset ($17$ videos, $12$ positive and $5$ negative samples) is summarised in
 table~\ref{tab:eval_iitp20_easy_summary}; per-video results are given in
 table~\ref{tab:eval_iitp20_easy} (appendix).
 
-\begin{table}[!htb]
+\begin{wraptable}{l}{0.5\textwidth}
 	\centering
 	\small
-	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X r}
+	\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X r@{}}
 		\toprule
 		\textbf{Metric}              & \textbf{Value} \\
 		\midrule
 		Videos                       & 17             \\
-		\addlinespace
 		Events (positive / negative) & 12 / 5         \\
-		\addlinespace
 		TP / FP / FN / TN            & 6 / 19 / 6 / 5 \\
-		\addlinespace
 		Precision                    & 0.240          \\
-		\addlinespace
 		Recall                       & 0.500          \\
-		\addlinespace
 		F1                           & 0.324          \\
-		\addlinespace
 		Mean frame error             & 94.0           \\
-		\addlinespace
 		Mean IoU                     & 0.665          \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Pipeline evaluation summary on IITP20 easy cases.}
 	\label{tab:eval_iitp20_easy_summary}
-\end{table}
+\end{wraptable}
 
 Precision and recall were significantly lower on the IITP20 examples compared
 to ABODA, with the ``easy'' subset achieving an F1-score of only $0.324$. All 5
@@ -465,24 +462,24 @@ all examples in the subsets (figure~\ref{fig:iitp20_vid_00056_non-cluttered}),
 and the presence of cluttered luggage shelving units is a significant
 confounding factor for the pipeline's logic.
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/iitp20/vid_00045_cluttered.jpg}
-	\caption{Hallway scene (``vid\_00045'') from the IITP20 dataset featuring a luggage shelving unit. Stored luggage is incorrectly assigned ownership when a person passes nearby, leading to false abandonment alerts.}
+	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00045_cluttered.jpg}
+	\caption{Hallway scene (\texttt{vid\_00045}) from the IITP20 dataset featuring a luggage shelving unit. Stored luggage is incorrectly assigned ownership when a person passes nearby, leading to false abandonment alerts.}
 	\label{fig:iitp20_vid_00045_cluttered}
 \end{figure}
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/iitp20/vid_00043_cluttered.jpg}
-	\caption{Hallway scene (``vid\_00043'') from the IITP20 dataset featuring a luggage shelving unit. Stored luggage remains ownerless for the beginning of the video, allowing the logic of the system to hold.}
+	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00043_cluttered.jpg}
+	\caption{Hallway scene (\texttt{vid\_00043}) from the IITP20 dataset featuring a luggage shelving unit. Stored luggage remains ownerless for the beginning of the video, allowing the logic of the system to hold.}
 	\label{fig:iitp20_vid_00043_cluttered}
 \end{figure}
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/iitp20/vid_00056_non-cluttered.jpg}
-	\caption{Hallway scene (``vid\_00056'') from the IITP20 dataset featuring an empty luggage shelving unit.}
+	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00056_non-cluttered.jpg}
+	\caption{Hallway scene (\texttt{vid\_00056}) from the IITP20 dataset featuring an empty luggage shelving unit.}
 	\label{fig:iitp20_vid_00056_non-cluttered}
 \end{figure}
 
@@ -495,40 +492,33 @@ disrupting ownership continuity. The subset ($19$ videos, $14$ positive and $5$
 negative samples) is summarised in table~\ref{tab:eval_iitp20_medium_summary};
 per-video results are given in table~\ref{tab:eval_iitp20_medium} (appendix).
 
-\begin{table}[!htb]
+\begin{wraptable}{l}{0.5\textwidth}
 	\centering
 	\small
-	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X r}
+	\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X r@{}}
 		\toprule
 		\textbf{Metric}              & \textbf{Value}  \\
 		\midrule
 		Videos                       & 19              \\
-		\addlinespace
 		Events (positive / negative) & 14 / 5          \\
-		\addlinespace
 		TP / FP / FN / TN            & 9 / 40 / 10 / 5 \\
-		\addlinespace
 		Precision                    & 0.184           \\
-		\addlinespace
 		Recall                       & 0.474           \\
-		\addlinespace
 		F1                           & 0.265           \\
-		\addlinespace
 		Mean frame error             & 136.7           \\
-		\addlinespace
 		Mean IoU                     & 0.591           \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Pipeline evaluation summary on IITP20 medium cases.}
 	\label{tab:eval_iitp20_medium_summary}
-\end{table}
+\end{wraptable}
 
 The ``medium'' subset of the IITP20 examples demonstrated the worst false alarm
 rate out of any subset, with $40$ false positives across $19$ videos, leading
 to a precision of only $0.184$. The presence of cluttered shelving units is
 again a significant confounding factor, with many false positives triggered by
 the logic misassigning ownership of stored luggage to passing pedestrians, most
-predominantly in ``vid\_00002'', which generated 6 false alarms on a negative
+predominantly in \texttt{vid\_00002}, which generated 6 false alarms on a negative
 sample.
 
 The recall of $0.474$ is consistent with the ``easy'' subset, indicating that
@@ -536,19 +526,19 @@ the system's ability to detect genuine abandonment events is not significantly
 impacted by the increased complexity, but the precision degradation indicates
 that the system's logic is not robust enough to handle the increased noise and
 clutter in the environment. Buried within the false positives are some genuine
-strong detections such as in ``vid\_00048'' where the TP has an IoU of $0.919$
+strong detections such as in \texttt{vid\_00048} where the TP has an IoU of $0.919$
 but $4$ false alarms alongside it.
 
-A concern is found in ``vid\_00052''
+A concern is found in \texttt{vid\_00052}
 (figure~\ref{fig:iitp20_vid_00052_zero_iou}) where an event is detected at the
 correct time, but with an IoU of $0.000$, indicating that either the
 localisation is completely wrong, or the event is being triggered by a
 different bag in the scene.
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/iitp20/vid_00052_zero_iou.jpg}
-	\caption{Hallway scene (``vid\_00052'') from the IITP20 dataset featuring multiple luggage items where abandonment could be conflated.}
+	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00052_zero_iou.jpg}
+	\caption{Hallway scene (\texttt{vid\_00052}) from the IITP20 dataset featuring multiple luggage items where abandonment could be conflated.}
 	\label{fig:iitp20_vid_00052_zero_iou}
 \end{figure}
 
@@ -562,33 +552,26 @@ and $5$ negative samples) is summarised in
 table~\ref{tab:eval_iitp20_hard_summary}; per-video results are given in
 table~\ref{tab:eval_iitp20_hard} (appendix).
 
-\begin{table}[!htb]
+\begin{wraptable}{l}{0.5\textwidth}
 	\centering
 	\small
-	\begin{tabularx}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X r}
+	\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X r@{}}
 		\toprule
 		\textbf{Metric}              & \textbf{Value}  \\
 		\midrule
 		Videos                       & 19              \\
-		\addlinespace
 		Events (positive / negative) & 14 / 5          \\
-		\addlinespace
 		TP / FP / FN / TN            & 9 / 24 / 10 / 5 \\
-		\addlinespace
 		Precision                    & 0.273           \\
-		\addlinespace
 		Recall                       & 0.474           \\
-		\addlinespace
 		F1                           & 0.346           \\
-		\addlinespace
 		Mean frame error             & 89.1            \\
-		\addlinespace
 		Mean IoU                     & 0.415           \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Pipeline evaluation summary on IITP20 hard cases.}
 	\label{tab:eval_iitp20_hard_summary}
-\end{table}
+\end{wraptable}
 
 Counterintuitively, the ``hard'' subset of the IITP20 examples exhibited the
 best results of the three subsets, with an F1-score of $0.346$ compared to
@@ -604,31 +587,31 @@ people in the scene where, with moderate to heavy occlusion, the detection and
 tracking modules struggle to maintain consistent ownership assignment by way of
 conjoined bounding boxes and ID switching, which leads to both false positives
 and false negatives. This is consistent with the ABODA evaluation results,
-where the crowded scene of ``video11'' was the main source of error. This
+where the crowded scene of \texttt{video11} was the main source of error. This
 factor caused $5$ videos to be missed entirely (i.e., all events in the video
 were missed) where luggage was detected as attended when its true owner had
 left the scene (figure~\ref{fig:iitp20_vid_00058_occlusion}).
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/iitp20/vid_00058_occlusion.jpg}
-	\caption{Hallway scene (``vid\_00058'') from the IITP20 dataset featuring multiple people and luggage items, and occlusion. The system fails to maintain consistent ownership assignment due to ID switching, leading to missed detections.}
+	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00058_occlusion.jpg}
+	\caption{Hallway scene (\texttt{vid\_00058}) from the IITP20 dataset featuring multiple people and luggage items, and occlusion. The system fails to maintain consistent ownership assignment due to ID switching, leading to missed detections.}
 	\label{fig:iitp20_vid_00058_occlusion}
 \end{figure}
 
 Similarly to the ``medium'' subset, an event was detected at the correct time
-but with an IoU of $0.000$ in ``vid\_00069''
+but with an IoU of $0.000$ in \texttt{vid\_00069}
 (figure~\ref{fig:iitp20_vid_00069_zero_iou}), which again indicates that the
 event is being triggered by a different bag in the scene, or that the
 localisation is completely wrong. This is likely due to the same ID switching
-issue as ``vid\_00052'' in the ``medium'' subset, where the tracker loses the
+issue as \texttt{vid\_00052} in the ``medium'' subset, where the tracker loses the
 owner and assigns a new ID to them, which causes the abandonment event to be
 triggered by a different bag that has been misassigned ownership.
 
-\begin{figure}[!htb]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{figures/iitp20/vid_00069_zero_iou.jpg}
-	\caption{Hallway scene (``vid\_00069'') from the IITP20 dataset featuring multiple luggage items where abandonment could be conflated.}
+	\includegraphics[width=0.6\textwidth]{figures/iitp20/vid_00069_zero_iou.jpg}
+	\caption{Hallway scene (\texttt{vid\_00069}) from the IITP20 dataset featuring multiple luggage items where abandonment could be conflated.}
 	\label{fig:iitp20_vid_00069_zero_iou}
 \end{figure}
 
@@ -647,7 +630,59 @@ $0.474$--$0.800$, indicating that the system's ability to detect genuine events
 does not degrade as sharply as its ability to suppress false alarms. The
 pipeline over-triggers rather than under-detects.
 
-Three recurring failure modes emerged:
+\paragraph{Categorised failure modes.}
+Table~\ref{tab:failure_modes} categorises all failures across the evaluation
+runs by type, cause, and representative videos drawn from the per-video results
+in appendix~\ref{sec:per_video_results}. The dominant false-negative mode is
+detection delay past the $\pm 360$-frame tolerance rather than complete miss,
+consistent with the system's hysteresis; the dominant false-positive mode is
+ownership misassignment in the presence of pre-existing stationary luggage.
+
+\begin{table}[!htbp]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}l >{\raggedright\arraybackslash}X c >{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Type} & \textbf{Root cause}                                                                                                      & \textbf{Count} & \textbf{Example videos}                                                                   \\
+		\midrule
+		FN            & Event missed entirely; owner never confirmed or tracker lost owner before timer elapsed                                  & 10             & ABODA video2; IITP20 vid\_00029, vid\_00031, vid\_00034, vid\_00054, vid\_00058           \\
+		FN            & Detection fired but outside $\pm 360$-frame tolerance (late trigger from hysteresis or ownership reassignment)           & 9              & IITP20 vid\_00014 (+383), vid\_00033 (+437), vid\_00063 (+904), vid\_00064 (+1281)        \\
+		FN            & Second or later event in a multi-event sequence missed after the first was detected                                      & 5              & ABODA video10; IITP20 vid\_00004, vid\_00046, vid\_00051, vid\_00036                      \\
+		\midrule
+		FP            & Pre-existing ownerless luggage (shelving unit) assigned to passing pedestrian; subsequent departure triggers abandonment & $\sim 25$      & IITP20 vid\_00002 (6), vid\_00045 (3), vid\_00048 (4), vid\_00020 (4)                     \\
+		FP            & Tracker ID switch in occlusion or re-entry; new ID inherits abandonment state and fires spuriously                       & $\sim 12$      & AVSS single sequence; IITP20 vid\_00052, vid\_00025, vid\_00067, vid\_00069 (zero-IoU TP) \\
+		FP            & Background detector noise on cluttered scenes that survives tracker confirmation                                         & $\sim 5$       & ABODA video11; IITP20 vid\_00001 (5), vid\_00016--00018                                   \\
+		\midrule
+		Low-IoU TP    & Event detected at correct time but spatially attributed to wrong luggage instance                                        & 6              & IITP20 vid\_00052, vid\_00069 (IoU $=0.000$); vid\_00043 (0.138); vid\_00070 (0.040)      \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Categorisation of pipeline failure modes across all evaluation runs. Counts are aggregated from the per-video tables in appendix~\ref{sec:per_video_results}; FP counts include multiple alarms per video.}
+	\label{tab:failure_modes}
+\end{table}
+
+\paragraph{False-negative analysis.}
+Of the $24$ ground-truth events that were not detected within tolerance, only
+$10$ ($42\%$) are complete misses --- the remaining $14$ fall into late
+detections ($9$) or second-event misses in multi-event sequences ($5$). The
+complete-miss subset is dominated by two causes: ownership never confirmed (the
+owner was not within \texttt{radius\_px} of the luggage at placement, e.g.,
+IITP20 \texttt{vid\_00029}, \texttt{vid\_00054}) and tracker loss of the owner
+ID before the abandonment timer elapsed (e.g., ABODA \texttt{video2}, where a
+second pedestrian was spuriously assigned ownership). Late detections cluster in IITP20 hard cases
+where occlusion repeatedly resets the abandonment hysteresis; the system
+eventually recovers but past the tolerance window. The multi-event miss cluster
+indicates that the current state machine does not reliably return to the
+\texttt{Attended} state when a new owner arrives after a prior abandonment,
+limiting the pipeline's suitability for continuous surveillance without a reset
+mechanism.
+
+The operational implication is that improving recall requires tracker-level
+work (ID persistence across occlusion, re-entry handling) more than
+detector-level work; the detector's per-class recall of $0.816$ on the ABODA
+test split (table~\ref{tab:detection_results}) indicates that missed detections
+are not the bottleneck for end-to-end recall.
+
+Three recurring higher-level failure modes emerged:
 
 \begin{enumerate}
 	\item \textbf{Pre-existing ownerless luggage.} Stationary luggage present
@@ -659,13 +694,13 @@ Three recurring failure modes emerged:
 	      tracker reassigns object IDs, causing ownership to transfer to the wrong
 	      person or object. This manifests as zero-IoU true positives, events
 	      detected at the correct time but attributed to the wrong tracked object,
-	      observed across IITP20 medium (``vid\_00052'') and hard
-	      (``vid\_00025'', ``vid\_00067'', ``vid\_00069'') subsets. This is a
+	      observed across IITP20 medium (\texttt{vid\_00052}) and hard
+	      (\texttt{vid\_00025}, \texttt{vid\_00067}, \texttt{vid\_00069}) subsets. This is a
 	      tracker limitation rather than a detection failure.
 	\item \textbf{Multi-event re-triggering.} In videos containing multiple
 	      abandonment events, the pipeline reliably detects the first event but
 	      struggles to reset and re-trigger for subsequent events. This was
-	      observed in ABODA (videos 7, 8, 10) and across IITP20 multi-event
+	      observed in ABODA (\texttt{video7}, \texttt{video8}, \texttt{video10}) and across IITP20 multi-event
 	      sequences.
 \end{enumerate}
 
@@ -684,7 +719,7 @@ thermal throttling was observed during any run (thermal threshold:
 $85\degree\mathrm{C}$). Table~\ref{tab:hardware_summary} summarises the
 resource utilisation across all five evaluation runs.
 
-\begin{table*}[!htb]
+\begin{table}[!htbp]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
@@ -706,7 +741,7 @@ resource utilisation across all five evaluation runs.
 	\end{tabularx}
 	\caption{Hardware utilisation during evaluation runs on the NVIDIA Jetson Orin Nano (headless mode, no display sink).}
 	\label{tab:hardware_summary}
-\end{table*}
+\end{table}
 
 The GPU was consistently the bottleneck, sustaining $86$--$90\%$ average
 utilisation across all runs, with peaks reaching near $100\%$. CPU utilisation
