@@ -344,9 +344,10 @@ of YOLO models' improvements up to YOLO11, highlighting five key areas:
 	      comparable or reduced parameter counts.
 	\item \textbf{Neck:} progression from the single $S\times S$ grid in
 	      YOLOv1, through the feature pyramid network (FPN) first incorporated
-	      in YOLOv3, to the PAN-style (Path Aggregation Network) necks used in
-	      YOLOv5 onwards --- with YOLO11 additionally adding the \texttt{C2PSA}
-	      spatial-attention block on top of the FPN/PAN hierarchy.
+	      in YOLOv3, to the PAN (Path Aggregation Network) necks adopted in
+	      YOLOv4 and carried forward through YOLOv5, YOLOv8, and YOLO11 ---
+	      with YOLO11 additionally inserting a \texttt{C2PSA} spatial-attention
+	      block after SPPF to refine feature maps before the neck.
 	\item \textbf{Detection head:} the transition to and from anchor-based
 	      methods, with YOLOv2 introducing anchor boxes, and YOLOv8/11 returning
 	      to anchor-free predictions. As well as the decoupling of classification
