@@ -474,10 +474,10 @@ disrupting ownership continuity. The subset ($19$ videos, $14$ positive and $5$
 negative samples) is summarised in table~\ref{tab:eval_iitp20_medium_summary};
 per-video results are given in table~\ref{tab:eval_iitp20_medium} (appendix).
 
-\begin{table}[!htbp]
+\begin{wraptable}{l}{0.5\textwidth}
 	\centering
 	\small
-	\begin{tabularx}{0.5\textwidth}{@{}>{\raggedright\arraybackslash}X r@{}}
+	\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X r@{}}
 		\toprule
 		\textbf{Metric}              & \textbf{Value}  \\
 		\midrule
@@ -493,7 +493,7 @@ per-video results are given in table~\ref{tab:eval_iitp20_medium} (appendix).
 	\end{tabularx}
 	\caption{Pipeline evaluation summary on IITP20 medium cases.}
 	\label{tab:eval_iitp20_medium_summary}
-\end{table}
+\end{wraptable}
 
 The ``medium'' subset of the IITP20 examples demonstrated the worst false alarm
 rate out of any subset, with $40$ false positives across $19$ videos, leading
@@ -534,10 +534,10 @@ and $5$ negative samples) is summarised in
 table~\ref{tab:eval_iitp20_hard_summary}; per-video results are given in
 table~\ref{tab:eval_iitp20_hard} (appendix).
 
-\begin{table}[!htbp]
+\begin{wraptable}{l}{0.5\textwidth}
 	\centering
 	\small
-	\begin{tabularx}{0.5\textwidth}{@{}>{\raggedright\arraybackslash}X r@{}}
+	\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X r@{}}
 		\toprule
 		\textbf{Metric}              & \textbf{Value}  \\
 		\midrule
@@ -553,7 +553,7 @@ table~\ref{tab:eval_iitp20_hard} (appendix).
 	\end{tabularx}
 	\caption{Pipeline evaluation summary on IITP20 hard cases.}
 	\label{tab:eval_iitp20_hard_summary}
-\end{table}
+\end{wraptable}
 
 Counterintuitively, the ``hard'' subset of the IITP20 examples exhibited the
 best results of the three subsets, with an F1-score of $0.346$ compared to
