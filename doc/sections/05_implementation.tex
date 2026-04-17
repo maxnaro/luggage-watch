@@ -437,10 +437,13 @@ DeepStream YOLO parser.
 \subsection{Deployment Setup and Configuration}
 \label{sec:deployment_setup_and_configuration}
 
-The deployment system used an NVIDIA Jetson Orin Nano running JetPack 6.2 and
-DeepStream 7.1 to perform real-time inference using the trained model, and
-integrating the object tracking and abandonment logic into an end-to-end
-pipeline.
+The deployment system used an NVIDIA Jetson Orin Nano Developer Kit, operated
+in the December 2024 ``Super'' power profile that uplifts INT8/FP16 throughput
+relative to the original Orin Nano specification. The board ran JetPack~6.2
+(L4T~36.4) with DeepStream~7.1 and TensorRT~10.3 to perform real-time inference
+using the trained model, integrating the object tracking and abandonment logic
+into an end-to-end pipeline. All hardware utilisation figures reported in
+section~\ref{sec:hardware_utilisation} are specific to this Super profile.
 
 Steps to set up the deployment environment included: (i) installing the
 necessary software dependencies in order to run a Python-based DeepStream
