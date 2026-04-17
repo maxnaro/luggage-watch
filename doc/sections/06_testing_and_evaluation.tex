@@ -614,12 +614,11 @@ pipeline over-triggers rather than under-detects.
 
 \paragraph{Categorised failure modes.}
 Table~\ref{tab:failure_modes} categorises all failures across the evaluation
-runs by type, cause, and representative videos drawn from the per-video
-results in appendix~\ref{sec:per_video_results}. The dominant false-negative
-mode is detection delay past the $\pm 360$-frame tolerance rather than
-complete miss, consistent with the system's hysteresis; the dominant
-false-positive mode is ownership misassignment in the presence of pre-existing
-stationary luggage.
+runs by type, cause, and representative videos drawn from the per-video results
+in appendix~\ref{sec:per_video_results}. The dominant false-negative mode is
+detection delay past the $\pm 360$-frame tolerance rather than complete miss,
+consistent with the system's hysteresis; the dominant false-positive mode is
+ownership misassignment in the presence of pre-existing stationary luggage.
 
 \begin{table}[!htbp]
 	\centering
@@ -629,7 +628,7 @@ stationary luggage.
 		\textbf{Type} & \textbf{Root cause}                                                                                                      & \textbf{Count} & \textbf{Example videos}                                                                   \\
 		\midrule
 		FN            & Event missed entirely; owner never confirmed or tracker lost owner before timer elapsed                                  & 10             & ABODA video2; IITP20 vid\_00029, vid\_00031, vid\_00034, vid\_00054, vid\_00058           \\
-		FN            & Detection fired but outside $\pm 360$-frame tolerance (late trigger from hysteresis or ownership reassignment)            & 9              & IITP20 vid\_00014 (+383), vid\_00033 (+437), vid\_00063 (+904), vid\_00064 (+1281)        \\
+		FN            & Detection fired but outside $\pm 360$-frame tolerance (late trigger from hysteresis or ownership reassignment)           & 9              & IITP20 vid\_00014 (+383), vid\_00033 (+437), vid\_00063 (+904), vid\_00064 (+1281)        \\
 		FN            & Second or later event in a multi-event sequence missed after the first was detected                                      & 5              & ABODA video10; IITP20 vid\_00004, vid\_00046, vid\_00051, vid\_00036                      \\
 		\midrule
 		FP            & Pre-existing ownerless luggage (shelving unit) assigned to passing pedestrian; subsequent departure triggers abandonment & $\sim 25$      & IITP20 vid\_00002 (6), vid\_00045 (3), vid\_00048 (4), vid\_00020 (4)                     \\
@@ -647,23 +646,23 @@ stationary luggage.
 Of the $24$ ground-truth events that were not detected within tolerance, only
 $10$ ($42\%$) are complete misses --- the remaining $14$ fall into late
 detections ($9$) or second-event misses in multi-event sequences ($5$). The
-complete-miss subset is dominated by two causes: ownership never confirmed
-(the owner was not within \texttt{radius\_px} of the luggage at placement,
-e.g., IITP20 vid\_00029, vid\_00054) and tracker loss of the owner ID before
-the abandonment timer elapsed (e.g., ABODA video2, where a second pedestrian
-was spuriously assigned ownership). Late detections cluster in IITP20 hard
-cases where occlusion repeatedly resets the abandonment hysteresis; the
-system eventually recovers but past the tolerance window. The multi-event
-miss cluster indicates that the current state machine does not reliably
-return to the \texttt{Attended} state when a new owner arrives after a prior
-abandonment, limiting the pipeline's suitability for continuous surveillance
-without a reset mechanism.
+complete-miss subset is dominated by two causes: ownership never confirmed (the
+owner was not within \texttt{radius\_px} of the luggage at placement, e.g.,
+IITP20 vid\_00029, vid\_00054) and tracker loss of the owner ID before the
+abandonment timer elapsed (e.g., ABODA video2, where a second pedestrian was
+spuriously assigned ownership). Late detections cluster in IITP20 hard cases
+where occlusion repeatedly resets the abandonment hysteresis; the system
+eventually recovers but past the tolerance window. The multi-event miss cluster
+indicates that the current state machine does not reliably return to the
+\texttt{Attended} state when a new owner arrives after a prior abandonment,
+limiting the pipeline's suitability for continuous surveillance without a reset
+mechanism.
 
 The operational implication is that improving recall requires tracker-level
 work (ID persistence across occlusion, re-entry handling) more than
 detector-level work; the detector's per-class recall of $0.816$ on the ABODA
-test split (table~\ref{tab:detection_results}) indicates that missed
-detections are not the bottleneck for end-to-end recall.
+test split (table~\ref{tab:detection_results}) indicates that missed detections
+are not the bottleneck for end-to-end recall.
 
 Three recurring higher-level failure modes emerged:
 

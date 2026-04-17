@@ -190,10 +190,10 @@ listing~\ref{lst:config}.
 \subsubsection{Model Architecture Selection}
 \label{sec:model_architecture_selection}
 
-As outlined in the system design (section~\ref{sec:model_choice}),
-both YOLO11 and YOLO26 were candidates for the final detector. During
-development, both architectures were trained and informally evaluated across
-multiple iterations using the same dataset and training pipeline.
+As outlined in the system design (section~\ref{sec:model_choice}), both YOLO11
+and YOLO26 were candidates for the final detector. During development, both
+architectures were trained and informally evaluated across multiple iterations
+using the same dataset and training pipeline.
 
 Early iterations used YOLO11 variants (\texttt{yolo11l.pt} and
 \texttt{yolo11s.pt}) as the base model for transfer learning. These runs
@@ -207,15 +207,15 @@ isolated model comparisons. However, anecdotal observations during development
 informed the final selection:
 
 \begin{itemize}
-	\item YOLO26s produced marginally higher validation metrics (mAP, precision,
-	      recall) than YOLO11s under equivalent training configurations, consistent
-	      with Ultralytics' own benchmarks (figure~\ref{fig:ultralytics_benchmarks}).
+	\item YOLO26s produced marginally higher validation metrics (mAP, precision, recall)
+	      than YOLO11s under equivalent training configurations, consistent with
+	      Ultralytics' own benchmarks (figure~\ref{fig:ultralytics_benchmarks}).
 	\item Inference latency on the Jetson Orin Nano was comparable between the two
-	      architectures at the small model size, with neither presenting a
-	      bottleneck for real-time processing.
-	\item YOLO26's export pipeline required no additional effort over YOLO11, as
-	      the DeepStream-Yolo integration \citep{luciano2026deepstreamyolo}
-	      supported both architectures.
+	      architectures at the small model size, with neither presenting a bottleneck for
+	      real-time processing.
+	\item YOLO26's export pipeline required no additional effort over YOLO11, as the
+	      DeepStream-Yolo integration \citep{luciano2026deepstreamyolo} supported both
+	      architectures.
 \end{itemize}
 
 Given the marginal accuracy improvements at no observed cost to latency or
@@ -347,48 +347,47 @@ examples.
 \paragraph{Ablation across training variants.}
 
 In addition to the baseline and two-phase runs, several intermediate
-configurations were trained during development to isolate the effects of
-model size, augmentation strength, and loss weighting. Validation metrics
-for these runs are summarised in table~\ref{tab:training_ablation}. All runs
-share the same architecture family (YOLO26) and
-\texttt{imgsz}~$=640$; variants differ in model size (nano~/~small~/~medium),
-dataset composition, augmentation intensity, and per-class loss weighting.
+configurations were trained during development to isolate the effects of model
+size, augmentation strength, and loss weighting. Validation metrics for these
+runs are summarised in table~\ref{tab:training_ablation}. All runs share the
+same architecture family (YOLO26) and \texttt{imgsz}~$=640$; variants differ in
+model size (nano~/~small~/~medium), dataset composition, augmentation
+intensity, and per-class loss weighting.
 
 \begin{table}[!htbp]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X c >{\raggedright\arraybackslash}X r r r r}
 		\toprule
-		\textbf{Run}                    & \textbf{Size} & \textbf{Changes over baseline}            & \textbf{mAP@0.5} & \textbf{mAP@0.5:0.95} & \textbf{P}     & \textbf{R}     \\
+		\textbf{Run}                   & \textbf{Size} & \textbf{Changes over baseline}           & \textbf{mAP@0.5} & \textbf{mAP@0.5:0.95} & \textbf{P}     & \textbf{R}     \\
 		\midrule
-		COCO baseline                   & s             & Pretrained on COCO only                   & 0.582            & 0.344                 & 0.643          & 0.536          \\
-		Mixed (reduced aug)             & s             & COCO + OID + ABODA, lighter augmentation  & 0.555            & 0.320                 & 0.673          & 0.514          \\
-		Mixed + person bias             & s             & Phase 1 with person-weighted class loss   & 0.535            & 0.308                 & 0.674          & 0.501          \\
-		Rebalanced loss                 & n             & Nano variant, rebalanced class weights    & 0.511            & 0.278                 & 0.623          & 0.473          \\
-		Rebalanced loss                 & s             & Small variant, rebalanced class weights   & 0.572            & 0.332                 & 0.645          & 0.541          \\
-		Mixed full (Phase~1)            & s             & Phase~1 reference run                     & 0.601            & 0.327                 & 0.712          & 0.534          \\
-		Aggressive aug                  & m             & Medium variant with heavy augmentation    & 0.602            & 0.363                 & 0.655          & 0.567          \\
-		Luggage detection               & m             & Medium variant with near-final recipe     & 0.689            & 0.436                 & 0.708          & 0.638          \\
-		\textbf{Phase~2 tuned (final)}  & s             & Phase~1 weights fine-tuned on ABODA       & \textbf{0.861}   & \textbf{0.438}        & \textbf{0.877} & \textbf{0.852} \\
+		COCO baseline                  & s             & Pretrained on COCO only                  & 0.582            & 0.344                 & 0.643          & 0.536          \\
+		Mixed (reduced aug)            & s             & COCO + OID + ABODA, lighter augmentation & 0.555            & 0.320                 & 0.673          & 0.514          \\
+		Mixed + person bias            & s             & Phase 1 with person-weighted class loss  & 0.535            & 0.308                 & 0.674          & 0.501          \\
+		Rebalanced loss                & n             & Nano variant, rebalanced class weights   & 0.511            & 0.278                 & 0.623          & 0.473          \\
+		Rebalanced loss                & s             & Small variant, rebalanced class weights  & 0.572            & 0.332                 & 0.645          & 0.541          \\
+		Mixed full (Phase~1)           & s             & Phase~1 reference run                    & 0.601            & 0.327                 & 0.712          & 0.534          \\
+		Aggressive aug                 & m             & Medium variant with heavy augmentation   & 0.602            & 0.363                 & 0.655          & 0.567          \\
+		Luggage detection              & m             & Medium variant with near-final recipe    & 0.689            & 0.436                 & 0.708          & 0.638          \\
+		\textbf{Phase~2 tuned (final)} & s             & Phase~1 weights fine-tuned on ABODA      & \textbf{0.861}   & \textbf{0.438}        & \textbf{0.877} & \textbf{0.852} \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Validation metrics for the training-run ablation. Metrics are taken from the final epoch of each run's \texttt{results.csv}. The Phase~2 tuned configuration was selected as the deployed detector.}
 	\label{tab:training_ablation}
 \end{table}
 
-Three observations follow from the ablation. First, increasing model size
-from small to medium (Aggressive aug \textit{vs.}\ Phase~1, same dataset and
+Three observations follow from the ablation. First, increasing model size from
+small to medium (Aggressive aug \textit{vs.}\ Phase~1, same dataset and
 augmentation family) raised mAP@0.5:0.95 from $0.327$ to $0.363$ but did not
-materially improve mAP@0.5, and came at the cost of Jetson inference
-latency; the nano variant underperformed on every metric. Second, reducing
-augmentation below the Phase~1 level (Mixed reduced aug) lowered mAP@0.5 by
-$\approx 4.6$ points without improving precision, supporting the choice of
-aggressive augmentation for the base phase. Third, per-class loss weighting
-(rebalanced or person-biased) did not yield a net improvement over uniform
-weighting at the same model size, and the final gains came instead from
-freezing the backbone and reducing the learning rate during Phase~2
-fine-tuning on ABODA-weighted data, which lifted mAP@0.5 by $0.26$ points
-over the best non-fine-tuned run.
+materially improve mAP@0.5, and came at the cost of Jetson inference latency;
+the nano variant underperformed on every metric. Second, reducing augmentation
+below the Phase~1 level (Mixed reduced aug) lowered mAP@0.5 by $\approx 4.6$
+points without improving precision, supporting the choice of aggressive
+augmentation for the base phase. Third, per-class loss weighting (rebalanced or
+person-biased) did not yield a net improvement over uniform weighting at the
+same model size, and the final gains came instead from freezing the backbone
+and reducing the learning rate during Phase~2 fine-tuning on ABODA-weighted
+data, which lifted mAP@0.5 by $0.26$ points over the best non-fine-tuned run.
 
 \subsection{Model Export}
 \label{sec:model_export}
@@ -479,7 +478,9 @@ determined by a custom configuration file, which specifies parameters such as
 the model path, input resolution, confidence threshold, and class count. These
 parameters can have a significant impact on the performance of the model and
 the overall system, and were tuned based on the results of the developing and
-testing process. The configuration file can be found in the appendix~\ref{lst:primary_config}, with the reasons for the key parameters being:
+testing process. The configuration file can be found in the
+appendix~\ref{lst:primary_config}, with the reasons for the key parameters
+being:
 
 \begin{itemize}
 	\item \textbf{Inference Interval and Real-time Tradeoff:} The
@@ -546,27 +547,27 @@ for association and a Kalman filter to update the state of tracked objects;
 \texttt{NvDeepSORT}, DeepStream's implementation of the DeepSORT algorithm
 \citep{wojke2017simple} in which a secondary ReID network produces an
 appearance embedding for every detected object and is combined with a
-Kalman-filter motion model for cross-frame association;
-\texttt{NvDCF}, an implementation that uses a discriminative correlation filter
-for tracking; and \texttt{MaskTracker}, mainly used for segmentation tasks.
+Kalman-filter motion model for cross-frame association; \texttt{NvDCF}, an
+implementation that uses a discriminative correlation filter for tracking; and
+\texttt{MaskTracker}, mainly used for segmentation tasks.
 
 After testing the different algorithms, it became clear that the requirements
 of the system required a robust tracking solution. Environmental factors such
 as occlusion and crowd density whilst using a less rigorous tracking algorithm
 led to frequent ID flips and ownership misattribution, which in turn led to
 incorrect abandonment detections. The requirements for ownership and ID
-consistency across frames made \texttt{NvDeepSORT} the most suitable choice,
-as its use of a deep association metric and ReID model provided improved
+consistency across frames made \texttt{NvDeepSORT} the most suitable choice, as
+its use of a deep association metric and ReID model provided improved
 robustness to occlusion and appearance changes, which are common in
 surveillance scenarios.
 
 \paragraph{NvDeepSORT versus original DeepSORT.}
-Both algorithms run a dedicated ReID network alongside the primary detector
-to produce appearance features for Hungarian assignment; the separation of
+Both algorithms run a dedicated ReID network alongside the primary detector to
+produce appearance features for Hungarian assignment; the separation of
 detector and appearance model is the defining contribution of
 \citet{wojke2017simple} and is preserved in NvDeepSORT. The substantive
-differences in NvDeepSORT are in the ReID stack and its integration rather
-than in the algorithm family:
+differences in NvDeepSORT are in the ReID stack and its integration rather than
+in the algorithm family:
 
 \begin{itemize}
 	\item \textbf{Stronger ReID backbone.} The original DeepSORT ships with a
@@ -578,9 +579,10 @@ than in the algorithm family:
 	      a TensorRT engine (FP16 in this project) that runs per-batch on cropped
 	      detections, driven by the same pipeline as the primary detector.
 	\item \textbf{Configurable weighted matching.} The association metric is a
-	      weighted combination of IoU, bounding-box size similarity, Mahalanobis
-	      motion distance, and ReID cosine similarity, with weights exposed in the
-	      tracker configuration (appendix~\ref{sec:config}).
+	      weighted combination of IoU ($0.7$), bounding-box size similarity
+	      ($0.05$), Mahalanobis motion distance, and ReID cosine similarity
+	      ($0.2$), with all weights exposed via the DeepStream tracker
+	      configuration file (\texttt{config\_tracker\_NvDeepSORT.yml}).
 \end{itemize}
 
 In practice NvDeepSORT is therefore best understood as DeepSORT with a
@@ -590,45 +592,44 @@ table~\ref{tab:tracker_comparison} are the closest available proxy for its
 expected tracking accuracy.
 
 Table~\ref{tab:tracker_comparison} summarises published benchmark results on
-MOT17 for the candidate trackers considered. These figures are drawn from
-the respective primary references and provide a comparative baseline across
+MOT17 for the candidate trackers considered. These figures are drawn from the
+respective primary references and provide a comparative baseline across
 trackers; no equivalent in-domain benchmark for this project was conducted
 because frame-level tracking ground truth was not available for the target
-evaluation sets
-(section~\ref{sec:object_detection_and_tracking_performance}).
+evaluation sets (section~\ref{sec:object_detection_and_tracking_performance}).
 
 \begin{table}[!htbp]
 	\centering
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X l r r r >{\raggedright\arraybackslash}X}
 		\toprule
-		\textbf{Tracker}                               & \textbf{Benchmark}        & \textbf{MOTA (\%)} & \textbf{IDF1 (\%)} & \textbf{HOTA (\%)} & \textbf{Key mechanism}                              \\
+		\textbf{Tracker}                               & \textbf{Benchmark}    & \textbf{MOTA (\%)} & \textbf{IDF1 (\%)} & \textbf{HOTA (\%)} & \textbf{Key mechanism}                              \\
 		\midrule
-		SORT \citep{bewley2016simple}                  & MOT17 val$^{\dagger}$     & 74.6               & 76.9               & ---                & Kalman filter + IoU association                     \\
-		DeepSORT \citep{wojke2017simple}               & MOT17 val$^{\dagger}$     & 75.4               & 77.2               & ---                & SORT + appearance ReID                              \\
-		ByteTrack \citep{zhang2022bytetrack}           & MOT17 test                & 80.3               & 77.3               & 63.1               & Two-stage association on high/low confidence splits \\
-		BoT-SORT (BoT-SORT-ReID) \citep{aharon2022bot} & MOT17 test                & 80.5               & 80.2               & 65.0               & ByteTrack + camera motion compensation + ReID       \\
+		SORT \citep{bewley2016simple}                  & MOT17 val$^{\dagger}$ & 74.6               & 76.9               & ---                & Kalman filter + IoU association                     \\
+		DeepSORT \citep{wojke2017simple}               & MOT17 val$^{\dagger}$ & 75.4               & 77.2               & ---                & SORT + appearance ReID                              \\
+		ByteTrack \citep{zhang2022bytetrack}           & MOT17 test            & 80.3               & 77.3               & 63.1               & Two-stage association on high/low confidence splits \\
+		BoT-SORT (BoT-SORT-ReID) \citep{aharon2022bot} & MOT17 test            & 80.5               & 80.2               & 65.0               & ByteTrack + camera motion compensation + ReID       \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Published MOT17 benchmarks for the candidate tracking algorithms. ByteTrack and BoT-SORT figures are the respective papers' MOT17 test-set entries. $^{\dagger}$SORT and DeepSORT were not evaluated on MOT17 in their original papers; the values shown are from \citet{zhang2022bytetrack} Table~2, where the authors re-ran both trackers on the MOT17 validation split using the same YOLOX detector as ByteTrack for an apples-to-apples tracker-only comparison. HOTA was not reported for the re-runs. NvDeepSORT is DeepStream's implementation of DeepSORT and has no separately reported MOT17 figures.}
 	\label{tab:tracker_comparison}
 \end{table}
 
-On the published benchmarks, BoT-SORT and ByteTrack both outperform DeepSORT
-on MOTA by approximately $5$ points; the IDF1 gap is small for ByteTrack
-($\approx 0.1$ point) but larger for BoT-SORT ($\approx 3$ points), and both
-report HOTA values unavailable for the SORT/DeepSORT re-runs. Direct
-cross-row comparison should be read with care because the SORT and DeepSORT
-entries are validation-split re-runs while ByteTrack and BoT-SORT are test
-submissions. BoT-SORT was the initial design choice for this reason, but
-lacks native DeepStream integration; NvDeepSORT was selected as the closest
-supported analogue, trading published tracking accuracy for the deployment
-benefits of a first-party implementation (TensorRT-accelerated ReID, direct
+On the published benchmarks, BoT-SORT and ByteTrack both outperform DeepSORT on
+MOTA by approximately $5$ points; the IDF1 gap is small for ByteTrack ($\approx
+	0.1$ point) but larger for BoT-SORT ($\approx 3$ points), and both report HOTA
+values unavailable for the SORT/DeepSORT re-runs. Direct cross-row comparison
+should be read with care because the SORT and DeepSORT entries are
+validation-split re-runs while ByteTrack and BoT-SORT are test submissions.
+BoT-SORT was the initial design choice for this reason, but lacks native
+DeepStream integration; NvDeepSORT was selected as the closest supported
+analogue, trading published tracking accuracy for the deployment benefits of a
+first-party implementation (TensorRT-accelerated ReID, direct
 \texttt{nvtracker} metadata, no custom integration code). The zero-IoU
-true-positive failures documented in
-section~\ref{sec:testing_and_evaluation} are consistent with DeepSORT's
-weaker identity preservation relative to BoT-SORT under occlusion and
-re-entry, and revisiting this trade-off is identified as future work.
+true-positive failures documented in section~\ref{sec:testing_and_evaluation}
+are consistent with DeepSORT's weaker identity preservation relative to
+BoT-SORT under occlusion and re-entry, and revisiting this trade-off is
+identified as future work.
 
 Utilising the pretrained ReID model \citep{nvidia2026reidnet}, based on the
 ResNet 50 architecture, the tracking component was able to maintain consistent
