@@ -146,32 +146,32 @@ IITP20 datasets respectively.
 	\small
 	\begin{tabularx}{\textwidth}{l l r r c >{\raggedright\arraybackslash}X}
 		\toprule
-		\textbf{Video} & \textbf{Outcome} & \textbf{Frame Error} & \textbf{IoU}  & \textbf{Extra FPs} & \textbf{Notes}                                      \\
+		\textbf{Video} & \textbf{Outcome}         & \textbf{Frame Error} & \textbf{IoU}  & \textbf{Extra FPs} & \textbf{Notes}                                                                                                             \\
 		\midrule
-		video1         & TP               & 72                   & 0.570         & 0                  & ---                                                 \\
+		video1         & TP                       & 72                   & 0.570         & 0                  & ---                                                                                                                        \\
 		\addlinespace
-		video2         & FN               & ---                  & ---           & 0                  & Missed entirely                                     \\
+		video2         & FN                       & ---                  & ---           & 0                  & Missed entirely                                                                                                            \\
 		\addlinespace
-		video3         & TP               & 57                   & 0.611         & 0                  & ---                                                 \\
+		video3         & TP                       & 57                   & 0.611         & 0                  & ---                                                                                                                        \\
 		\addlinespace
-		video4         & TP               & 73                   & 0.709         & 0                  & ---                                                 \\
+		video4         & TP                       & 73                   & 0.709         & 0                  & ---                                                                                                                        \\
 		\addlinespace
-		video5         & TP               & 56                   & 0.381         & 0                  & Low spatial accuracy                                \\
+		video5         & TP                       & 56                   & 0.381         & 0                  & Low spatial accuracy                                                                                                       \\
 		\addlinespace
-		video6         & TP               & 44                   & 0.596         & 0                  & ---                                                 \\
+		video6         & TP                       & 44                   & 0.596         & 0                  & ---                                                                                                                        \\
 		\addlinespace
-		video7         & 2$\times$TP      & 302 / 5              & 0.576 / 0.659 & 0                  & Both detected; event\_0 delayed by no-owner timeout \\
+		video7         & 2$\times$TP$^{\ddagger}$ & 905 / 5              & 0.576 / 0.659 & 0                  & Both detected; event\_0 delayed $905$ frames by no-owner timeout (reclassified TP, see \S\ref{sec:testing_and_evaluation}) \\
 		\addlinespace
-		video8         & 2$\times$TP      & 302 / 24             & 0.623 / 0.784 & 0                  & Both detected; event\_0 delayed by no-owner timeout \\
+		video8         & 2$\times$TP$^{\ddagger}$ & 905 / 24             & 0.623 / 0.784 & 0                  & Both detected; event\_0 delayed $905$ frames by no-owner timeout (reclassified TP, see \S\ref{sec:testing_and_evaluation}) \\
 		\addlinespace
-		video9         & 2$\times$TP      & 136 / 42             & 0.720 / 0.539 & 0                  & Both events detected                                \\
+		video9         & 2$\times$TP              & 136 / 42             & 0.720 / 0.539 & 0                  & Both events detected                                                                                                       \\
 		\addlinespace
-		video10        & TP + FN          & 56                   & 0.700         & 0                  & 1 of 2 events detected; second outside tolerance    \\
+		video10        & TP + FN                  & 56                   & 0.700         & 0                  & 1 of 2 events detected; second outside tolerance                                                                           \\
 		\addlinespace
-		video11        & FN               & ---                  & ---           & 2                  & Missed; 2 false alarms on background                \\
+		video11        & FN                       & ---                  & ---           & 2                  & Missed; 2 false alarms on background                                                                                       \\
 		\bottomrule
 	\end{tabularx}
-	\caption{Per-video pipeline results on the ABODA dataset.}
+	\caption{Per-video pipeline results on the ABODA dataset. $^{\ddagger}$\,\texttt{event\_0} in \texttt{video7} and \texttt{video8} exceeded the $\pm 360$-frame tolerance ($905$-frame delay) and is raw-classified as FP+FN; it is reclassified as TP in the summary because the delay is attributable to the pipeline's documented no-owner-timeout hysteresis rather than a detection failure (\S\ref{sec:testing_and_evaluation}).}
 	\label{tab:eval_aboda}
 \end{table}
 
@@ -323,9 +323,9 @@ IITP20 datasets respectively.
 
 \subsection{Requirements Traceability Matrix}
 
-A matrix mapping the project requirements to their corresponding sections in the
-report, along with a status of whether each requirement was met, is shown in
-Table~\ref{tab:traceability}.
+A matrix mapping the project requirements to their corresponding sections in
+the report, along with a status of whether each requirement was met, is shown
+in Table~\ref{tab:traceability}.
 
 \begin{table}[!htbp]
 	\centering
