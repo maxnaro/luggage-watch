@@ -249,7 +249,7 @@ datasets for abandoned object detection.
 		\addlinespace
 		False Positive per Image              & For number of images $N_{\mathrm{images}}$: $$\mathrm{FPPI} = \frac{\mathrm{FP}}{N_{\mathrm{images}}}$$                                                                                                           \\
 		\addlinespace
-		Objectness Score                      & As calculated by \cite{jocher2020yolov5} in YOLOv3, for probability of object presence within a bounding box $P(\mathrm{Obj}) \in [0, 1]$: $$\mathrm{Objectness} = P(\mathrm{Obj}) \cdot \mathrm{IoU} \in [0,1]$$ \\
+		Objectness Score                      & As defined in the original YOLO paper \citep{redmon2016lookonceunifiedrealtime}, for probability of object presence within a bounding box $P(\mathrm{Obj}) \in [0, 1]$: $$\mathrm{Objectness} = P(\mathrm{Obj}) \cdot \mathrm{IoU} \in [0,1]$$ \\
 		\addlinespace
 		Detection Error Rate ($\mathrm{DER}$) & For total number of detections $D$: $$\mathrm{DER} = \frac{\mathrm{FP} + \mathrm{FN}}{D} \times 100$$                                                                                                             \\
 		\bottomrule
