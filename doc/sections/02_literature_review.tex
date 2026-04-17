@@ -239,19 +239,19 @@ datasets for abandoned object detection.
 	\small
 	\begin{tabularx}{\textwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
 		\toprule
-		\textbf{Metric}                       & \textbf{Formula}                                                                                                                                                                                                  \\
+		\textbf{Metric}                       & \textbf{Formula}                                                                                                                                                                                                                               \\
 		\midrule
-		Cohen's Kappa ($\kappa$)              & For $P_o$ the observed accuracy and $P_e$ the expected accuracy: $$\kappa = \frac{P_o - P_e}{1 - P_e} \in [-1,1]$$                                                                                                \\
+		Cohen's Kappa ($\kappa$)              & For $P_o$ the observed accuracy and $P_e$ the expected accuracy: $$\kappa = \frac{P_o - P_e}{1 - P_e} \in [-1,1]$$                                                                                                                             \\
 		\addlinespace
-		Expected Agreement by Chance ($P_e$)  & For number of classes $N$: $$P_e = \frac{1}{N^2}\cdot\sum^k_{i=1}{(A_i\cdot B_i)}$$                                                                                                                               \\
+		Expected Agreement by Chance ($P_e$)  & For number of classes $N$: $$P_e = \frac{1}{N^2}\cdot\sum^k_{i=1}{(A_i\cdot B_i)}$$                                                                                                                                                            \\
 		\addlinespace
-		Balanced Accuracy                     & $$\frac{1}{2}\cdot(\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} + \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FP}}) \in [0,1]$$                                                                                     \\
+		Balanced Accuracy                     & $$\frac{1}{2}\cdot(\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} + \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FP}}) \in [0,1]$$                                                                                                                  \\
 		\addlinespace
-		False Positive per Image              & For number of images $N_{\mathrm{images}}$: $$\mathrm{FPPI} = \frac{\mathrm{FP}}{N_{\mathrm{images}}}$$                                                                                                           \\
+		False Positive per Image              & For number of images $N_{\mathrm{images}}$: $$\mathrm{FPPI} = \frac{\mathrm{FP}}{N_{\mathrm{images}}}$$                                                                                                                                        \\
 		\addlinespace
 		Objectness Score                      & As defined in the original YOLO paper \citep{redmon2016lookonceunifiedrealtime}, for probability of object presence within a bounding box $P(\mathrm{Obj}) \in [0, 1]$: $$\mathrm{Objectness} = P(\mathrm{Obj}) \cdot \mathrm{IoU} \in [0,1]$$ \\
 		\addlinespace
-		Detection Error Rate ($\mathrm{DER}$) & For total number of detections $D$: $$\mathrm{DER} = \frac{\mathrm{FP} + \mathrm{FN}}{D} \times 100$$                                                                                                             \\
+		Detection Error Rate ($\mathrm{DER}$) & For total number of detections $D$: $$\mathrm{DER} = \frac{\mathrm{FP} + \mathrm{FN}}{D} \times 100$$                                                                                                                                          \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Evaluation metrics for object detection: formulae (Part 2).}
